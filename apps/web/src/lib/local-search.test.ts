@@ -15,4 +15,3 @@ describe('local Spanish search fallback', () => {
     expect(searchLocalPlaces(query).some((place) => place.cityId === cityId)).toBe(true);
   });
 });
-

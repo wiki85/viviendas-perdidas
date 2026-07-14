@@ -13,4 +13,3 @@ export async function getDeviceFingerprintHash(): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(randomId));
   return bytesToHex(new Uint8Array(digest));
 }
-

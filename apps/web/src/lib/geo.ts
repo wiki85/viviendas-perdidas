@@ -66,7 +66,12 @@ function normalizeManifest(raw: unknown): CityDefinition[] {
   const parsed = rows.flatMap((row): CityDefinition[] => {
     if (!row || typeof row !== 'object') return [];
     const value = row as Record<string, unknown>;
-    const id = typeof value.id === 'string' ? value.id : typeof value.cityId === 'string' ? value.cityId : '';
+    const id =
+      typeof value.id === 'string'
+        ? value.id
+        : typeof value.cityId === 'string'
+          ? value.cityId
+          : '';
     const fallback = FALLBACK_CITIES.find((city) => city.id === id);
     const center = parseCenter(value.center) ?? fallback?.center ?? null;
     const manifestBounds = parseBounds(value.bounds ?? value.bbox);
@@ -78,7 +83,7 @@ function normalizeManifest(raw: unknown): CityDefinition[] {
             east: Math.max(manifestBounds.east, fallback.bounds.east),
             west: Math.min(manifestBounds.west, fallback.bounds.west),
           }
-        : manifestBounds ?? fallback?.bounds ?? null;
+        : (manifestBounds ?? fallback?.bounds ?? null);
     if (!id || !center || !bounds) return [];
     const geoJsonUrlValue =
       value.geoJsonUrl ?? value.geojson ?? value.neighborhoods ?? value.path ?? value.file;
@@ -87,11 +92,11 @@ function normalizeManifest(raw: unknown): CityDefinition[] {
         ? geoJsonUrlValue.startsWith('/')
           ? geoJsonUrlValue
           : `/geo/${geoJsonUrlValue}`
-        : fallback?.geoJsonUrl ?? `/geo/${id}/neighborhoods.geojson`;
+        : (fallback?.geoJsonUrl ?? `/geo/${id}/neighborhoods.geojson`);
     return [
       {
         id,
-        name: typeof value.name === 'string' ? value.name : fallback?.name ?? id,
+        name: typeof value.name === 'string' ? value.name : (fallback?.name ?? id),
         center,
         bounds,
         geoJsonUrl,
@@ -120,8 +125,10 @@ function normalizeNeighborhoods(
   const features = raw.features.flatMap((feature): NeighborhoodFeature[] => {
     if (feature.geometry.type !== 'Polygon' && feature.geometry.type !== 'MultiPolygon') return [];
     const properties = feature.properties ?? {};
-    const idValue = properties.id ?? properties.neighborhoodId ?? properties.barri_id ?? properties.COD_BAR;
-    const nameValue = properties.name ?? properties.neighborhoodName ?? properties.nom ?? properties.NOMBRE;
+    const idValue =
+      properties.id ?? properties.neighborhoodId ?? properties.barri_id ?? properties.COD_BAR;
+    const nameValue =
+      properties.name ?? properties.neighborhoodName ?? properties.nom ?? properties.NOMBRE;
     const id = idValue === undefined || idValue === null ? '' : String(idValue);
     if (!id) return [];
     return [
@@ -209,7 +216,8 @@ export async function resolveVisibleScope(
 ): Promise<ResolvedScope> {
   const cities = await loadCityManifest();
   const hinted = cityHint ? (cities.find((city) => city.id === cityHint.id) ?? cityHint) : null;
-  const city = cities.find((candidate) => containsPoint(candidate.bounds, position)) ??
+  const city =
+    cities.find((candidate) => containsPoint(candidate.bounds, position)) ??
     (hinted && containsPoint(hinted.bounds, position) ? hinted : null);
 
   if (!city) {

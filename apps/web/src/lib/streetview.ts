@@ -17,9 +17,12 @@ export async function fetchStreetViewMetadata(
     key: apiKey,
     source: 'outdoor',
   });
-  const response = await fetch(`https://maps.googleapis.com/maps/api/streetview/metadata?${params}`, {
-    signal,
-  });
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/streetview/metadata?${params}`,
+    {
+      signal,
+    },
+  );
   if (!response.ok) throw new Error('No se pudo comprobar Street View.');
   const payload = (await response.json()) as {
     status?: string;
@@ -32,8 +35,7 @@ export async function fetchStreetViewMetadata(
   return {
     available: payload.status === 'OK' && typeof payload.pano_id === 'string',
     panoId: payload.pano_id ?? null,
-    location:
-      typeof lat === 'number' && typeof lng === 'number' ? { lat, lng } : null,
+    location: typeof lat === 'number' && typeof lng === 'number' ? { lat, lng } : null,
     date: payload.date,
   };
 }

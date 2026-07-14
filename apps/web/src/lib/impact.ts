@@ -18,4 +18,3 @@ export function formatListingDate(value: string) {
   if (Number.isNaN(date.valueOf())) return 'Fecha no disponible';
   return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(date);
 }
-

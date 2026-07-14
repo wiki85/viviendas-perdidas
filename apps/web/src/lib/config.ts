@@ -44,6 +44,6 @@ export const capabilityNotice = appConfig.demoMode
   ? 'Modo demostración: puedes explorar y probar el flujo; los cambios no se guardan.'
   : !appConfig.recaptchaSiteKey && !appConfig.useFirebaseEmulators
     ? 'Modo de solo lectura: falta configurar App Check para colaborar.'
-  : !appConfig.googleMapsApiKey
-    ? 'Mapa demostrativo activo: falta configurar Google Maps.'
-    : null;
+    : !appConfig.googleMapsApiKey
+      ? 'Mapa demostrativo activo: falta configurar Google Maps.'
+      : null;

@@ -82,4 +82,3 @@ export function searchLocalPlaces(query: string, limit = 6) {
     normalize(`${place.primary} ${place.secondary}`).includes(needle),
   ).slice(0, limit);
 }
-

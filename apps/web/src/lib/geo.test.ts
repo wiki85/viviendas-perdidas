@@ -26,7 +26,15 @@ describe('visible-scope point in polygon resolution', () => {
                 properties: { id: 'centro', name: 'Centro', cityId: 'test-city' },
                 geometry: {
                   type: 'Polygon',
-                  coordinates: [[[-0.5, 39.4], [-0.2, 39.4], [-0.2, 39.7], [-0.5, 39.7], [-0.5, 39.4]]],
+                  coordinates: [
+                    [
+                      [-0.5, 39.4],
+                      [-0.2, 39.4],
+                      [-0.2, 39.7],
+                      [-0.5, 39.7],
+                      [-0.5, 39.4],
+                    ],
+                  ],
                 },
               },
             ],
@@ -43,17 +51,13 @@ describe('visible-scope point in polygon resolution', () => {
       name: 'Centro',
     });
 
-    const fallback = await resolveVisibleScope(
-      { lat: 37.3891, lng: -5.9845 },
-      12,
-      {
-        id: 'sevilla',
-        name: 'Sevilla',
-        center: { lat: 37.3891, lng: -5.9845 },
-        bounds: { north: 37.55, south: 37.23, east: -5.78, west: -6.18 },
-        geoJsonUrl: '/geo/sevilla/neighborhoods.geojson',
-      },
-    );
+    const fallback = await resolveVisibleScope({ lat: 37.3891, lng: -5.9845 }, 12, {
+      id: 'sevilla',
+      name: 'Sevilla',
+      center: { lat: 37.3891, lng: -5.9845 },
+      bounds: { north: 37.55, south: 37.23, east: -5.78, west: -6.18 },
+      geoJsonUrl: '/geo/sevilla/neighborhoods.geojson',
+    });
     expect(fallback.scope).toMatchObject({
       scopeId: 'sevilla',
       scope: 'city',

@@ -3,7 +3,9 @@ import { validateEvidenceNote, validateLicenseNumber } from './privacy';
 
 describe('validateEvidenceNote', () => {
   it('accepts a short observation about the property', () => {
-    expect(validateEvidenceNote('Placa turística visible junto al portal.')).toEqual({ valid: true });
+    expect(validateEvidenceNote('Placa turística visible junto al portal.')).toEqual({
+      valid: true,
+    });
   });
 
   it.each([
