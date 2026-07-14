@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "name": "madrid-neighborhoods-representative",
+  "metadata": {
+    "schemaVersion": 1,
+    "cityId": "madrid",
+    "cityName": "Madrid",
+    "representative": true,
+    "source": "Geometrías simplificadas de demostración; sustituir por límites del portal de datos abiertos municipal antes de producción."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "lavapies",
+        "name": "Lavapiés-Embajadores",
+        "cityId": "madrid"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-3.714, 40.405],
+            [-3.695, 40.405],
+            [-3.694, 40.42],
+            [-3.714, 40.42],
+            [-3.714, 40.405]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "chamberi",
+        "name": "Chamberí",
+        "cityId": "madrid"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-3.713, 40.424],
+            [-3.69, 40.424],
+            [-3.69, 40.447],
+            [-3.713, 40.447],
+            [-3.713, 40.424]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "salamanca",
+        "name": "Salamanca",
+        "cityId": "madrid"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-3.69, 40.416],
+            [-3.661, 40.416],
+            [-3.661, 40.438],
+            [-3.69, 40.438],
+            [-3.69, 40.416]
+          ]
+        ]
+      }
+    }
+  ]
+}

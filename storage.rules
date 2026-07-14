@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Approved facade photos, published by the moderation Cloud Function.
+    match /public/{path=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Pending uploads and anything else are server-only (Admin SDK bypasses rules).
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

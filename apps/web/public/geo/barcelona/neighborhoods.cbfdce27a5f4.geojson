@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "name": "barcelona-neighborhoods-representative",
+  "metadata": {
+    "schemaVersion": 1,
+    "cityId": "barcelona",
+    "cityName": "Barcelona",
+    "representative": true,
+    "source": "Geometrías simplificadas de demostración; sustituir por límites del portal de datos abiertos municipal antes de producción."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ciutat-vella",
+        "name": "Ciutat Vella",
+        "cityId": "barcelona"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [2.162, 41.373],
+            [2.185, 41.373],
+            [2.185, 41.388],
+            [2.162, 41.388],
+            [2.162, 41.373]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "eixample",
+        "name": "L'Eixample",
+        "cityId": "barcelona"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [2.145, 41.388],
+            [2.184, 41.388],
+            [2.184, 41.401],
+            [2.145, 41.401],
+            [2.145, 41.388]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gracia",
+        "name": "Gràcia",
+        "cityId": "barcelona"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [2.139, 41.401],
+            [2.177, 41.401],
+            [2.177, 41.423],
+            [2.139, 41.423],
+            [2.139, 41.401]
+          ]
+        ]
+      }
+    }
+  ]
+}

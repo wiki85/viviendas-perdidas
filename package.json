@@ -1,0 +1,43 @@
+{
+  "name": "viviendas-perdidas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mapa colaborativo de viviendas perdidas por el uso turístico.",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "functions"
+  ],
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @viviendas-perdidas/web",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --project scripts/tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "npm run test --workspaces --if-present",
+    "test:integration": "npm run test:integration --workspace @viviendas-perdidas/functions",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "emulators": "firebase emulators:start",
+    "emulators:export": "firebase emulators:export .firebase/emulator-data",
+    "deploy": "npm run build && firebase deploy",
+    "geo:import": "tsx scripts/import-neighborhoods.ts",
+    "seed:demo": "tsx scripts/seed-demo-data.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@types/node": "^22.17.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "firebase-admin": "^13.4.0",
+    "firebase-tools": "^14.12.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.39.1"
+  }
+}

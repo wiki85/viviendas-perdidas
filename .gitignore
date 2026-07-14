@@ -1,0 +1,41 @@
+# Dependencies and generated JavaScript
+node_modules/
+dist/
+lib/
+build/
+coverage/
+*.tsbuildinfo
+
+# Local environment and secrets (examples remain tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+functions/.secret.local
+functions/geo/
+
+# Firebase local state and emulator exports
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+
+# Test and tooling caches
+.eslintcache
+.vite/
+.vitest/
+playwright-report/
+test-results/
+
+# Machine-local Claude Code permissions and Firebase project alias
+.claude/settings.local.json
+.firebaserc

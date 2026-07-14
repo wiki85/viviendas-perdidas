@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "name": "valencia-neighborhoods-representative",
+  "metadata": {
+    "schemaVersion": 1,
+    "cityId": "valencia",
+    "cityName": "València",
+    "representative": true,
+    "source": "Geometrías simplificadas de demostración; sustituir por límites del portal de datos abiertos municipal antes de producción."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "el-carme",
+        "name": "El Carme",
+        "cityId": "valencia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-0.389, 39.47],
+            [-0.37, 39.47],
+            [-0.37, 39.485],
+            [-0.389, 39.485],
+            [-0.389, 39.47]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "russafa",
+        "name": "Russafa",
+        "cityId": "valencia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-0.385, 39.451],
+            [-0.363, 39.451],
+            [-0.363, 39.468],
+            [-0.385, 39.468],
+            [-0.385, 39.451]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "el-cabanyal-el-canyamelar",
+        "name": "El Cabanyal-El Canyamelar",
+        "cityId": "valencia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-0.341, 39.458],
+            [-0.318, 39.458],
+            [-0.318, 39.485],
+            [-0.341, 39.485],
+            [-0.341, 39.458]
+          ]
+        ]
+      }
+    }
+  ]
+}
