@@ -536,7 +536,9 @@ export function RegisterWizard({
                   <div className="street-placeholder">
                     <ImageOff size={30} />
                     <span>Sin vista de Street View en este punto</span>
-                    <small>Pasa en calles peatonales. Puedes añadir tu propia foto aquí abajo.</small>
+                    <small>
+                      Pasa en calles peatonales. Puedes añadir tu propia foto aquí abajo.
+                    </small>
                   </div>
                 )}
               </div>

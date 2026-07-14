@@ -38,7 +38,10 @@ export async function recordClientError(
 }
 
 /** Standard shape for logging a caught error together with the raw payload. */
-export function describeCaughtError(error: unknown, requestData: unknown): {
+export function describeCaughtError(
+  error: unknown,
+  requestData: unknown,
+): {
   kind: string;
   details: Record<string, unknown>;
 } {

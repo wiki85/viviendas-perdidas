@@ -48,11 +48,7 @@ export const adminListErrors = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
   async (request) => {
     requireModerator(request);
-    const snapshot = await db
-      .collection('errorLogs')
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get();
+    const snapshot = await db.collection('errorLogs').orderBy('createdAt', 'desc').limit(50).get();
     return {
       errors: snapshot.docs.map((doc) => ({
         id: doc.id,

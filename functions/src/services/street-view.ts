@@ -66,7 +66,13 @@ export async function resolveStreetView(
   if (payload.status === 'ZERO_RESULTS' || payload.status === 'NOT_FOUND') {
     if (panoIdHint !== null) {
       // Stale or invalid hint: fall back to the regular outdoor search.
-      return resolveStreetView(listingLocation, requestedHeading, apiKey, null, fetchImplementation);
+      return resolveStreetView(
+        listingLocation,
+        requestedHeading,
+        apiKey,
+        null,
+        fetchImplementation,
+      );
     }
     return { available: false, panoId: null, heading: null };
   }
@@ -81,9 +87,18 @@ export async function resolveStreetView(
     Number.isFinite(panoramaLatitude) && Number.isFinite(panoramaLongitude)
       ? { latitude: panoramaLatitude, longitude: panoramaLongitude }
       : null;
-  if (panoramaLocation && distanceMeters(panoramaLocation, listingLocation) > MAX_PANORAMA_DISTANCE_METERS) {
+  if (
+    panoramaLocation &&
+    distanceMeters(panoramaLocation, listingLocation) > MAX_PANORAMA_DISTANCE_METERS
+  ) {
     if (panoIdHint !== null) {
-      return resolveStreetView(listingLocation, requestedHeading, apiKey, null, fetchImplementation);
+      return resolveStreetView(
+        listingLocation,
+        requestedHeading,
+        apiKey,
+        null,
+        fetchImplementation,
+      );
     }
     return { available: false, panoId: null, heading: null };
   }
