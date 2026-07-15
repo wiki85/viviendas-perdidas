@@ -10,6 +10,7 @@ import {
   ImageOff,
   Info,
   LoaderCircle,
+  LocateFixed,
   MapPin,
   ShieldCheck,
   Store,
@@ -25,6 +26,7 @@ import type {
 } from '../domain/types';
 import { useStreetView } from '../hooks/use-street-view';
 import { appConfig } from '../lib/config';
+import { isTouchDevice } from '../lib/device';
 import { calculateImpact } from '../lib/impact';
 import { validateEvidenceNote, validateLicenseNumber } from '../lib/privacy';
 import { buildStreetViewUrl } from '../lib/streetview';
@@ -155,6 +157,10 @@ export function RegisterWizard({
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoConsent, setPhotoConsent] = useState(false);
   const [previewHeading, setPreviewHeading] = useState(0);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  // Evaluated once: whether we're on a phone/tablet doesn't change mid-session.
+  const [touchDevice] = useState(isTouchDevice);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,6 +188,15 @@ export function RegisterWizard({
     if (!pickedPosition) return;
     onPlacementModeChange(false);
     const current = locationRef.current;
+    // The pin drop we triggered ourselves (search, current position) must
+    // not overwrite the label we just resolved for those same coordinates.
+    if (
+      current &&
+      current.position.lat === pickedPosition.lat &&
+      current.position.lng === pickedPosition.lng
+    ) {
+      return;
+    }
     // Dragging the pin after a search keeps the searched address; only the
     // exact coordinates change (misplaced anchors on pedestrian streets).
     if (current?.placeId) {
@@ -227,6 +242,62 @@ export function RegisterWizard({
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
+
+  const useCurrentPosition = () => {
+    if (!navigator.geolocation) {
+      setLocateError('Este dispositivo no permite obtener la posición.');
+      return;
+    }
+    setLocating(true);
+    setLocateError(null);
+    navigator.geolocation.getCurrentPosition(
+      (result) => {
+        const position = { lat: result.coords.latitude, lng: result.coords.longitude };
+        const fallback: LocationChoice = {
+          position,
+          label: `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)} · tu posición actual`,
+          source: 'map',
+        };
+        const finish = (choice: LocationChoice) => {
+          setLocation(choice);
+          onPreviewLocation(position);
+          onPlacementModeChange(false);
+          setLocating(false);
+        };
+        if (!mapsEnabled || !window.google?.maps) {
+          finish(fallback);
+          return;
+        }
+        // Reverse geocoding names the exact address; the GPS coordinates
+        // stay as the pin so the marker sits where the user is standing.
+        void new google.maps.Geocoder()
+          .geocode({ location: position })
+          .then(({ results }) => {
+            const first = results[0];
+            finish(
+              first
+                ? {
+                    position,
+                    label: first.formatted_address,
+                    placeId: first.place_id,
+                    source: 'map',
+                  }
+                : fallback,
+            );
+          })
+          .catch(() => finish(fallback));
+      },
+      (failure) => {
+        setLocating(false);
+        setLocateError(
+          failure.code === failure.PERMISSION_DENIED
+            ? 'Permiso de ubicación denegado. Actívalo para este sitio en los ajustes del navegador.'
+            : 'No se pudo obtener tu posición. Busca la dirección o toca el mapa.',
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 },
+    );
+  };
 
   const selectSearchPlace = (place: SearchPlace) => {
     setLocation({
@@ -417,20 +488,41 @@ export function RegisterWizard({
                 >
                   <Crosshair size={18} /> Tocar en el mapa
                 </button>
-                <button
-                  className="button button--ghost"
-                  type="button"
-                  onClick={() =>
-                    setLocation({
-                      position: center,
-                      label: `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)} · centro del mapa`,
-                      source: 'map',
-                    })
-                  }
-                >
-                  <MapPin size={18} /> Usar el centro
-                </button>
+                {touchDevice ? (
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    disabled={locating}
+                    onClick={useCurrentPosition}
+                  >
+                    {locating ? (
+                      <LoaderCircle className="spin" size={18} />
+                    ) : (
+                      <LocateFixed size={18} />
+                    )}{' '}
+                    Mi posición actual
+                  </button>
+                ) : (
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    onClick={() =>
+                      setLocation({
+                        position: center,
+                        label: `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)} · centro del mapa`,
+                        source: 'map',
+                      })
+                    }
+                  >
+                    <MapPin size={18} /> Usar el centro
+                  </button>
+                )}
               </div>
+              {locateError && (
+                <p className="field-error" role="alert">
+                  {locateError}
+                </p>
+              )}
               {location && (
                 <div className="selected-location">
                   <Check size={18} />

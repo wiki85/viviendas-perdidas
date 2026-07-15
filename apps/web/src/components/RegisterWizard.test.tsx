@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RegisterWizard } from './RegisterWizard';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('RegisterWizard mobile flow', () => {
   it('submits a 12-home building only after privacy and confirmation checks', async () => {
@@ -97,5 +101,40 @@ describe('RegisterWizard mobile flow', () => {
     // Two count fields render for a building; the first pair is dwellings.
     fireEvent.click(screen.getAllByRole('button', { name: /sumar uno/i })[0]);
     expect(dwellings.value).toBe('8');
+  });
+
+  it('offers the current GPS position instead of the map center on touch devices', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(pointer: coarse)',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const getCurrentPosition = vi.fn(
+      (success: (result: { coords: { latitude: number; longitude: number } }) => void) =>
+        success({ coords: { latitude: 37.39923, longitude: -5.99201 } }),
+    );
+    vi.stubGlobal('navigator', { ...window.navigator, geolocation: { getCurrentPosition } });
+    const onPreviewLocation = vi.fn();
+
+    render(
+      <RegisterWizard
+        center={{ lat: 39.4623, lng: -0.3734 }}
+        pickedPosition={null}
+        mapsEnabled={false}
+        onPlacementModeChange={vi.fn()}
+        onPreviewLocation={onPreviewLocation}
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        onSelectDuplicate={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /usar el centro/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /mi posición actual/i }));
+
+    expect(getCurrentPosition).toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText(/tu posición actual/i)).toBeInTheDocument());
+    expect(onPreviewLocation).toHaveBeenCalledWith({ lat: 37.39923, lng: -5.99201 });
+    expect(screen.getByRole('button', { name: /continuar/i })).toBeEnabled();
   });
 });

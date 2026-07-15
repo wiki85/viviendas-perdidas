@@ -1,5 +1,15 @@
 const DEVICE_KEY = 'viviendas-perdidas-device-v1';
 
+/**
+ * True on phones/tablets (coarse pointer). GPS positioning only makes
+ * sense there: a desktop geolocates by IP, often kilometres away.
+ */
+export function isTouchDevice(): boolean {
+  return (
+    typeof window !== 'undefined' && (window.matchMedia?.('(pointer: coarse)').matches ?? false)
+  );
+}
+
 function bytesToHex(bytes: Uint8Array) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
