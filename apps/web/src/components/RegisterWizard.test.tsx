@@ -60,4 +60,42 @@ describe('RegisterWizard mobile flow', () => {
       ),
     );
   });
+
+  it('lets the user clear a count field without rewriting a zero (mobile keyboards)', () => {
+    render(
+      <RegisterWizard
+        center={{ lat: 39.4623, lng: -0.3734 }}
+        pickedPosition={null}
+        mapsEnabled={false}
+        onPlacementModeChange={vi.fn()}
+        onPreviewLocation={vi.fn()}
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        onSelectDuplicate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /usar el centro/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /edificio completo/i }));
+
+    const dwellings = screen.getByLabelText<HTMLInputElement>(
+      /número de viviendas en el edificio/i,
+    );
+    // Clearing must leave the field empty (not snap back to "0"/"1")...
+    fireEvent.change(dwellings, { target: { value: '' } });
+    expect(dwellings.value).toBe('');
+    expect(screen.getByRole('button', { name: /continuar/i })).toBeDisabled();
+    // ...so typing afterwards produces "2", never "02".
+    fireEvent.change(dwellings, { target: { value: '2' } });
+    expect(dwellings.value).toBe('2');
+    // Leading zeros and out-of-range values normalize on blur.
+    fireEvent.change(dwellings, { target: { value: '07' } });
+    fireEvent.blur(dwellings);
+    expect(dwellings.value).toBe('7');
+    // The +/− buttons replace the native spinners hidden on mobile.
+    // Two count fields render for a building; the first pair is dwellings.
+    fireEvent.click(screen.getAllByRole('button', { name: /sumar uno/i })[0]);
+    expect(dwellings.value).toBe('8');
+  });
 });

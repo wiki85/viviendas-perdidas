@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -50,6 +50,88 @@ type LocationChoice = {
 };
 
 const STEPS = ['Ubicación', 'Tipo', 'Evidencias', 'Vista previa'];
+
+type CountFieldProps = {
+  label: ReactNode;
+  hint: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (value: number) => void;
+};
+
+/**
+ * Numeric field usable from a phone: mobile browsers hide the native
+ * spinners of <input type="number">, so we render −/+ buttons, and the
+ * text draft may stay empty or hold "05" while editing — a controlled
+ * number would rewrite "0" on clear, forcing users into typing "01".
+ */
+function CountField({ label, hint, min, max, value, onChange }: CountFieldProps) {
+  // Explicit for/id: with an implicit (wrapping) label the associated
+  // control would be the first labelable descendant — the − button.
+  const inputId = useId();
+  const [draft, setDraft] = useState(String(value));
+  const lastEmitted = useRef(value);
+
+  useEffect(() => {
+    // External resets (switching listing type) refresh the text; our own
+    // edits must not, or clearing the field would instantly write it back.
+    if (value !== lastEmitted.current) {
+      lastEmitted.current = value;
+      setDraft(String(value));
+    }
+  }, [value]);
+
+  const emit = (next: number) => {
+    lastEmitted.current = next;
+    onChange(next);
+  };
+
+  const commit = (next: number) => {
+    const clamped = Math.min(max, Math.max(min, next));
+    emit(clamped);
+    setDraft(String(clamped));
+  };
+
+  return (
+    <div className="field field--count">
+      <label htmlFor={inputId}>{label}</label>
+      <span className="count-stepper">
+        <button
+          type="button"
+          aria-label="Restar uno"
+          disabled={value <= min}
+          onClick={() => commit(value - 1)}
+        >
+          −
+        </button>
+        <input
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={draft}
+          onChange={(event) => {
+            const digits = event.target.value.replace(/\D+/gu, '').slice(0, String(max).length);
+            setDraft(digits);
+            emit(digits === '' ? 0 : Math.min(max, Number(digits)));
+          }}
+          onBlur={() => commit(draft === '' ? min : Number(draft))}
+        />
+        <button
+          type="button"
+          aria-label="Sumar uno"
+          disabled={value >= max}
+          onClick={() => commit(value + 1)}
+        >
+          +
+        </button>
+      </span>
+      <small>{hint}</small>
+    </div>
+  );
+}
 
 export function RegisterWizard({
   center,
@@ -424,59 +506,37 @@ export function RegisterWizard({
               </div>
               {type === 'building' && (
                 <>
-                  <label className="field field--count">
-                    <span>Número de viviendas en el edificio</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      max="500"
-                      value={dwellingsCount}
-                      onChange={(event) =>
-                        setDwellingsCount(Math.max(0, Number(event.target.value)))
-                      }
-                    />
-                    <small>Entre 1 y 500. Cuenta viviendas, no habitaciones.</small>
-                  </label>
-                  <label className="field field--count">
-                    <span>
-                      Locales comerciales eliminados <em>opcional</em>
-                    </span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="50"
-                      value={commercialUnitsCount}
-                      onChange={(event) =>
-                        setCommercialUnitsCount(
-                          Math.min(50, Math.max(0, Number(event.target.value) || 0)),
-                        )
-                      }
-                    />
-                    <small>
-                      Si la conversión también acabó con bajos comerciales, indícalo aquí.
-                    </small>
-                  </label>
+                  <CountField
+                    label="Número de viviendas en el edificio"
+                    hint="Entre 1 y 500. Cuenta viviendas, no habitaciones."
+                    min={1}
+                    max={500}
+                    value={dwellingsCount}
+                    onChange={setDwellingsCount}
+                  />
+                  <CountField
+                    label={
+                      <>
+                        Locales comerciales eliminados <em>opcional</em>
+                      </>
+                    }
+                    hint="Si la conversión también acabó con bajos comerciales, indícalo aquí."
+                    min={0}
+                    max={50}
+                    value={commercialUnitsCount}
+                    onChange={setCommercialUnitsCount}
+                  />
                 </>
               )}
               {type === 'commercial' && (
-                <label className="field field--count">
-                  <span>Número de locales afectados</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    max="50"
-                    value={commercialUnitsCount}
-                    onChange={(event) =>
-                      setCommercialUnitsCount(
-                        Math.min(50, Math.max(0, Number(event.target.value) || 0)),
-                      )
-                    }
-                  />
-                  <small>Entre 1 y 50. Varios bajos del mismo número cuentan por separado.</small>
-                </label>
+                <CountField
+                  label="Número de locales afectados"
+                  hint="Entre 1 y 50. Varios bajos del mismo número cuentan por separado."
+                  min={1}
+                  max={50}
+                  value={commercialUnitsCount}
+                  onChange={setCommercialUnitsCount}
+                />
               )}
               <div className="impact-preview">
                 <span>Impacto que se sumará</span>

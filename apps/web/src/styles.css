@@ -1251,7 +1251,8 @@ textarea:focus-visible,
   font-weight: 690;
 }
 
-.field span em {
+.field span em,
+.field label em {
   color: var(--muted);
   font-size: 0.65rem;
   font-style: normal;
@@ -1288,6 +1289,31 @@ textarea:focus-visible,
   width: 112px;
   font-size: 1.1rem;
   font-weight: 750;
+  text-align: center;
+}
+
+.count-stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 9px;
+}
+
+.count-stepper button {
+  flex: 0 0 45px;
+  min-height: 45px;
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  background: #fff;
+  border: 1px solid rgba(30, 43, 39, 0.18);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.count-stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .field-error {
