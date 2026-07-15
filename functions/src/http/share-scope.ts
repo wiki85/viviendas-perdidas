@@ -51,7 +51,12 @@ export const shareScope = onRequest(
     const formatter = new Intl.NumberFormat('es-ES');
     const title = `${name} ha perdido ${formatter.format(families)} familias`;
     const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados. Datos colaborativos y no oficiales.`;
-    const origin = `${request.protocol}://${request.get('host') ?? ''}`;
+    // Behind the Hosting rewrite the Host header is the internal Cloud Run
+    // hostname; the public domain the visitor used travels in X-Forwarded-Host.
+    const forwardedHost = request.get('x-forwarded-host')?.split(',')[0]?.trim();
+    const host = forwardedHost || request.get('host') || '';
+    const protocol = request.get('x-forwarded-proto')?.split(',')[0]?.trim() || request.protocol;
+    const origin = `${protocol}://${host}`;
     const mapParams = new URLSearchParams({ scope: scopeId });
     const latitude = queryNumber(request.query.lat);
     const longitude = queryNumber(request.query.lng);
