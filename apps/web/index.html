@@ -8,6 +8,7 @@
       name="description"
       content="Mapa colaborativo de las viviendas, familias y habitantes desplazados por apartamentos turísticos."
     />
+    <link rel="canonical" href="https://www.aquiviviamos.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -36,6 +37,36 @@
     />
     <meta name="twitter:image" content="https://www.aquiviviamos.com/og.png" />
     <title>Viviendas Perdidas</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://www.aquiviviamos.com/#website",
+            "url": "https://www.aquiviviamos.com/",
+            "name": "Viviendas Perdidas",
+            "alternateName": "Aquí Vivíamos",
+            "description": "Mapa colaborativo de las viviendas, familias y comercios desplazados por los apartamentos turísticos en España.",
+            "inLanguage": "es"
+          },
+          {
+            "@type": "Dataset",
+            "name": "Viviendas perdidas por apartamentos turísticos en España",
+            "description": "Registros colaborativos y no oficiales de viviendas, edificios y locales comerciales convertidos en alojamiento turístico, con estimación de familias y habitantes desplazados según el tamaño medio del hogar del INE.",
+            "url": "https://www.aquiviviamos.com/",
+            "creator": {
+              "@type": "Organization",
+              "name": "Viviendas Perdidas",
+              "url": "https://www.aquiviviamos.com/"
+            },
+            "spatialCoverage": "España",
+            "inLanguage": "es",
+            "isAccessibleForFree": true
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
