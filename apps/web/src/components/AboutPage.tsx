@@ -71,6 +71,9 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
           <button className="text-link" type="button" onClick={onOpenMethodology}>
             Leer la metodología completa y el compromiso de transparencia <ExternalLink size={15} />
           </button>
+          <a className="text-link" href="/ciudades">
+            Ver las cifras ciudad a ciudad <ExternalLink size={15} />
+          </a>
         </section>
         <section className="about-page__section about-page__download">
           <div>

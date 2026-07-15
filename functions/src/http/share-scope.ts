@@ -1,25 +1,9 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
+import { escapeHtml, integer, jsonForInlineScript, requestOrigin } from './html.js';
 
 const SCOPE_ID_PATTERN = /^[a-z0-9-]+(?:__[a-z0-9-]+)?$/u;
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/gu, '&amp;')
-    .replace(/</gu, '&lt;')
-    .replace(/>/gu, '&gt;')
-    .replace(/"/gu, '&quot;')
-    .replace(/'/gu, '&#39;');
-}
-
-function integer(value: unknown): number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 0;
-}
-
-function jsonForInlineScript(value: string): string {
-  return JSON.stringify(value).replace(/</gu, '\\u003c');
-}
 
 function queryNumber(value: unknown): number | null {
   const candidate = Array.isArray(value) ? value[0] : value;
@@ -51,12 +35,7 @@ export const shareScope = onRequest(
     const formatter = new Intl.NumberFormat('es-ES');
     const title = `${name} ha perdido ${formatter.format(families)} familias`;
     const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados. Datos colaborativos y no oficiales.`;
-    // Behind the Hosting rewrite the Host header is the internal Cloud Run
-    // hostname; the public domain the visitor used travels in X-Forwarded-Host.
-    const forwardedHost = request.get('x-forwarded-host')?.split(',')[0]?.trim();
-    const host = forwardedHost || request.get('host') || '';
-    const protocol = request.get('x-forwarded-proto')?.split(',')[0]?.trim() || request.protocol;
-    const origin = `${protocol}://${host}`;
+    const origin = requestOrigin(request);
     const mapParams = new URLSearchParams({ scope: scopeId });
     const latitude = queryNumber(request.query.lat);
     const longitude = queryNumber(request.query.lng);

@@ -26,6 +26,27 @@
         }
       },
       {
+        "source": "/ciudad/**",
+        "function": {
+          "functionId": "cityPage",
+          "region": "europe-southwest1"
+        }
+      },
+      {
+        "source": "/ciudades",
+        "function": {
+          "functionId": "cityPage",
+          "region": "europe-southwest1"
+        }
+      },
+      {
+        "source": "/sitemap.xml",
+        "function": {
+          "functionId": "sitemap",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
