@@ -96,6 +96,14 @@ export const shareScope = onRequest(
     <meta property="og:title" content="${escapeHtml(title)}">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:url" content="${escapeHtml(canonicalShareUrl)}">
+    <meta property="og:site_name" content="Viviendas Perdidas">
+    <meta property="og:image" content="${escapeHtml(`${origin}/og.png`)}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${escapeHtml(title)}">
+    <meta name="twitter:description" content="${escapeHtml(description)}">
+    <meta name="twitter:image" content="${escapeHtml(`${origin}/og.png`)}">
     <title>${escapeHtml(title)} | Viviendas Perdidas</title>
     <style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f7f3eb;color:#1e2b27}a{color:#315d4c;font-weight:700}</style>
   </head>
