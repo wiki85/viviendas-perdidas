@@ -29,6 +29,9 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
   const [voted, setVoted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const impact = calculateImpact(listing.dwellingsCount);
+  // Legacy commercial listings stored 0 locales but always counted as 1.
+  const commercialCount =
+    listing.type === 'commercial' ? Math.max(1, listing.commercialUnitsCount ?? 1) : 0;
   const communityPhotoUrl = listing.photo?.url ?? null;
   const streetViewUrl =
     listing.streetView.available && listing.streetView.panoId && appConfig.googleMapsApiKey
@@ -135,7 +138,9 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
           )}
           <h2 id="listing-title">
             {listing.type === 'commercial'
-              ? 'Local comercial perdido'
+              ? commercialCount === 1
+                ? 'Local comercial perdido'
+                : `${commercialCount} locales comerciales perdidos`
               : `${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'vivienda perdida' : 'viviendas perdidas'}`}
           </h2>
           <p className="listing-address">
@@ -146,7 +151,11 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
               <div>
                 <Store size={19} />
                 <span>Aquí había</span>
-                <strong>un comercio de barrio</strong>
+                <strong>
+                  {commercialCount === 1
+                    ? 'un comercio de barrio'
+                    : `${commercialCount} comercios de barrio`}
+                </strong>
               </div>
               <div>
                 <span className="person-glyph" aria-hidden="true">

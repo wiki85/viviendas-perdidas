@@ -85,7 +85,10 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.adminListListings());
   }
 
-  adminUpdateListing(listingId: string, patch: { type: ListingType; dwellingsCount: number }) {
+  adminUpdateListing(
+    listingId: string,
+    patch: { type: ListingType; dwellingsCount: number; commercialUnitsCount: number },
+  ) {
     return this.load().then((service) => service.adminUpdateListing(listingId, patch));
   }
 

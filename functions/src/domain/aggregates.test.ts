@@ -109,4 +109,25 @@ describe('aggregateDeltas', () => {
       lostDwellings: 0,
     });
   });
+
+  it('counts the declared locales of a converted commercial premises', () => {
+    const deltas = aggregateDeltas(null, listing({ type: 'commercial', commercialUnitsCount: 3 }));
+    expect(deltas[0]).toMatchObject({
+      lostDwellings: 0,
+      lostCommercial: 3,
+    });
+  });
+
+  it('keeps counting legacy commercial listings stored with zero locales as one', () => {
+    // Older docs stored commercialUnitsCount 0 but contributed +1 at creation;
+    // removing them must subtract exactly 1 or aggregates would drift.
+    expect(
+      aggregateDeltas(
+        listing({ type: 'commercial', commercialUnitsCount: 0 }),
+        listing({ type: 'commercial', commercialUnitsCount: 0, status: 'removed' }),
+      )[0],
+    ).toMatchObject({
+      lostCommercial: -1,
+    });
+  });
 });

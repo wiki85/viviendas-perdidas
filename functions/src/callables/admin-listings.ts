@@ -75,6 +75,12 @@ export const adminUpdateListing = onCall(
       transaction.update(reference, {
         type: input.type,
         dwellingsCount: input.dwellingsCount,
+        commercialUnitsCount:
+          input.type === 'building'
+            ? (input.commercialUnitsCount ?? 0)
+            : input.type === 'commercial'
+              ? (input.commercialUnitsCount ?? 1)
+              : 0,
         updatedAt: Timestamp.now(),
       });
     });

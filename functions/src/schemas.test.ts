@@ -63,4 +63,33 @@ describe('createListingSchema', () => {
       }).success,
     ).toBe(false);
   });
+
+  it('accepts a converted commercial premises declaring several locales', () => {
+    expect(
+      createListingSchema.safeParse({
+        ...basePayload,
+        type: 'commercial',
+        commercialUnitsCount: 3,
+      }).success,
+    ).toBe(true);
+  });
+
+  it('rejects a converted commercial premises declaring zero locales', () => {
+    expect(
+      createListingSchema.safeParse({
+        ...basePayload,
+        type: 'commercial',
+        commercialUnitsCount: 0,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects an individual apartment declaring locales', () => {
+    expect(
+      createListingSchema.safeParse({
+        ...basePayload,
+        commercialUnitsCount: 2,
+      }).success,
+    ).toBe(false);
+  });
 });

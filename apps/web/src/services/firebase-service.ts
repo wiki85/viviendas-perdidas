@@ -318,7 +318,7 @@ export class FirebaseListingsService implements ListingsService {
 
   async adminUpdateListing(
     listingId: string,
-    patch: { type: Listing['type']; dwellingsCount: number },
+    patch: { type: Listing['type']; dwellingsCount: number; commercialUnitsCount: number },
   ): Promise<void> {
     const callable = httpsCallable(this.functions, 'adminUpdateListing');
     await callable({ listingId, ...patch });

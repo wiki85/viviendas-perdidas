@@ -269,12 +269,13 @@ export class DemoListingsService implements ListingsService {
 
   async adminUpdateListing(
     listingId: string,
-    patch: { type: Listing['type']; dwellingsCount: number },
+    patch: { type: Listing['type']; dwellingsCount: number; commercialUnitsCount: number },
   ): Promise<void> {
     const listing = this.listings.find((candidate) => candidate.id === listingId);
     if (!listing) throw new Error('El registro no existe.');
     listing.type = patch.type;
     listing.dwellingsCount = patch.dwellingsCount;
+    listing.commercialUnitsCount = patch.commercialUnitsCount;
     listing.updatedAt = new Date().toISOString();
     this.emit();
   }
@@ -309,14 +310,16 @@ export class DemoListingsService implements ListingsService {
       (sum, listing) => sum + calculateImpact(listing.dwellingsCount).lostInhabitants,
       0,
     );
-    const lostCommercial =
-      matching.length -
-      residential.length +
-      residential.reduce(
-        (sum, listing) =>
-          sum + (listing.type === 'building' ? (listing.commercialUnitsCount ?? 0) : 0),
-        0,
-      );
+    const lostCommercial = matching.reduce(
+      (sum, listing) =>
+        sum +
+        (listing.type === 'commercial'
+          ? Math.max(1, listing.commercialUnitsCount ?? 1)
+          : listing.type === 'building'
+            ? (listing.commercialUnitsCount ?? 0)
+            : 0),
+      0,
+    );
     return {
       ...scope,
       listingsCount: matching.length,

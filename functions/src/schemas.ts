@@ -87,14 +87,26 @@ export const createListingSchema = z
       });
     }
     if (
-      input.type !== 'building' &&
+      input.type === 'unit' &&
       input.commercialUnitsCount !== undefined &&
       input.commercialUnitsCount !== null &&
       input.commercialUnitsCount !== 0
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Solo un edificio puede declarar locales comerciales afectados.',
+        message: 'Un apartamento individual no puede declarar locales comerciales.',
+        path: ['commercialUnitsCount'],
+      });
+    }
+    if (
+      input.type === 'commercial' &&
+      input.commercialUnitsCount !== undefined &&
+      input.commercialUnitsCount !== null &&
+      input.commercialUnitsCount < 1
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Un local comercial convertido debe representar al menos un local.',
         path: ['commercialUnitsCount'],
       });
     }
@@ -155,6 +167,7 @@ export const adminUpdateListingSchema = z
     listingId: firestoreIdSchema,
     type: z.enum(['unit', 'building', 'commercial']),
     dwellingsCount: z.number().int().min(1).max(500),
+    commercialUnitsCount: z.number().int().min(0).max(50).optional(),
   })
   .strict()
   .superRefine((input, context) => {
@@ -163,6 +176,20 @@ export const adminUpdateListingSchema = z
         code: z.ZodIssueCode.custom,
         message: 'Solo un edificio puede declarar más de una vivienda.',
         path: ['dwellingsCount'],
+      });
+    }
+    if (input.type === 'unit' && (input.commercialUnitsCount ?? 0) !== 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Un apartamento individual no puede declarar locales comerciales.',
+        path: ['commercialUnitsCount'],
+      });
+    }
+    if (input.type === 'commercial' && (input.commercialUnitsCount ?? 1) < 1) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Un local comercial convertido debe representar al menos un local.',
+        path: ['commercialUnitsCount'],
       });
     }
   });

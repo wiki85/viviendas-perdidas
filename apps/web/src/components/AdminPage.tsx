@@ -71,9 +71,9 @@ export function AdminPage({ service, onClose }: Props) {
   const [filter, setFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { type: ListingType; dwellings: number }>>(
-    {},
-  );
+  const [drafts, setDrafts] = useState<
+    Record<string, { type: ListingType; dwellings: number; locales: number }>
+  >({});
   const photoTarget = useRef<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -163,27 +163,49 @@ export function AdminPage({ service, onClose }: Props) {
   };
 
   const draftFor = (listing: Listing) =>
-    drafts[listing.id] ?? { type: listing.type, dwellings: listing.dwellingsCount };
+    drafts[listing.id] ?? {
+      type: listing.type,
+      dwellings: listing.dwellingsCount,
+      locales: listing.commercialUnitsCount ?? (listing.type === 'commercial' ? 1 : 0),
+    };
 
-  const setDraft = (listing: Listing, patch: Partial<{ type: ListingType; dwellings: number }>) =>
-    setDrafts((current) => ({ ...current, [listing.id]: { ...draftFor(listing), ...patch } }));
+  const setDraft = (
+    listing: Listing,
+    patch: Partial<{ type: ListingType; dwellings: number; locales: number }>,
+  ) => setDrafts((current) => ({ ...current, [listing.id]: { ...draftFor(listing), ...patch } }));
 
   const draftChanged = (listing: Listing) => {
     const draft = draftFor(listing);
-    return draft.type !== listing.type || draft.dwellings !== listing.dwellingsCount;
+    return (
+      draft.type !== listing.type ||
+      draft.dwellings !== listing.dwellingsCount ||
+      draft.locales !== (listing.commercialUnitsCount ?? (listing.type === 'commercial' ? 1 : 0))
+    );
   };
 
   const saveListing = async (listing: Listing) => {
     const draft = draftFor(listing);
     const dwellingsCount = draft.type === 'building' ? Math.max(1, draft.dwellings) : 1;
+    const commercialUnitsCount =
+      draft.type === 'building'
+        ? Math.max(0, draft.locales)
+        : draft.type === 'commercial'
+          ? Math.max(1, draft.locales)
+          : 0;
     setBusyId(listing.id);
     setError(null);
     try {
-      await service.adminUpdateListing(listing.id, { type: draft.type, dwellingsCount });
+      await service.adminUpdateListing(listing.id, {
+        type: draft.type,
+        dwellingsCount,
+        commercialUnitsCount,
+      });
       setListings(
         (current) =>
           current?.map((entry) =>
-            entry.id === listing.id ? { ...entry, type: draft.type, dwellingsCount } : entry,
+            entry.id === listing.id
+              ? { ...entry, type: draft.type, dwellingsCount, commercialUnitsCount }
+              : entry,
           ) ?? null,
       );
       setDrafts((current) =>
@@ -486,8 +508,11 @@ export function AdminPage({ service, onClose }: Props) {
                           <div>
                             <strong>{listing.address.formatted}</strong>
                             <small>
-                              {typeLabel(listing.type)} · {listing.dwellingsCount}{' '}
-                              {listing.dwellingsCount === 1 ? 'unidad' : 'viviendas'} ·{' '}
+                              {typeLabel(listing.type)} ·{' '}
+                              {listing.type === 'commercial'
+                                ? `${Math.max(1, listing.commercialUnitsCount ?? 1)} ${(listing.commercialUnitsCount ?? 1) > 1 ? 'locales' : 'local'}`
+                                : `${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'unidad' : 'viviendas'}`}{' '}
+                              ·{' '}
                               {removed
                                 ? 'Eliminado'
                                 : listing.status === 'flagged'
@@ -511,6 +536,11 @@ export function AdminPage({ service, onClose }: Props) {
                                       ...(event.target.value !== 'building'
                                         ? { dwellings: 1 }
                                         : {}),
+                                      ...(event.target.value === 'commercial'
+                                        ? { locales: Math.max(1, draft.locales) }
+                                        : event.target.value === 'unit'
+                                          ? { locales: 0 }
+                                          : {}),
                                     })
                                   }
                                 >
@@ -530,6 +560,27 @@ export function AdminPage({ service, onClose }: Props) {
                                   onChange={(event) =>
                                     setDraft(listing, {
                                       dwellings: Math.max(1, Number(event.target.value) || 1),
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                <span>Locales</span>
+                                <input
+                                  type="number"
+                                  min={draft.type === 'commercial' ? 1 : 0}
+                                  max="50"
+                                  value={draft.locales}
+                                  disabled={busy || draft.type === 'unit'}
+                                  onChange={(event) =>
+                                    setDraft(listing, {
+                                      locales: Math.min(
+                                        50,
+                                        Math.max(
+                                          draft.type === 'commercial' ? 1 : 0,
+                                          Number(event.target.value) || 0,
+                                        ),
+                                      ),
                                     })
                                   }
                                 />

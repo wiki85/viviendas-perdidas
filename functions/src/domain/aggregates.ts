@@ -29,12 +29,14 @@ export function listingContributions(listing: ListingLike | null, sign: 1 | -1):
   if (!isCounted(listing)) return [];
 
   // A converted commercial premises displaces neighbourhood commerce, not
-  // residents: it counts as one lost local and zero dwellings/families.
+  // residents: it counts its declared locales and zero dwellings/families.
+  // Legacy commercial docs stored 0 but were always counted as one local,
+  // so anything below 1 must keep counting as 1 or deletions would drift.
   // Buildings can additionally wipe out the premises they declare.
   const dwellings = listing.type === 'commercial' ? 0 : listing.dwellingsCount;
   const commercialUnits =
     listing.type === 'commercial'
-      ? 1
+      ? Math.max(listing.commercialUnitsCount ?? 1, 1)
       : listing.type === 'building'
         ? (listing.commercialUnitsCount ?? 0)
         : 0;

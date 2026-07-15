@@ -183,7 +183,8 @@ export default function App() {
       if (listing.status === 'removed' || !listingIsInBounds(listing.location, bounds)) continue;
       listingsCount += 1;
       if (listing.type === 'commercial') {
-        lostCommercial += 1;
+        // Legacy commercial listings stored 0 locales but always counted as 1.
+        lostCommercial += Math.max(1, listing.commercialUnitsCount ?? 1);
         continue;
       }
       if (listing.type === 'building') lostCommercial += listing.commercialUnitsCount ?? 0;

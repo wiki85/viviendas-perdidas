@@ -194,7 +194,12 @@ export const createListing = onCall(
       const listing: ListingData = {
         type: input.type,
         dwellingsCount: input.dwellingsCount,
-        commercialUnitsCount: input.type === 'building' ? (input.commercialUnitsCount ?? 0) : 0,
+        commercialUnitsCount:
+          input.type === 'building'
+            ? (input.commercialUnitsCount ?? 0)
+            : input.type === 'commercial'
+              ? (input.commercialUnitsCount ?? 1)
+              : 0,
         address: geocoded.address,
         location: new GeoPoint(location.latitude, location.longitude),
         geohash: geohashForLocation([location.latitude, location.longitude]),

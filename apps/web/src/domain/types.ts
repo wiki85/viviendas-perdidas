@@ -206,7 +206,7 @@ export interface ListingsService {
   adminListListings(): Promise<Listing[]>;
   adminUpdateListing(
     listingId: string,
-    patch: { type: ListingType; dwellingsCount: number },
+    patch: { type: ListingType; dwellingsCount: number; commercialUnitsCount: number },
   ): Promise<void>;
   adminDeleteListing(listingId: string): Promise<void>;
   adminSetListingPhoto(listingId: string, imageBase64: string | null): Promise<void>;

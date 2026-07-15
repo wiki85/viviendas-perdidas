@@ -161,7 +161,10 @@ export function RegisterWizard({
     step === 0
       ? location !== null
       : step === 1
-        ? type === 'unit' || (dwellingsCount >= 1 && dwellingsCount <= 500)
+        ? type === 'unit' ||
+          (type === 'building'
+            ? dwellingsCount >= 1 && dwellingsCount <= 500
+            : commercialUnitsCount >= 1 && commercialUnitsCount <= 50)
         : step === 2
           ? noteValidation.valid && licenseValidation.valid
           : true;
@@ -172,6 +175,7 @@ export function RegisterWizard({
       type,
       dwellingsCount: type === 'building' ? dwellingsCount : 1,
       ...(type === 'building' && commercialUnitsCount > 0 ? { commercialUnitsCount } : {}),
+      ...(type === 'commercial' ? { commercialUnitsCount: Math.max(1, commercialUnitsCount) } : {}),
       // Coordinates always travel: they pin the exact portal even when the
       // address anchor in Google's database is misplaced.
       location: location.position,
@@ -372,6 +376,7 @@ export function RegisterWizard({
                   onClick={() => {
                     setType('unit');
                     setDwellingsCount(1);
+                    setCommercialUnitsCount(0);
                   }}
                 >
                   <House />
@@ -386,7 +391,10 @@ export function RegisterWizard({
                   role="radio"
                   aria-checked={type === 'building'}
                   className={type === 'building' ? 'is-selected' : ''}
-                  onClick={() => setType('building')}
+                  onClick={() => {
+                    setType('building');
+                    setCommercialUnitsCount(0);
+                  }}
                 >
                   <Building2 />
                   <span>
@@ -403,12 +411,13 @@ export function RegisterWizard({
                   onClick={() => {
                     setType('commercial');
                     setDwellingsCount(1);
+                    setCommercialUnitsCount(1);
                   }}
                 >
                   <Store />
                   <span>
                     <strong>Local comercial convertido</strong>
-                    <small>Un bajo que antes era comercio</small>
+                    <small>Uno o varios bajos que antes eran comercio</small>
                   </span>
                   <i />
                 </button>
@@ -451,11 +460,29 @@ export function RegisterWizard({
                   </label>
                 </>
               )}
+              {type === 'commercial' && (
+                <label className="field field--count">
+                  <span>Número de locales afectados</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    max="50"
+                    value={commercialUnitsCount}
+                    onChange={(event) =>
+                      setCommercialUnitsCount(
+                        Math.min(50, Math.max(0, Number(event.target.value) || 0)),
+                      )
+                    }
+                  />
+                  <small>Entre 1 y 50. Varios bajos del mismo número cuentan por separado.</small>
+                </label>
+              )}
               <div className="impact-preview">
                 <span>Impacto que se sumará</span>
                 <strong>
                   {type === 'commercial'
-                    ? '1 local comercial perdido'
+                    ? `${commercialUnitsCount} ${commercialUnitsCount === 1 ? 'local comercial perdido' : 'locales comerciales perdidos'}`
                     : `${impact.lostFamilies} familias · ${impact.lostInhabitants} habitantes${type === 'building' && commercialUnitsCount > 0 ? ` · ${commercialUnitsCount} ${commercialUnitsCount === 1 ? 'local' : 'locales'}` : ''}`}
                 </strong>
               </div>
@@ -570,13 +597,17 @@ export function RegisterWizard({
                   {type === 'building'
                     ? `Edificio de ${dwellingsCount} viviendas`
                     : type === 'commercial'
-                      ? 'Local comercial convertido en turístico'
+                      ? commercialUnitsCount > 1
+                        ? `${commercialUnitsCount} locales comerciales convertidos en turísticos`
+                        : 'Local comercial convertido en turístico'
                       : 'Apartamento individual'}
                 </strong>
                 <span>{location?.label}</span>
                 <span>
                   {type === 'commercial'
-                    ? 'Se sumará un local comercial perdido para el barrio.'
+                    ? commercialUnitsCount > 1
+                      ? `Se sumarán ${commercialUnitsCount} locales comerciales perdidos para el barrio.`
+                      : 'Se sumará un local comercial perdido para el barrio.'
                     : `Se estiman ${impact.lostFamilies} familias y ${impact.lostInhabitants} habitantes desplazados.${type === 'building' && commercialUnitsCount > 0 ? ` Además, ${commercialUnitsCount} ${commercialUnitsCount === 1 ? 'local comercial eliminado' : 'locales comerciales eliminados'}.` : ''}`}
                 </span>
               </div>
