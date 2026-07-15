@@ -600,7 +600,6 @@ export default function App() {
           bounds={bounds}
           listings={listingState.listings}
           selectedId={selectedId}
-          neighborhoods={resolvedScope.neighborhoods}
           activeNeighborhood={resolvedScope.activeNeighborhood}
           placementMode={placementMode}
           placementPosition={pickedPosition}

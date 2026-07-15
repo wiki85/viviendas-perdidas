@@ -1,11 +1,5 @@
 import { lazy, Suspense } from 'react';
-import type {
-  LatLng,
-  Listing,
-  MapBounds,
-  NeighborhoodCollection,
-  NeighborhoodFeature,
-} from '../../domain/types';
+import type { LatLng, Listing, MapBounds, NeighborhoodFeature } from '../../domain/types';
 import { appConfig } from '../../lib/config';
 import { DemoMap } from './DemoMap';
 
@@ -17,7 +11,8 @@ export type MapStageProps = {
   bounds: MapBounds;
   listings: Listing[];
   selectedId: string | null;
-  neighborhoods: NeighborhoodCollection | null;
+  // Only for the demo map's watermark label; polygons are no longer drawn
+  // (the bundled boundaries are placeholder rectangles, not real limits).
   activeNeighborhood: NeighborhoodFeature | null;
   placementMode: boolean;
   placementPosition: LatLng | null;

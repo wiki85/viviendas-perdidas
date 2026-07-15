@@ -90,25 +90,6 @@ export function DemoMap({
     });
   }, [center, listings, size.height, size.width, zoom]);
 
-  const neighborhoodPath = useMemo(() => {
-    if (!activeNeighborhood) return '';
-    const geometry = activeNeighborhood.geometry;
-    const ring =
-      geometry.type === 'Polygon' ? geometry.coordinates[0] : geometry.coordinates[0]?.[0];
-    if (!ring) return '';
-    const centerPixel = worldPixel(center, zoom);
-    return (
-      ring
-        .map(([lng, lat], index) => {
-          const pixel = worldPixel({ lat, lng }, zoom);
-          const x = size.width / 2 + pixel.x - centerPixel.x;
-          const y = size.height / 2 + pixel.y - centerPixel.y;
-          return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(' ') + ' Z'
-    );
-  }, [activeNeighborhood, center, size.height, size.width, zoom]);
-
   const updateZoom = (nextZoom: number) => {
     const boundedZoom = Math.max(5, Math.min(19, nextZoom));
     onViewportChange(center, boundedZoom, approximateBounds(center, boundedZoom));
@@ -221,7 +202,6 @@ export function DemoMap({
           strokeWidth="12"
           opacity=".9"
         />
-        {neighborhoodPath && <path d={neighborhoodPath} className="demo-map__neighborhood" />}
       </svg>
       <div className="demo-map__watermark" aria-hidden="true">
         <span>vista de demostración</span>

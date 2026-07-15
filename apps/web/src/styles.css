@@ -474,13 +474,6 @@ textarea:focus-visible,
   inset: 0;
 }
 
-.demo-map__neighborhood {
-  fill: rgba(217, 96, 76, 0.15);
-  stroke: var(--coral-dark);
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-
 .demo-map__watermark {
   position: absolute;
   top: 18px;

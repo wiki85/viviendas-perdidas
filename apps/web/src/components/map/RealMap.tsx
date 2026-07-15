@@ -7,39 +7,11 @@ import {
   useMap,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
-import type { Listing, NeighborhoodCollection, NeighborhoodFeature } from '../../domain/types';
+import type { Listing } from '../../domain/types';
 import { MAP_STYLE } from '../../lib/constants';
 import type { MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
-
-function NeighborhoodLayer({
-  collection,
-  active,
-}: {
-  collection: NeighborhoodCollection | null;
-  active: NeighborhoodFeature | null;
-}) {
-  const map = useMap();
-  useEffect(() => {
-    if (!map || !collection) return;
-    const layer = new google.maps.Data({ map });
-    layer.addGeoJson(collection);
-    layer.setStyle((feature) => {
-      const isActive = String(feature.getProperty('id')) === active?.properties.id;
-      return {
-        fillColor: isActive ? '#d9604c' : '#315d4c',
-        fillOpacity: isActive ? 0.14 : 0.025,
-        strokeColor: isActive ? '#a43e30' : '#315d4c',
-        strokeOpacity: isActive ? 0.88 : 0.16,
-        strokeWeight: isActive ? 2 : 1,
-        clickable: false,
-      };
-    });
-    return () => layer.setMap(null);
-  }, [active?.properties.id, collection, map]);
-  return null;
-}
 
 function MarkerLayer({
   listings,
@@ -111,7 +83,6 @@ function MapContent(props: RealMapProps) {
           if (props.placementMode && event.detail.latLng) props.onPickLocation(event.detail.latLng);
         }}
       >
-        <NeighborhoodLayer collection={props.neighborhoods} active={props.activeNeighborhood} />
         <MarkerLayer
           listings={props.listings}
           selectedId={props.selectedId}
