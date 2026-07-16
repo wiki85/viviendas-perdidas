@@ -59,6 +59,7 @@ function typeLabel(type: ListingType): string {
 
 export function AdminPage({ service, onClose }: Props) {
   const [email, setEmail] = useState<string | null>(null);
+  const [deniedEmail, setDeniedEmail] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('photos');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +142,12 @@ export function AdminPage({ service, onClose }: Props) {
     setLoading(true);
     try {
       const session = await service.adminSignIn();
+      if (!session.moderator) {
+        // The service already signed the account out; show the single
+        // "no permissions" screen instead of the (empty) panel.
+        setDeniedEmail(session.email);
+        return;
+      }
       setEmail(session.email);
     } catch (cause) {
       setError(describeError(cause));
@@ -310,7 +317,28 @@ export function AdminPage({ service, onClose }: Props) {
         </span>
       </header>
 
-      {email === null ? (
+      {deniedEmail !== null ? (
+        <section className="admin-page__gate">
+          <h1>Esta cuenta no tiene permisos</h1>
+          <p>
+            La moderación de Viviendas Perdidas está reservada a cuentas autorizadas.
+            <strong> {deniedEmail}</strong> no está en esa lista y la sesión se ha cerrado.
+          </p>
+          <button className="button button--confirm" type="button" onClick={onClose}>
+            <ArrowLeft size={17} /> Volver al mapa
+          </button>
+          <button
+            className="text-link"
+            type="button"
+            onClick={() => {
+              setDeniedEmail(null);
+              void signIn();
+            }}
+          >
+            Probar con otra cuenta
+          </button>
+        </section>
+      ) : email === null ? (
         <section className="admin-page__gate">
           <h1>Panel de administración</h1>
           <p>

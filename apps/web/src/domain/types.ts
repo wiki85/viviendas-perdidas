@@ -199,7 +199,7 @@ export interface ListingsService {
     imageBase64: string,
     deviceFingerprintHash: string,
   ): Promise<void>;
-  adminSignIn(): Promise<{ email: string }>;
+  adminSignIn(): Promise<{ email: string; moderator: boolean }>;
   listPendingPhotos(): Promise<PendingPhoto[]>;
   getPendingPhotoImage(photoId: string): Promise<string>;
   reviewListingPhoto(photoId: string, decision: PhotoDecision): Promise<void>;

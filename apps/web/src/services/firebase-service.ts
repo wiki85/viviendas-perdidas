@@ -272,13 +272,28 @@ export class FirebaseListingsService implements ListingsService {
     await callable({ listingId, imageBase64, deviceFingerprintHash });
   }
 
-  async adminSignIn(): Promise<{ email: string }> {
+  async adminSignIn(): Promise<{ email: string; moderator: boolean }> {
     const { getAuth, GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
     const auth = getAuth(this.app);
-    if (auth.currentUser?.email) return { email: auth.currentUser.email };
-    const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-    if (!credential.user.email) throw new Error('La cuenta no tiene email visible.');
-    return { email: credential.user.email };
+    let email = auth.currentUser?.email ?? null;
+    if (!email) {
+      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+      email = credential.user.email;
+    }
+    if (!email) throw new Error('La cuenta no tiene email visible.');
+    try {
+      // Server-side probe: only allowlisted moderators pass. Anyone else is
+      // signed out immediately so no session lingers behind the admin gate.
+      await httpsCallable(this.functions, 'adminWhoAmI')({});
+      return { email, moderator: true };
+    } catch (cause) {
+      const code = (cause as { code?: string }).code ?? '';
+      if (code.includes('permission-denied')) {
+        await auth.signOut().catch(() => undefined);
+        return { email, moderator: false };
+      }
+      throw cause;
+    }
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

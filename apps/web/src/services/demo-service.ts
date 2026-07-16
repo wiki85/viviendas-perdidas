@@ -230,8 +230,8 @@ export class DemoListingsService implements ListingsService {
     });
   }
 
-  async adminSignIn(): Promise<{ email: string }> {
-    return { email: 'moderacion@demo.local' };
+  async adminSignIn(): Promise<{ email: string; moderator: boolean }> {
+    return { email: 'moderacion@demo.local', moderator: true };
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

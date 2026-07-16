@@ -29,6 +29,18 @@ async function deletePublicPhoto(url: string | undefined | null): Promise<void> 
     .catch(() => undefined);
 }
 
+/**
+ * Cheap authorization probe: the panel calls it right after sign-in so an
+ * unauthorized account is bounced before seeing any admin UI.
+ */
+export const adminWhoAmI = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 10, maxInstances: 5 },
+  (request) => {
+    const email = requireModerator(request);
+    return { email };
+  },
+);
+
 export const adminListListings = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
   async (request) => {

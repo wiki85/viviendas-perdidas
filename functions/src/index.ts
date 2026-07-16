@@ -12,6 +12,7 @@ export {
   adminListListings,
   adminSetListingPhoto,
   adminUpdateListing,
+  adminWhoAmI,
 } from './callables/admin-listings.js';
 export { exportPublicData } from './http/export-public-data.js';
 export { shareScope } from './http/share-scope.js';
