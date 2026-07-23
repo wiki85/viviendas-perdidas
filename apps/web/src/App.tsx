@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
 import type {
   Aggregate,
@@ -8,8 +8,9 @@ import type {
   LatLng,
   Listing,
   MapBounds,
+  OfficialCell,
   OfficialPin,
-  OfficialStats,
+  OfficialViewportStats,
   SearchPlace,
   SourceMode,
   VoteKind,
@@ -38,6 +39,12 @@ import {
 import { getDeviceFingerprintHash } from './lib/device';
 import { calculateImpact } from './lib/impact';
 import { municipalityFromGeocoderResult } from './lib/google-geocode';
+import {
+  enumeratePinCellIds,
+  OFFICIAL_PIN_MIN_ZOOM,
+  officialPrecisionForZoom,
+  sumCellsInBounds,
+} from './lib/official-cells';
 import { SPAIN_CENTER, SPAIN_ZOOM } from './lib/constants';
 import { getListingsService } from './services';
 
@@ -64,6 +71,14 @@ function currentPathIsMethodology() {
 function sharedScopeFromUrl(): string | null {
   const scopeId = new URLSearchParams(window.location.search).get('scope');
   return scopeId && /^[a-z0-9-]+(?:__[a-z0-9-]+)?$/u.test(scopeId) ? scopeId : null;
+}
+
+/** Shared links restore the data source the sender was looking at. */
+function sharedSourceFromUrl(): SourceMode | null {
+  const fuente = new URLSearchParams(window.location.search).get('fuente');
+  if (fuente === 'oficial') return 'official';
+  if (fuente === 'ambas') return 'both';
+  return null;
 }
 
 function sharedLocationFromUrl(): { center: LatLng; zoom: number } | null {
@@ -164,9 +179,15 @@ export default function App() {
   const [donateOpen, setDonateOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingImpact, setPendingImpact] = useState<PendingImpact | null>(null);
-  const [sourceMode, setSourceMode] = useState<SourceMode>('citizens');
-  const [officialStatsList, setOfficialStatsList] = useState<OfficialStats[] | null>(null);
-  const [officialPins, setOfficialPins] = useState<OfficialPin[]>([]);
+  const [sourceMode, setSourceMode] = useState<SourceMode>(
+    () => sharedSourceFromUrl() ?? 'citizens',
+  );
+  const [officialData, setOfficialData] = useState<
+    { kind: 'cells'; cells: OfficialCell[] } | { kind: 'pins'; pins: OfficialPin[] } | null
+  >(null);
+  // Street cells already downloaded this session (id → pins, [] when empty),
+  // so panning at street zoom only fetches the cells that enter the view.
+  const pinCellCache = useRef(new Map<string, OfficialPin[]>());
   const [selectedOfficial, setSelectedOfficial] = useState<OfficialPin | null>(null);
   const resolvedScope = useVisibleScope(center, zoom, cityHint);
   const {
@@ -176,39 +197,36 @@ export default function App() {
   } = useAggregate(service, resolvedScope.scope);
   const listingState = useListingsInBounds(service, bounds, service.mode === 'demo' || zoom >= 8);
 
-  // Official registry data (OpenRTA mirror) loads lazily, on first opt-in.
+  // Official registry layer (OpenRTA mirror): aggregated bubbles per zoom
+  // band, or the exact pins at street zoom. Refetched on every pan/zoom so
+  // the layer always covers the visible area.
   useEffect(() => {
-    if (sourceMode === 'citizens' || officialStatsList !== null || service.mode !== 'firebase') {
-      return;
-    }
-    let active = true;
-    service
-      .listOfficialStats()
-      .then((stats) => {
-        if (active) setOfficialStatsList(stats);
-      })
-      .catch(() => {
-        if (active) setOfficialStatsList([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [officialStatsList, service, sourceMode]);
-
-  useEffect(() => {
-    if (sourceMode === 'citizens' || zoom < 14 || service.mode !== 'firebase') {
-      setOfficialPins([]);
+    if (sourceMode === 'citizens' || service.mode !== 'firebase') {
+      setOfficialData(null);
       return;
     }
     let active = true;
     const timeout = window.setTimeout(() => {
-      service
-        .listOfficialInBounds(bounds)
-        .then((pins) => {
-          if (active) setOfficialPins(pins);
-        })
-        .catch(() => undefined);
-    }, 350);
+      const load = async () => {
+        if (zoom >= OFFICIAL_PIN_MIN_ZOOM) {
+          const ids = enumeratePinCellIds(bounds);
+          const cache = pinCellCache.current;
+          const missing = ids.filter((id) => !cache.has(id));
+          if (missing.length > 0) {
+            const fetched = await service.listOfficialPinCells(missing);
+            if (cache.size > 1500) cache.clear();
+            for (const id of missing) cache.set(id, []);
+            for (const cell of fetched) cache.set(cell.id, cell.pins);
+          }
+          if (!active) return;
+          setOfficialData({ kind: 'pins', pins: ids.flatMap((id) => cache.get(id) ?? []) });
+          return;
+        }
+        const cells = await service.listOfficialCells(bounds, officialPrecisionForZoom(zoom));
+        if (active) setOfficialData({ kind: 'cells', cells });
+      };
+      load().catch(() => undefined);
+    }, 300);
     return () => {
       active = false;
       window.clearTimeout(timeout);
@@ -250,30 +268,24 @@ export default function App() {
       updatedAt: null,
     };
   }, [bounds, listingState.error, listingState.listings, resolvedScope.scope, viewportMode]);
-  const officialScopeStats = useMemo<OfficialStats | null>(() => {
-    if (!officialStatsList || officialStatsList.length === 0) return null;
-    const cityId = resolvedScope.scope.cityId;
-    if (cityId) return officialStatsList.find((stats) => stats.cityId === cityId) ?? null;
-    // Country view: aggregate every mirrored municipality.
-    return officialStatsList.reduce<OfficialStats>(
-      (accumulator, stats) => ({
-        ...accumulator,
-        total: accumulator.total + stats.total,
-        entireHomes: accumulator.entireHomes + stats.entireHomes,
-        roomsOnly: accumulator.roomsOnly + stats.roomsOnly,
-        places: accumulator.places + stats.places,
-      }),
-      {
-        cityId: 'andalucia',
-        municipality: 'Andalucía',
-        total: 0,
-        entireHomes: 0,
-        roomsOnly: 0,
-        places: 0,
-        updatedAt: null,
-      },
-    );
-  }, [officialStatsList, resolvedScope.scope.cityId]);
+  // Official registry figures for exactly what the map shows: cell sums at
+  // bubble zooms, per-pin counts at street zoom. Searching a city, a
+  // neighbourhood or a postal code fits the viewport to that area, so these
+  // figures follow the search too.
+  const officialViewport = useMemo<OfficialViewportStats | null>(() => {
+    if (sourceMode === 'citizens' || !officialData) return null;
+    if (officialData.kind === 'pins') {
+      let total = 0;
+      let entireHomes = 0;
+      for (const pin of officialData.pins) {
+        if (!listingIsInBounds(pin.location, bounds)) continue;
+        total += 1;
+        if (pin.entire) entireHomes += 1;
+      }
+      return { total, entireHomes, roomsOnly: total - entireHomes };
+    }
+    return sumCellsInBounds(officialData.cells, bounds);
+  }, [bounds, officialData, sourceMode]);
 
   const displayedAggregate = useMemo(() => {
     if (viewportAggregate) return viewportAggregate;
@@ -293,17 +305,17 @@ export default function App() {
     };
   }, [aggregate, pendingImpact, viewportAggregate]);
 
-  // Counters shown in the header. Official dwellings (whole homes from the
-  // RTA, municipality granularity) replace the community figures in
-  // 'official' mode and add to them in 'both'; inhabitants use the same
-  // INE household-size formula so both sources stay comparable.
+  // Counters shown in the header. Official whole homes visible on the map
+  // replace the community figures in 'official' mode and add to them in
+  // 'both'; inhabitants use the same INE household-size formula so both
+  // sources stay comparable. Rooms-only rentals never count as a lost home.
   const metricsAggregate = useMemo<Aggregate>(() => {
-    if (sourceMode === 'citizens' || !officialScopeStats) return displayedAggregate;
-    const officialImpact = calculateImpact(officialScopeStats.entireHomes);
+    if (sourceMode === 'citizens' || !officialViewport) return displayedAggregate;
+    const officialImpact = calculateImpact(officialViewport.entireHomes);
     if (sourceMode === 'official') {
       return {
         ...displayedAggregate,
-        listingsCount: officialScopeStats.total,
+        listingsCount: officialViewport.total,
         lostDwellings: officialImpact.lostDwellings,
         lostFamilies: officialImpact.lostFamilies,
         lostInhabitants: officialImpact.lostInhabitants,
@@ -316,7 +328,7 @@ export default function App() {
       lostFamilies: displayedAggregate.lostFamilies + officialImpact.lostFamilies,
       lostInhabitants: displayedAggregate.lostInhabitants + officialImpact.lostInhabitants,
     };
-  }, [displayedAggregate, officialScopeStats, sourceMode]);
+  }, [displayedAggregate, officialViewport, sourceMode]);
 
   useEffect(() => {
     const popState = () => {
@@ -327,6 +339,13 @@ export default function App() {
     window.addEventListener('popstate', popState);
     return () => window.removeEventListener('popstate', popState);
   }, []);
+
+  useEffect(() => {
+    // Links that only carry the data source (no scope) keep a clean URL.
+    if (!sharedScopeId && sharedSourceFromUrl() !== null) {
+      window.history.replaceState({}, '', '/');
+    }
+  }, [sharedScopeId]);
 
   useEffect(() => {
     if (sharedScopeId || !navigator.geolocation) return;
@@ -403,18 +422,24 @@ export default function App() {
   }, [aggregate.lostDwellings, aggregate.scopeId, pendingImpact]);
 
   useEffect(() => {
-    const scoped = displayedAggregate.scope !== 'country';
+    const scoped = metricsAggregate.scope !== 'country';
+    const sourceNote =
+      sourceMode === 'official'
+        ? 'Registro oficial de turismo (RTA).'
+        : sourceMode === 'both'
+          ? 'Datos colaborativos + registro oficial.'
+          : 'Datos colaborativos.';
     const title = scoped
-      ? `${displayedAggregate.name} ha perdido ${displayedAggregate.lostFamilies.toLocaleString('es-ES')} familias | Viviendas Perdidas`
+      ? `${metricsAggregate.name} ha perdido ${metricsAggregate.lostFamilies.toLocaleString('es-ES')} familias | Viviendas Perdidas`
       : 'Viviendas Perdidas — mapa colaborativo';
     const description = scoped
-      ? `${displayedAggregate.lostDwellings.toLocaleString('es-ES')} viviendas y unos ${displayedAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes desplazados en ${displayedAggregate.name}. Datos colaborativos.`
+      ? `${metricsAggregate.lostDwellings.toLocaleString('es-ES')} viviendas y unos ${metricsAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes desplazados en ${metricsAggregate.name}. ${sourceNote}`
       : 'Descubre cuántas viviendas, familias y habitantes ha perdido cada barrio por los apartamentos turísticos.';
     document.title = title;
     updateMeta('description', 'name', description);
     updateMeta('og:title', 'property', title);
     updateMeta('og:description', 'property', description);
-  }, [displayedAggregate]);
+  }, [metricsAggregate, sourceMode]);
 
   useEffect(() => {
     if (
@@ -612,13 +637,17 @@ export default function App() {
   };
 
   const shareVisibleScope = async () => {
+    // The link carries the active data source so the recipient (and the
+    // social card) sees the same figures, official registry included.
+    const fuenteParam =
+      sourceMode === 'official' ? 'oficial' : sourceMode === 'both' ? 'ambas' : null;
     const url =
-      displayedAggregate.scope === 'country'
-        ? window.location.origin
-        : `${window.location.origin}/compartir/${encodeURIComponent(displayedAggregate.scopeId)}?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&zoom=${zoom}`;
+      metricsAggregate.scope === 'country'
+        ? `${window.location.origin}${fuenteParam ? `/?fuente=${fuenteParam}` : ''}`
+        : `${window.location.origin}/compartir/${encodeURIComponent(metricsAggregate.scopeId)}?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&zoom=${zoom}${fuenteParam ? `&fuente=${fuenteParam}` : ''}`;
     const shareData = {
       title: document.title,
-      text: `${displayedAggregate.name}: ${displayedAggregate.lostFamilies.toLocaleString('es-ES')} familias y ${displayedAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes estimados.`,
+      text: `${metricsAggregate.name}: ${metricsAggregate.lostFamilies.toLocaleString('es-ES')} familias y ${metricsAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes estimados.${fuenteParam ? ' Incluye el registro oficial de turismo.' : ''}`,
       url,
     };
     try {
@@ -687,7 +716,7 @@ export default function App() {
         mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
         sourceMode={sourceMode}
         onSourceModeChange={setSourceMode}
-        officialStats={officialScopeStats}
+        official={officialViewport}
         sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
@@ -700,7 +729,8 @@ export default function App() {
           zoom={zoom}
           bounds={bounds}
           listings={sourceMode === 'official' ? [] : listingState.listings}
-          officialPins={sourceMode === 'citizens' ? [] : officialPins}
+          officialCells={officialData?.kind === 'cells' ? officialData.cells : []}
+          officialPins={officialData?.kind === 'pins' ? officialData.pins : []}
           selectedId={selectedId}
           activeNeighborhood={resolvedScope.activeNeighborhood}
           placementMode={placementMode}

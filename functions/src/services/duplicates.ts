@@ -50,7 +50,7 @@ function asListingCandidate(
     address: address as ListingAddress,
     location: { latitude: location.latitude, longitude: location.longitude },
     cityId: value.cityId,
-    neighborhoodId: value.neighborhoodId,
+    neighborhoodId: typeof value.neighborhoodId === 'string' ? value.neighborhoodId : null,
     confirmations: typeof value.confirmations === 'number' ? value.confirmations : 0,
     reports: typeof value.reports === 'number' ? value.reports : 0,
   };

@@ -7,13 +7,59 @@ import {
   useMap,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
-import type { Listing, OfficialPin } from '../../domain/types';
+import type { Listing, OfficialCell, OfficialPin } from '../../domain/types';
 import { MAP_STYLE } from '../../lib/constants';
+import { formatCellCount } from '../../lib/official-cells';
 import type { MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
 
-function OfficialLayer({
+/** Zoom applied when tapping a bubble: jumps into the next, finer band. */
+const CELL_ZOOM_AFTER_CLICK: Record<number, number> = { 4: 10, 5: 13, 6: 15.4, 7: 17.2 };
+
+function officialBubbleElement(count: number, label: string): HTMLButtonElement {
+  const content = document.createElement('button');
+  content.type = 'button';
+  const size = count >= 1000 ? 'l' : count >= 100 ? 'm' : 's';
+  content.className = `map-cluster--official map-cluster--official--${size}`;
+  content.textContent = formatCellCount(count);
+  content.setAttribute('aria-label', label);
+  return content;
+}
+
+/** Aggregated bubbles of the official registry (server-precomputed cells). */
+function OfficialCellsLayer({ cells }: { cells: OfficialCell[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map || cells.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
+    const markers = cells.map((cell) => {
+      const content = officialBubbleElement(
+        cell.count,
+        `${cell.count} viviendas turísticas del registro oficial en esta zona. Acercar.`,
+      );
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map,
+        position: cell.location,
+        content,
+        zIndex: 1,
+      });
+      marker.addListener('click', () => {
+        map.panTo(cell.location);
+        map.setZoom(CELL_ZOOM_AFTER_CLICK[cell.precision] ?? 15);
+      });
+      return marker;
+    });
+    return () => {
+      markers.forEach((marker) => {
+        marker.map = null;
+      });
+    };
+  }, [map, cells]);
+  return null;
+}
+
+/** Exact official pins at street zoom, clustered like the community ones. */
+function OfficialPinsLayer({
   pins,
   onSelect,
 }: {
@@ -39,7 +85,23 @@ function OfficialLayer({
       marker.addListener('click', () => layerData.onSelect(pin));
       return marker;
     });
+    const clusterer = new MarkerClusterer({
+      map,
+      markers,
+      renderer: {
+        render: ({ count, position }) =>
+          new google.maps.marker.AdvancedMarkerElement({
+            position,
+            zIndex: 1,
+            content: officialBubbleElement(
+              count,
+              `Grupo de ${count} viviendas turísticas oficiales. Acercar.`,
+            ),
+          }),
+      },
+    });
     return () => {
+      clusterer.clearMarkers();
       markers.forEach((marker) => {
         marker.map = null;
       });
@@ -118,7 +180,8 @@ function MapContent(props: RealMapProps) {
           if (props.placementMode && event.detail.latLng) props.onPickLocation(event.detail.latLng);
         }}
       >
-        <OfficialLayer pins={props.officialPins} onSelect={props.onSelectOfficial} />
+        <OfficialCellsLayer cells={props.officialCells} />
+        <OfficialPinsLayer pins={props.officialPins} onSelect={props.onSelectOfficial} />
         <MarkerLayer
           listings={props.listings}
           selectedId={props.selectedId}

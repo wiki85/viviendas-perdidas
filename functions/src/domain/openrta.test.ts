@@ -25,10 +25,8 @@ describe('extractStreetNumber', () => {
 describe('utmToWgs84', () => {
   it('projects a Sevilla ETRS89/UTM30N coordinate into a plausible lat/lng', () => {
     const result = utmToWgs84(235864.81, 4140991.82);
-    expect(result).toEqual({
-      latitude: expect.closeTo(37.39, 1),
-      longitude: expect.closeTo(-5.99, 1),
-    });
+    expect(result?.latitude).toBeCloseTo(37.39, 1);
+    expect(result?.longitude).toBeCloseTo(-5.99, 1);
   });
 
   it('rejects zero or non-finite coordinates', () => {

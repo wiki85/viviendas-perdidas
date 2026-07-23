@@ -4,6 +4,7 @@ import {
   collection,
   connectFirestoreEmulator,
   doc,
+  documentId,
   getDocs,
   getFirestore,
   limit,
@@ -34,8 +35,9 @@ import type {
   Listing,
   ListingsService,
   MapBounds,
+  OfficialCell,
   OfficialPin,
-  OfficialStats,
+  OfficialPinCell,
   PendingPhoto,
   PhotoDecision,
   Unsubscribe,
@@ -45,7 +47,8 @@ import type {
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { distanceMeters, listingIsInBounds } from '../lib/geo';
-import { MAX_LISTINGS_PER_VIEW, MAX_OFFICIAL_PINS } from '../lib/constants';
+import { MAX_LISTINGS_PER_VIEW } from '../lib/constants';
+import { CELL_DEGREES } from '../lib/official-cells';
 
 function toIsoString(value: unknown) {
   if (value && typeof value === 'object' && 'toDate' in value) {
@@ -290,65 +293,77 @@ export class FirebaseListingsService implements ListingsService {
     await callable({ listingId, imageBase64, deviceFingerprintHash });
   }
 
-  async listOfficialStats(): Promise<OfficialStats[]> {
-    const snapshot = await getDocs(collection(this.db, 'officialStats'));
-    return snapshot.docs.map((document) => {
-      const data = document.data();
-      return {
-        cityId: document.id,
-        municipality: typeof data.municipality === 'string' ? data.municipality : document.id,
-        total: typeof data.total === 'number' ? data.total : 0,
-        entireHomes: typeof data.entireHomes === 'number' ? data.entireHomes : 0,
-        roomsOnly: typeof data.roomsOnly === 'number' ? data.roomsOnly : 0,
-        places: typeof data.places === 'number' ? data.places : 0,
-        updatedAt: data.updatedAt ? toIsoString(data.updatedAt) : null,
-      };
-    });
-  }
-
-  async listOfficialInBounds(bounds: MapBounds): Promise<OfficialPin[]> {
-    const center = {
-      lat: (bounds.north + bounds.south) / 2,
-      lng: (bounds.east + bounds.west) / 2,
-    };
-    const corner = { lat: bounds.north, lng: bounds.east };
-    const radius = Math.max(100, distanceMeters(center, corner));
-    const ranges = geohashQueryBounds([center.lat, center.lng], radius);
-    const perRange = Math.max(50, Math.ceil(MAX_OFFICIAL_PINS / Math.max(1, ranges.length)));
-    const snapshots = await Promise.all(
-      ranges.map(([start, end]) =>
-        getDocs(
-          query(
-            collection(this.db, 'officialVut'),
-            orderBy('geohash'),
-            startAt(start),
-            endAt(end),
-            limit(perRange),
-          ),
-        ),
+  async listOfficialCells(bounds: MapBounds, precision: number): Promise<OfficialCell[]> {
+    // One latitude band per query (any-SDK-safe single inequality); longitude
+    // is filtered client side. Cells are tiny docs, so the overfetch of other
+    // municipalities sharing the band is negligible.
+    const pad = CELL_DEGREES[precision] ?? CELL_DEGREES[7];
+    const snapshot = await getDocs(
+      query(
+        collection(this.db, 'officialCells'),
+        where('precision', '==', precision),
+        where('lat', '>=', bounds.south - pad.lat),
+        where('lat', '<=', bounds.north + pad.lat),
+        orderBy('lat'),
+        limit(2000),
       ),
     );
-    const merged = new Map<string, OfficialPin>();
+    const west = bounds.west - pad.lng;
+    const east = bounds.east + pad.lng;
+    const cells: OfficialCell[] = [];
+    for (const document of snapshot.docs) {
+      const data = document.data();
+      if (typeof data.lat !== 'number' || typeof data.lng !== 'number') continue;
+      if (data.lng < west || data.lng > east) continue;
+      cells.push({
+        id: document.id,
+        precision,
+        location: { lat: data.lat, lng: data.lng },
+        count: typeof data.count === 'number' ? data.count : 0,
+        entireCount: typeof data.entireCount === 'number' ? data.entireCount : 0,
+      });
+    }
+    return cells;
+  }
+
+  async listOfficialPinCells(cellIds: string[]): Promise<OfficialPinCell[]> {
+    if (cellIds.length === 0) return [];
+    const chunks: string[][] = [];
+    for (let index = 0; index < cellIds.length; index += 30) {
+      chunks.push(cellIds.slice(index, index + 30));
+    }
+    const snapshots = await Promise.all(
+      chunks.map((chunk) =>
+        getDocs(query(collection(this.db, 'officialCellPins'), where(documentId(), 'in', chunk))),
+      ),
+    );
+    const cells: OfficialPinCell[] = [];
     for (const snapshot of snapshots) {
       for (const document of snapshot.docs) {
         const data = document.data();
-        if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') continue;
-        const location = { lat: data.latitude, lng: data.longitude };
-        if (!listingIsInBounds(location, bounds)) continue;
-        merged.set(document.id, {
-          id: document.id,
-          location,
-          registrationCode: typeof data.registrationCode === 'string' ? data.registrationCode : '',
-          name: typeof data.name === 'string' ? data.name : '',
-          addressText: typeof data.addressText === 'string' ? data.addressText : '',
-          postalCode: typeof data.postalCode === 'string' ? data.postalCode : '',
-          municipality: typeof data.municipality === 'string' ? data.municipality : '',
-          entire: data.entire === true,
-          places: typeof data.places === 'number' ? data.places : 0,
-        });
+        if (typeof data.lat !== 'number' || typeof data.lng !== 'number') continue;
+        const rawPins = Array.isArray(data.pins) ? data.pins : [];
+        const pins: OfficialPin[] = [];
+        for (const raw of rawPins) {
+          if (!raw || typeof raw !== 'object') continue;
+          const pin = raw as Record<string, unknown>;
+          if (typeof pin.lat !== 'number' || typeof pin.lng !== 'number') continue;
+          pins.push({
+            id: typeof pin.id === 'string' ? pin.id : `${document.id}-${pins.length}`,
+            location: { lat: pin.lat, lng: pin.lng },
+            registrationCode: typeof pin.registrationCode === 'string' ? pin.registrationCode : '',
+            name: typeof pin.name === 'string' ? pin.name : '',
+            addressText: typeof pin.addressText === 'string' ? pin.addressText : '',
+            postalCode: typeof pin.postalCode === 'string' ? pin.postalCode : '',
+            municipality: typeof pin.municipality === 'string' ? pin.municipality : '',
+            entire: pin.entire === true,
+            places: typeof pin.places === 'number' ? pin.places : 0,
+          });
+        }
+        cells.push({ id: document.id, location: { lat: data.lat, lng: data.lng }, pins });
       }
     }
-    return Array.from(merged.values()).slice(0, MAX_OFFICIAL_PINS);
+    return cells;
   }
 
   async adminResolveOfficialMatch(listingId: string): Promise<void> {

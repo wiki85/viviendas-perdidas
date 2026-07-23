@@ -8,7 +8,7 @@ import {
   Store,
   UsersRound,
 } from 'lucide-react';
-import type { Aggregate, OfficialStats, SearchPlace, SourceMode } from '../domain/types';
+import type { Aggregate, OfficialViewportStats, SearchPlace, SourceMode } from '../domain/types';
 import { useCountUp } from '../hooks/use-count-up';
 import { formatInteger } from '../lib/impact';
 import { BrandMark } from './BrandMark';
@@ -21,8 +21,8 @@ type Props = {
   mapsEnabled: boolean;
   sourceMode: SourceMode;
   onSourceModeChange: (mode: SourceMode) => void;
-  /** Official registry stats for the visible scope's city (null outside Andalucía). */
-  officialStats: OfficialStats | null;
+  /** Official registry figures for the visible map area (null while loading). */
+  official: OfficialViewportStats | null;
   sourceToggleAvailable: boolean;
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
@@ -56,7 +56,7 @@ export function TopBar({
   mapsEnabled,
   sourceMode,
   onSourceModeChange,
-  officialStats,
+  official,
   sourceToggleAvailable,
   onSelectPlace,
   onOpenAbout,
@@ -140,13 +140,16 @@ export function TopBar({
       <p className="topbar__records">
         {sourceMode === 'official' ? (
           <>
-            <span>{formatInteger(aggregate.listingsCount)}</span> viviendas en el registro oficial
+            <span>{formatInteger(aggregate.listingsCount)}</span> viviendas del registro oficial a
+            la vista
           </>
         ) : (
           <>
             <span>{formatInteger(aggregate.listingsCount)}</span>{' '}
             {aggregate.listingsCount === 1 ? 'registro colaborativo' : 'registros colaborativos'}
-            {sourceMode === 'both' ? ' + registro oficial' : ''}
+            {sourceMode === 'both'
+              ? ` + ${formatInteger(official?.total ?? 0)} del registro oficial`
+              : ''}
           </>
         )}
       </p>
@@ -156,17 +159,16 @@ export function TopBar({
             className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}
           >
             <Landmark size={15} aria-hidden="true" />
-            {officialStats ? (
+            {official && official.total > 0 ? (
               <span>
-                Registro oficial (RTA): <strong>{formatInteger(officialStats.entireHomes)}</strong>{' '}
-                viviendas turísticas completas en{' '}
-                {officialStats.municipality.toLocaleLowerCase('es')}
-                {officialStats.roomsOnly > 0
-                  ? ` (+${formatInteger(officialStats.roomsOnly)} por habitaciones)`
+                Registro oficial (RTA): <strong>{formatInteger(official.entireHomes)}</strong>{' '}
+                viviendas turísticas completas en la zona visible
+                {official.roomsOnly > 0
+                  ? ` (+${formatInteger(official.roomsOnly)} por habitaciones)`
                   : ''}
               </span>
             ) : (
-              <span>Sin datos oficiales para esta zona (disponibles en Andalucía).</span>
+              <span>Sin viviendas del registro oficial en esta zona (cobertura: Andalucía).</span>
             )}
           </p>
           <p className="official-credit">

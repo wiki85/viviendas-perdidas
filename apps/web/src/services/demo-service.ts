@@ -5,8 +5,8 @@ import type {
   Listing,
   ListingsService,
   MapBounds,
-  OfficialPin,
-  OfficialStats,
+  OfficialCell,
+  OfficialPinCell,
   PendingPhoto,
   PhotoDecision,
   Unsubscribe,
@@ -232,11 +232,11 @@ export class DemoListingsService implements ListingsService {
     });
   }
 
-  async listOfficialStats(): Promise<OfficialStats[]> {
+  async listOfficialCells(): Promise<OfficialCell[]> {
     return [];
   }
 
-  async listOfficialInBounds(): Promise<OfficialPin[]> {
+  async listOfficialPinCells(): Promise<OfficialPinCell[]> {
     return [];
   }
 

@@ -4,6 +4,7 @@ import type {
   Listing,
   MapBounds,
   NeighborhoodFeature,
+  OfficialCell,
   OfficialPin,
 } from '../../domain/types';
 import { appConfig } from '../../lib/config';
@@ -16,7 +17,9 @@ export type MapStageProps = {
   zoom: number;
   bounds: MapBounds;
   listings: Listing[];
-  /** Official registry pins (OpenRTA layer), already filtered by source mode. */
+  /** Official registry bubbles (aggregated cells), filtered by source mode. */
+  officialCells: OfficialCell[];
+  /** Official registry pins (street zoom), already filtered by source mode. */
   officialPins: OfficialPin[];
   selectedId: string | null;
   // Only for the demo map's watermark label; polygons are no longer drawn

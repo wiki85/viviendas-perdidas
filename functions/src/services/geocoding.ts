@@ -144,9 +144,9 @@ export async function geocodeInSpain(
     const detail = typeof payload.error_message === 'string' ? ` ${payload.error_message}` : '';
     throw new GeocodingError('upstream', `Geocoding API no pudo completar la solicitud.${detail}`);
   }
-  const result = payload.results[0];
+  const result: unknown = payload.results[0];
   if (typeof result !== 'object' || result === null) {
     throw new GeocodingError('upstream', 'Geocoding API devolvió una respuesta inválida.');
   }
-  return parseResult(result as GoogleGeocodingResult, input);
+  return parseResult(result, input);
 }

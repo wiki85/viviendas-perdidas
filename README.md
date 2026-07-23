@@ -182,9 +182,10 @@ El mapa combina dos fuentes que **nunca se suman en un mismo contador**: los reg
 - las coordenadas se reproyectan de UTM (ETRS89 / UTM zona 30N, EPSG:25830) a WGS84 (latitud/longitud) mediante `proj4`;
 - se normalizan códigos de licencia, direcciones y nombres de calle para el cruce con los registros vecinales;
 - se calculan estadísticas agregadas por municipio (total, viviendas completas, solo por habitaciones, plazas) y un total sintético para «Andalucía»;
+- se agrupan las viviendas geolocalizadas en celdas geohash de varias precisiones (colecciones `officialCells` y `officialCellPins`) para dibujar burbujas por nivel de zoom y contar lo visible en el mapa; el <1% de registros sin coordenadas no puede dibujarse ni contarse;
 - solo se mantiene un subconjunto de municipios andaluces (ver `SYNCED_MUNICIPALITIES` en `functions/src/services/openrta-sync.ts`).
 
-**Sincronización:** el trabajo programado `syncOpenRta` (semanal, lunes 04:30 Europe/Madrid, en `europe-west1` porque Cloud Scheduler no opera en `europe-southwest1`) y el callable `adminSyncOfficialData` reconstruyen las colecciones `officialVut` y `officialStats` desde la API de OpenRTA. Última descarga inicial: julio de 2026 (~50.900 viviendas de uso turístico en 10 municipios).
+**Sincronización:** el trabajo programado `syncOpenRta` (semanal, lunes 04:30 Europe/Madrid, en `europe-west1` porque Cloud Scheduler no opera en `europe-southwest1`) y el callable `adminSyncOfficialData` reconstruyen las colecciones `officialVut`, `officialStats`, `officialCells` y `officialCellPins` desde la API de OpenRTA (las celdas obsoletas se eliminan en cada pasada). Última descarga inicial: julio de 2026 (~50.900 viviendas de uso turístico en 10 municipios).
 
 **Sin respaldo oficial:** la Junta de Andalucía no respalda, patrocina ni avala Viviendas Perdidas. La cita de la fuente es un crédito neutral y no implica relación, colaboración ni aprobación por parte del titular de los datos. Los datos oficiales se ofrecen «tal cual» y «según disponibilidad», sin garantías.
 

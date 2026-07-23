@@ -47,7 +47,7 @@ export function describeCaughtError(
 } {
   const kind =
     error && typeof error === 'object' && 'code' in error
-      ? `https_${String((error as { code: unknown }).code)}`
+      ? `https_${String(error.code)}`
       : error instanceof Error
         ? error.name
         : 'unknown';
@@ -56,9 +56,7 @@ export function describeCaughtError(
     details: {
       message: error instanceof Error ? error.message : String(error),
       httpDetails:
-        error && typeof error === 'object' && 'details' in error
-          ? ((error as { details: unknown }).details ?? null)
-          : null,
+        error && typeof error === 'object' && 'details' in error ? (error.details ?? null) : null,
       requestData: requestData ?? null,
     },
   };

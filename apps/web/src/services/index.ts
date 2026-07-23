@@ -69,12 +69,12 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.adminSignIn());
   }
 
-  listOfficialStats() {
-    return this.load().then((service) => service.listOfficialStats());
+  listOfficialCells(bounds: MapBounds, precision: number) {
+    return this.load().then((service) => service.listOfficialCells(bounds, precision));
   }
 
-  listOfficialInBounds(bounds: MapBounds) {
-    return this.load().then((service) => service.listOfficialInBounds(bounds));
+  listOfficialPinCells(cellIds: string[]) {
+    return this.load().then((service) => service.listOfficialPinCells(cellIds));
   }
 
   adminResolveOfficialMatch(listingId: string) {

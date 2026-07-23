@@ -60,16 +60,6 @@ export type Listing = {
   updatedAt: string;
 };
 
-export type OfficialStats = {
-  cityId: string;
-  municipality: string;
-  total: number;
-  entireHomes: number;
-  roomsOnly: number;
-  places: number;
-  updatedAt: string | null;
-};
-
 export type OfficialPin = {
   id: string;
   location: LatLng;
@@ -81,6 +71,30 @@ export type OfficialPin = {
   /** Whole-home rental (group 'Completa') vs rooms-only. */
   entire: boolean;
   places: number;
+};
+
+/** Precomputed geohash-cell aggregate of the official registry (bubble). */
+export type OfficialCell = {
+  id: string;
+  precision: number;
+  /** Centroid of the member dwellings. */
+  location: LatLng;
+  count: number;
+  entireCount: number;
+};
+
+/** Street-level cell carrying its individual pins. */
+export type OfficialPinCell = {
+  id: string;
+  location: LatLng;
+  pins: OfficialPin[];
+};
+
+/** Official registry figures for the area currently visible on the map. */
+export type OfficialViewportStats = {
+  total: number;
+  entireHomes: number;
+  roomsOnly: number;
 };
 
 export type SourceMode = 'citizens' | 'official' | 'both';
@@ -246,8 +260,8 @@ export interface ListingsService {
     imageBase64: string,
     deviceFingerprintHash: string,
   ): Promise<void>;
-  listOfficialStats(): Promise<OfficialStats[]>;
-  listOfficialInBounds(bounds: MapBounds): Promise<OfficialPin[]>;
+  listOfficialCells(bounds: MapBounds, precision: number): Promise<OfficialCell[]>;
+  listOfficialPinCells(cellIds: string[]): Promise<OfficialPinCell[]>;
   adminSignIn(): Promise<{ email: string; moderator: boolean }>;
   adminResolveOfficialMatch(listingId: string): Promise<void>;
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;

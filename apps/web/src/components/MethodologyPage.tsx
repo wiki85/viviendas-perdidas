@@ -105,10 +105,15 @@ export function MethodologyPage({ onClose }: Props) {
             <Landmark size={20} aria-hidden="true" /> Fuentes de datos y licencia
           </h2>
           <p>
-            El mapa combina dos fuentes que <strong>nunca se mezclan en un mismo contador</strong>:
-            los registros <strong>vecinales</strong> que aporta la ciudadanía y, cuando activas la
-            fuente <strong>oficial</strong>, el registro público de viviendas de uso turístico de
-            Andalucía.
+            El mapa maneja dos fuentes <strong>siempre identificables</strong>: los registros{' '}
+            <strong>vecinales</strong> que aporta la ciudadanía y el registro público de viviendas
+            de uso turístico de Andalucía (<strong>oficial</strong>). Puedes ver cada fuente por
+            separado o ambas a la vez; en el modo «Ambas» los contadores suman las dos y una franja
+            indica cuánto aporta el registro oficial. Los contadores reflejan siempre{' '}
+            <strong>la zona visible del mapa</strong>: al buscar una ciudad, un barrio o un código
+            postal se cuentan los registros de esa zona, y al desplazarte se actualizan con lo que
+            tengas a la vista. Las viviendas oficiales «por habitaciones» nunca se cuentan como
+            hogar desplazado.
           </p>
           <p>
             Los datos oficiales proceden de{' '}
@@ -130,9 +135,11 @@ export function MethodologyPage({ onClose }: Props) {
           <p>
             <strong>Modificaciones que aplicamos</strong> (la licencia obliga a indicarlas): se
             filtran a viviendas de uso turístico publicadas en el RTA abierto, se reproyectan las
-            coordenadas de UTM (ETRS89 / UTM 30N, EPSG:25830) a latitud/longitud (WGS84) y se
-            calculan estadísticas agregadas por municipio. Solo se refleja un subconjunto de
-            municipios andaluces.
+            coordenadas de UTM (ETRS89 / UTM 30N, EPSG:25830) a latitud/longitud (WGS84), se
+            calculan estadísticas agregadas por municipio y se agrupan las viviendas en celdas
+            geográficas (geohash) para dibujarlas y contarlas según el nivel de zoom. Solo se
+            refleja un subconjunto de municipios andaluces; el pequeño porcentaje de registros
+            publicados sin coordenadas (&lt;1%) no puede dibujarse ni contarse en el mapa.
           </p>
           <p>
             <strong>La Junta de Andalucía no respalda ni avala este proyecto</strong>: la cita es un

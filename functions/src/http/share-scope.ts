@@ -1,15 +1,35 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
+import { inhabitantsForDwellings } from '../domain/aggregates.js';
 import { escapeHtml, integer, jsonForInlineScript, requestOrigin } from './html.js';
 
 const SCOPE_ID_PATTERN = /^[a-z0-9-]+(?:__[a-z0-9-]+)?$/u;
+const LOWERCASE_CONNECTORS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y']);
 
 function queryNumber(value: unknown): number | null {
-  const candidate = Array.isArray(value) ? value[0] : value;
+  const candidate: unknown = Array.isArray(value) ? value[0] : value;
   if (typeof candidate !== 'string' || candidate.trim().length === 0) return null;
   const parsed = Number(candidate);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function queryText(value: unknown): string | null {
+  const candidate: unknown = Array.isArray(value) ? value[0] : value;
+  return typeof candidate === 'string' ? candidate : null;
+}
+
+/** 'JEREZ DE LA FRONTERA' → 'Jerez de la Frontera' for card titles. */
+function titleCaseMunicipality(value: string): string {
+  return value
+    .toLocaleLowerCase('es')
+    .split(/\s+/u)
+    .map((word, index) =>
+      index > 0 && LOWERCASE_CONNECTORS.has(word)
+        ? word
+        : word.charAt(0).toLocaleUpperCase('es') + word.slice(1),
+    )
+    .join(' ');
 }
 
 export const shareScope = onRequest(
@@ -21,20 +41,66 @@ export const shareScope = onRequest(
       return;
     }
 
-    const snapshot = await db.collection('aggregates').doc(scopeId).get();
-    if (!snapshot.exists) {
+    const fuenteRaw = queryText(request.query.fuente);
+    const fuente = fuenteRaw === 'oficial' || fuenteRaw === 'ambas' ? fuenteRaw : null;
+    const cityId = scopeId.split('__')[0] ?? scopeId;
+    const cityLevelScope = !scopeId.includes('__');
+
+    const [snapshot, officialSnapshot] = await Promise.all([
+      db.collection('aggregates').doc(scopeId).get(),
+      // Official figures exist per municipality; sub-city scopes keep the
+      // community card (the map still opens with the official layer on).
+      fuente !== null && cityLevelScope
+        ? db.collection('officialStats').doc(cityId).get()
+        : Promise.resolve(null),
+    ]);
+    const official =
+      officialSnapshot?.exists === true
+        ? {
+            total: integer(officialSnapshot.data()?.total),
+            entireHomes: integer(officialSnapshot.data()?.entireHomes),
+            municipality:
+              typeof officialSnapshot.data()?.municipality === 'string'
+                ? (officialSnapshot.data()?.municipality as string)
+                : '',
+          }
+        : null;
+    if (!snapshot.exists && official === null) {
       response.status(404).send('No encontrado');
       return;
     }
 
     const data = snapshot.data() ?? {};
-    const name = typeof data.name === 'string' && data.name.length > 0 ? data.name : scopeId;
-    const families = integer(data.lostFamilies);
-    const dwellings = integer(data.lostDwellings);
-    const inhabitants = integer(data.lostInhabitants);
+    const name =
+      typeof data.name === 'string' && data.name.length > 0
+        ? data.name
+        : official !== null && official.municipality.length > 0
+          ? titleCaseMunicipality(official.municipality)
+          : scopeId;
+    let families = integer(data.lostFamilies);
+    let dwellings = integer(data.lostDwellings);
+    let inhabitants = integer(data.lostInhabitants);
     const formatter = new Intl.NumberFormat('es-ES');
+    let sourceNote = 'Datos colaborativos y no oficiales.';
+    if (fuente !== null && official !== null) {
+      const officialInhabitants = inhabitantsForDwellings(official.entireHomes, cityId);
+      if (fuente === 'oficial') {
+        families = official.entireHomes;
+        dwellings = official.entireHomes;
+        inhabitants = officialInhabitants;
+        sourceNote = `Fuente: Registro de Turismo de Andalucía (${formatter.format(official.total)} viviendas turísticas), datos adaptados · CC BY 4.0. Sin respaldo oficial.`;
+      } else {
+        families += official.entireHomes;
+        dwellings += official.entireHomes;
+        inhabitants += officialInhabitants;
+        sourceNote =
+          'Datos colaborativos + Registro de Turismo de Andalucía (CC BY 4.0). Sin respaldo oficial.';
+      }
+    } else if (fuente !== null) {
+      sourceNote = 'Datos colaborativos; el mapa se abre con el registro oficial activado.';
+    }
     const title = `${name} ha perdido ${formatter.format(families)} familias`;
-    const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados. Datos colaborativos y no oficiales.`;
+    const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados. ${sourceNote}`;
     const origin = requestOrigin(request);
     const mapParams = new URLSearchParams({ scope: scopeId });
     const latitude = queryNumber(request.query.lat);
@@ -55,6 +121,7 @@ export const shareScope = onRequest(
       mapParams.set('lng', longitude.toFixed(6));
       mapParams.set('zoom', String(Math.round(zoom)));
     }
+    if (fuente !== null) mapParams.set('fuente', fuente);
     const mapUrl = `${origin}/?${mapParams.toString()}`;
     const shareParams = new URLSearchParams(mapParams);
     shareParams.delete('scope');

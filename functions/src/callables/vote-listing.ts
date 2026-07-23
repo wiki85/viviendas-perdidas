@@ -73,7 +73,7 @@ export const voteListing = onCall(
         const reports = nonnegativeCounter(listing.reports, 'reports');
 
         if (voteSnapshot.exists) {
-          const previousKind = voteSnapshot.get('kind');
+          const previousKind: unknown = voteSnapshot.get('kind');
           if (previousKind !== input.kind) throw new DifferentVoteAlreadyExistsError();
           return {
             created: false,

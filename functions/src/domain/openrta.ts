@@ -68,7 +68,13 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
   const addressText =
     typeof raw.establishment_address === 'string' ? raw.establishment_address : '';
   const roadName = typeof raw.road_name === 'string' ? raw.road_name : '';
-  const srid = String(raw.srid ?? '');
+  const sridValue = raw.srid;
+  const srid =
+    typeof sridValue === 'string'
+      ? sridValue
+      : typeof sridValue === 'number'
+        ? String(sridValue)
+        : '';
   const coordinates =
     srid === '25830'
       ? utmToWgs84(parseSpanishDecimal(raw.coord_x), parseSpanishDecimal(raw.coord_y))

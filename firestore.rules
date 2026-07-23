@@ -27,6 +27,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Precomputed geohash-cell aggregates of the official registry: bubble
+    // counts per zoom band, plus embedded pins at street-level precision.
+    match /officialCells/{cellId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /officialCellPins/{cellId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Votes, rate-limit buckets, and every future internal collection are
     // server-only. Admin SDK writes from Cloud Functions bypass these rules.
     match /votes/{voteId} {

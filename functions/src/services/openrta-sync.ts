@@ -2,6 +2,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { db } from '../firebase.js';
 import { parseRtaRecord, type OfficialVutRecord } from '../domain/openrta.js';
+import { buildOfficialCells } from '../domain/openrta-cells.js';
 
 const SEARCH_URL = 'https://datos.juntadeandalucia.es/api/v0/openrta/search';
 const PAGE_SIZE = 10_000;
@@ -98,7 +99,35 @@ async function writeBatched(records: OfficialVutRecord[], geohashFor: GeohashFn)
   }
 }
 
-type GeohashFn = (location: [number, number]) => string;
+type GeohashFn = (location: [number, number], precision?: number) => string;
+
+/**
+ * Overwrites a mirror collection with the freshly computed documents and
+ * deletes any document that no longer exists (stale cells after a resync).
+ */
+async function replaceCollection(
+  name: string,
+  documents: Array<{ id: string; data: Record<string, unknown> }>,
+): Promise<void> {
+  const existing = await db.collection(name).select().get();
+  const nextIds = new Set(documents.map((document) => document.id));
+  const stale = existing.docs.map((snapshot) => snapshot.id).filter((id) => !nextIds.has(id));
+  const CHUNK = 400;
+  for (let index = 0; index < documents.length; index += CHUNK) {
+    const batch = db.batch();
+    for (const { id, data } of documents.slice(index, index + CHUNK)) {
+      batch.set(db.collection(name).doc(id), data);
+    }
+    await batch.commit();
+  }
+  for (let index = 0; index < stale.length; index += CHUNK) {
+    const batch = db.batch();
+    for (const id of stale.slice(index, index + CHUNK)) {
+      batch.delete(db.collection(name).doc(id));
+    }
+    await batch.commit();
+  }
+}
 
 export interface OpenRtaSyncSummary {
   municipalities: number;
@@ -110,8 +139,10 @@ export async function runOpenRtaSync(
   geohashFor: GeohashFn,
 ): Promise<OpenRtaSyncSummary> {
   let total = 0;
+  const allRecords: OfficialVutRecord[] = [];
   for (const municipality of SYNCED_MUNICIPALITIES) {
     const records = await fetchMunicipality(municipality, fetchImplementation);
+    allRecords.push(...records);
     await writeBatched(records, geohashFor);
     const cityId = records[0]?.cityId;
     if (cityId !== undefined) {
@@ -134,5 +165,38 @@ export async function runOpenRtaSync(
     total += records.length;
     logger.info('OpenRTA municipality synced', { municipality, records: records.length });
   }
+
+  // Geohash cell mirror: the map reads these aggregated bubbles (and the
+  // embedded pins at street zoom) instead of querying 50k individual docs.
+  const { cells, pinCells } = buildOfficialCells(allRecords, geohashFor);
+  const builtAt = Timestamp.now();
+  await replaceCollection(
+    'officialCells',
+    cells.map((cell) => ({
+      id: cell.id,
+      data: {
+        precision: cell.precision,
+        lat: cell.lat,
+        lng: cell.lng,
+        count: cell.count,
+        entireCount: cell.entireCount,
+        updatedAt: builtAt,
+      },
+    })),
+  );
+  await replaceCollection(
+    'officialCellPins',
+    pinCells.map((cell) => ({
+      id: cell.id,
+      data: {
+        lat: cell.lat,
+        lng: cell.lng,
+        count: cell.count,
+        pins: cell.pins,
+        updatedAt: builtAt,
+      },
+    })),
+  );
+  logger.info('OpenRTA cells rebuilt', { cells: cells.length, pinCells: pinCells.length });
   return { municipalities: SYNCED_MUNICIPALITIES.length, records: total };
 }
