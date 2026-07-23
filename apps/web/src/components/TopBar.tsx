@@ -128,23 +128,28 @@ export function TopBar({
           ))}
         </div>
       )}
-      {sourceMode !== 'official' && (
-        <>
-          <div className="metrics" aria-label={`Impacto estimado en ${aggregate.name}`}>
-            <Metric value={aggregate.lostDwellings} label="viviendas" icon={<House size={16} />} />
-            <Metric
-              value={aggregate.lostInhabitants}
-              label="habitantes"
-              icon={<UsersRound size={17} />}
-            />
-            <Metric value={aggregate.lostCommercial} label="locales" icon={<Store size={16} />} />
-          </div>
-          <p className="topbar__records">
+      <div className="metrics" aria-label={`Impacto estimado en ${aggregate.name}`}>
+        <Metric value={aggregate.lostDwellings} label="viviendas" icon={<House size={16} />} />
+        <Metric
+          value={aggregate.lostInhabitants}
+          label="habitantes"
+          icon={<UsersRound size={17} />}
+        />
+        <Metric value={aggregate.lostCommercial} label="locales" icon={<Store size={16} />} />
+      </div>
+      <p className="topbar__records">
+        {sourceMode === 'official' ? (
+          <>
+            <span>{formatInteger(aggregate.listingsCount)}</span> viviendas en el registro oficial
+          </>
+        ) : (
+          <>
             <span>{formatInteger(aggregate.listingsCount)}</span>{' '}
             {aggregate.listingsCount === 1 ? 'registro colaborativo' : 'registros colaborativos'}
-          </p>
-        </>
-      )}
+            {sourceMode === 'both' ? ' + registro oficial' : ''}
+          </>
+        )}
+      </p>
       {sourceMode !== 'citizens' && (
         <>
           <p

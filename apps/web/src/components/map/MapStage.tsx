@@ -26,6 +26,7 @@ export type MapStageProps = {
   placementPosition: LatLng | null;
   onViewportChange: (center: LatLng, zoom: number, bounds: MapBounds) => void;
   onSelectListing: (listing: Listing) => void;
+  onSelectOfficial: (pin: OfficialPin) => void;
   onPickLocation: (position: LatLng) => void;
 };
 

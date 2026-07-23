@@ -13,27 +13,38 @@ import type { MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
 
-function OfficialLayer({ pins }: { pins: OfficialPin[] }) {
+function OfficialLayer({
+  pins,
+  onSelect,
+}: {
+  pins: OfficialPin[];
+  onSelect: (pin: OfficialPin) => void;
+}) {
   const map = useMap();
+  const layerData = useMemo(() => ({ pins, onSelect }), [pins, onSelect]);
   useEffect(() => {
-    if (!map || pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
-    const markers = pins.map((pin) => {
-      const content = document.createElement('span');
+    if (!map || layerData.pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
+    const markers = layerData.pins.map((pin) => {
+      const content = document.createElement('button');
+      content.type = 'button';
       content.className = 'map-marker--official';
       content.title = `${pin.registrationCode} · Registro oficial (RTA)`;
-      return new google.maps.marker.AdvancedMarkerElement({
+      content.setAttribute('aria-label', `Vivienda turística oficial ${pin.registrationCode}`);
+      const marker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: pin.location,
         content,
         zIndex: 1,
       });
+      marker.addListener('click', () => layerData.onSelect(pin));
+      return marker;
     });
     return () => {
       markers.forEach((marker) => {
         marker.map = null;
       });
     };
-  }, [map, pins]);
+  }, [map, layerData]);
   return null;
 }
 
@@ -107,7 +118,7 @@ function MapContent(props: RealMapProps) {
           if (props.placementMode && event.detail.latLng) props.onPickLocation(event.detail.latLng);
         }}
       >
-        <OfficialLayer pins={props.officialPins} />
+        <OfficialLayer pins={props.officialPins} onSelect={props.onSelectOfficial} />
         <MarkerLayer
           listings={props.listings}
           selectedId={props.selectedId}

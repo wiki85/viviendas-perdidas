@@ -20,6 +20,7 @@ import { MethodologyPage } from './components/MethodologyPage';
 import { CookieNotice } from './components/CookieNotice';
 import { DonateSheet } from './components/DonateSheet';
 import { ListingSheet } from './components/ListingSheet';
+import { OfficialSheet } from './components/OfficialSheet';
 import { MapStage } from './components/map/MapStage';
 import { RegisterWizard } from './components/RegisterWizard';
 import { TopBar } from './components/TopBar';
@@ -166,6 +167,7 @@ export default function App() {
   const [sourceMode, setSourceMode] = useState<SourceMode>('citizens');
   const [officialStatsList, setOfficialStatsList] = useState<OfficialStats[] | null>(null);
   const [officialPins, setOfficialPins] = useState<OfficialPin[]>([]);
+  const [selectedOfficial, setSelectedOfficial] = useState<OfficialPin | null>(null);
   const resolvedScope = useVisibleScope(center, zoom, cityHint);
   const {
     aggregate,
@@ -290,6 +292,31 @@ export default function App() {
       lostInhabitants: aggregate.lostInhabitants + impact.lostInhabitants,
     };
   }, [aggregate, pendingImpact, viewportAggregate]);
+
+  // Counters shown in the header. Official dwellings (whole homes from the
+  // RTA, municipality granularity) replace the community figures in
+  // 'official' mode and add to them in 'both'; inhabitants use the same
+  // INE household-size formula so both sources stay comparable.
+  const metricsAggregate = useMemo<Aggregate>(() => {
+    if (sourceMode === 'citizens' || !officialScopeStats) return displayedAggregate;
+    const officialImpact = calculateImpact(officialScopeStats.entireHomes);
+    if (sourceMode === 'official') {
+      return {
+        ...displayedAggregate,
+        listingsCount: officialScopeStats.total,
+        lostDwellings: officialImpact.lostDwellings,
+        lostFamilies: officialImpact.lostFamilies,
+        lostInhabitants: officialImpact.lostInhabitants,
+        lostCommercial: 0,
+      };
+    }
+    return {
+      ...displayedAggregate,
+      lostDwellings: displayedAggregate.lostDwellings + officialImpact.lostDwellings,
+      lostFamilies: displayedAggregate.lostFamilies + officialImpact.lostFamilies,
+      lostInhabitants: displayedAggregate.lostInhabitants + officialImpact.lostInhabitants,
+    };
+  }, [displayedAggregate, officialScopeStats, sourceMode]);
 
   useEffect(() => {
     const popState = () => {
@@ -650,7 +677,7 @@ export default function App() {
   return (
     <main className="app-shell">
       <TopBar
-        aggregate={displayedAggregate}
+        aggregate={metricsAggregate}
         viewportMode={Boolean(viewportAggregate)}
         loading={
           viewportAggregate
@@ -681,7 +708,13 @@ export default function App() {
           onViewportChange={updateViewport}
           onSelectListing={(listing) => {
             setSelectedFallback(null);
+            setSelectedOfficial(null);
             setSelectedId(listing.id);
+          }}
+          onSelectOfficial={(pin) => {
+            setSelectedId(null);
+            setSelectedFallback(null);
+            setSelectedOfficial(pin);
           }}
           onPickLocation={(position) => {
             setPickedPosition(position);
@@ -723,6 +756,9 @@ export default function App() {
           onClose={closeListing}
           onVote={(kind) => vote(selectedListing, kind)}
         />
+      )}
+      {selectedOfficial && !selectedListing && (
+        <OfficialSheet pin={selectedOfficial} onClose={() => setSelectedOfficial(null)} />
       )}
       {registrationOpen && (
         <RegisterWizard

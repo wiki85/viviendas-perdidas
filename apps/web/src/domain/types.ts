@@ -75,6 +75,12 @@ export type OfficialPin = {
   location: LatLng;
   registrationCode: string;
   name: string;
+  addressText: string;
+  postalCode: string;
+  municipality: string;
+  /** Whole-home rental (group 'Completa') vs rooms-only. */
+  entire: boolean;
+  places: number;
 };
 
 export type SourceMode = 'citizens' | 'official' | 'both';

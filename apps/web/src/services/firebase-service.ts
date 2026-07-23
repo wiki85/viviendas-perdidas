@@ -340,6 +340,11 @@ export class FirebaseListingsService implements ListingsService {
           location,
           registrationCode: typeof data.registrationCode === 'string' ? data.registrationCode : '',
           name: typeof data.name === 'string' ? data.name : '',
+          addressText: typeof data.addressText === 'string' ? data.addressText : '',
+          postalCode: typeof data.postalCode === 'string' ? data.postalCode : '',
+          municipality: typeof data.municipality === 'string' ? data.municipality : '',
+          entire: data.entire === true,
+          places: typeof data.places === 'number' ? data.places : 0,
         });
       }
     }

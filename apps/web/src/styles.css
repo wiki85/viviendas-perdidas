@@ -438,10 +438,34 @@ textarea:focus-visible,
   display: block;
   width: 11px;
   height: 11px;
+  padding: 0;
   background: #315d4c;
   border: 2px solid #fff;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.map-marker--official:hover {
+  transform: scale(1.5);
+}
+
+.listing-badge--official {
+  color: #fff;
+  background: #315d4c;
+}
+
+.listing-sheet__body--official {
+  padding-top: 34px;
+}
+
+.listing-sheet__body--official .listing-badge--official {
+  position: static;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .listing-verified {
