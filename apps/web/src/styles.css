@@ -421,6 +421,19 @@ textarea:focus-visible,
   color: #315d4c;
 }
 
+.official-credit {
+  margin-top: 5px;
+  padding: 0 2px;
+  font-size: 0.64rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.official-credit a {
+  color: #315d4c;
+  font-weight: 600;
+}
+
 .map-marker--official {
   display: block;
   width: 11px;

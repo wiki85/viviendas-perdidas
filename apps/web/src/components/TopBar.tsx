@@ -146,20 +146,44 @@ export function TopBar({
         </>
       )}
       {sourceMode !== 'citizens' && (
-        <p className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}>
-          <Landmark size={15} aria-hidden="true" />
-          {officialStats ? (
-            <span>
-              Registro oficial (RTA): <strong>{formatInteger(officialStats.entireHomes)}</strong>{' '}
-              viviendas turísticas completas en {officialStats.municipality.toLocaleLowerCase('es')}
-              {officialStats.roomsOnly > 0
-                ? ` (+${formatInteger(officialStats.roomsOnly)} por habitaciones)`
-                : ''}
-            </span>
-          ) : (
-            <span>Sin datos oficiales para esta zona (disponibles en Andalucía).</span>
-          )}
-        </p>
+        <>
+          <p
+            className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}
+          >
+            <Landmark size={15} aria-hidden="true" />
+            {officialStats ? (
+              <span>
+                Registro oficial (RTA): <strong>{formatInteger(officialStats.entireHomes)}</strong>{' '}
+                viviendas turísticas completas en{' '}
+                {officialStats.municipality.toLocaleLowerCase('es')}
+                {officialStats.roomsOnly > 0
+                  ? ` (+${formatInteger(officialStats.roomsOnly)} por habitaciones)`
+                  : ''}
+              </span>
+            ) : (
+              <span>Sin datos oficiales para esta zona (disponibles en Andalucía).</span>
+            )}
+          </p>
+          <p className="official-credit">
+            Fuente:{' '}
+            <a
+              href="https://datos.gob.es/es/catalogo/a01002820-openrta"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Registro de Turismo de Andalucía
+            </a>{' '}
+            (Junta de Andalucía), datos adaptados ·{' '}
+            <a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0
+            </a>
+            . Sin respaldo oficial.
+          </p>
+        </>
       )}
     </header>
   );

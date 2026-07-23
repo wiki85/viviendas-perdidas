@@ -166,6 +166,28 @@ locales perdidos   = 1 si type = commercial
 
 Los votos también son transaccionales e idempotentes. Con 5 reportes y más del doble de reportes que confirmaciones el registro pasa a `flagged`; con 15 reportes pasa a `removed` y deja de aparecer y contar.
 
+## Fuentes de datos y licencias
+
+El mapa combina dos fuentes que **nunca se suman en un mismo contador**: los registros **vecinales** (colaborativos) y, en la capa **oficial**, el registro público de viviendas de uso turístico de Andalucía.
+
+| Fuente                                                                  | Titular / autor                                            | Enlace                                                                                                                                                  | Licencia                                                  |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| OpenRTA — Registro de Turismo de Andalucía (viviendas de uso turístico) | Junta de Andalucía (Registro de Turismo de Andalucía, RTA) | [API OpenRTA](https://datos.juntadeandalucia.es/api/v0/openrta/search) · [Catálogo en datos.gob.es](https://datos.gob.es/es/catalogo/a01002820-openrta) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+**Atribución (CC BY 4.0):** «OpenRTA — Registro de Turismo de Andalucía» de la [Junta de Andalucía](https://datos.gob.es/es/catalogo/a01002820-openrta), disponible en el [portal de datos abiertos de la Junta de Andalucía](https://datos.juntadeandalucia.es/api/v0/openrta/search), bajo licencia [Creative Commons Reconocimiento 4.0 Internacional (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+**Modificaciones realizadas por Viviendas Perdidas** (obligatorio indicarlas según la cláusula 3(a)(1)(B) de la licencia):
+
+- se filtran los registros a viviendas de uso turístico marcadas como publicadas en el RTA abierto (`ind_pub_open_rta = 'S'`);
+- las coordenadas se reproyectan de UTM (ETRS89 / UTM zona 30N, EPSG:25830) a WGS84 (latitud/longitud) mediante `proj4`;
+- se normalizan códigos de licencia, direcciones y nombres de calle para el cruce con los registros vecinales;
+- se calculan estadísticas agregadas por municipio (total, viviendas completas, solo por habitaciones, plazas) y un total sintético para «Andalucía»;
+- solo se mantiene un subconjunto de municipios andaluces (ver `SYNCED_MUNICIPALITIES` en `functions/src/services/openrta-sync.ts`).
+
+**Sincronización:** el trabajo programado `syncOpenRta` (semanal, lunes 04:30 Europe/Madrid, en `europe-west1` porque Cloud Scheduler no opera en `europe-southwest1`) y el callable `adminSyncOfficialData` reconstruyen las colecciones `officialVut` y `officialStats` desde la API de OpenRTA. Última descarga inicial: julio de 2026 (~50.900 viviendas de uso turístico en 10 municipios).
+
+**Sin respaldo oficial:** la Junta de Andalucía no respalda, patrocina ni avala Viviendas Perdidas. La cita de la fuente es un crédito neutral y no implica relación, colaboración ni aprobación por parte del titular de los datos. Los datos oficiales se ofrecen «tal cual» y «según disponibilidad», sin garantías.
+
 ## Fotos de la comunidad y moderación previa
 
 Cuando Street View no muestra bien la fachada, cualquier persona puede enviar una foto desde la ficha del inmueble. El flujo es de aprobación previa obligatoria:

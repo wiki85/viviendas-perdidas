@@ -3,6 +3,7 @@ import {
   Calculator,
   ExternalLink,
   HeartHandshake,
+  Landmark,
   Scale,
   ShieldCheck,
 } from 'lucide-react';
@@ -97,6 +98,55 @@ export function MethodologyPage({ onClose }: Props) {
             automáticamente, y las fotos pasan por una revisión humana previa; además, al
             prepararlas se eliminan sus metadatos (como la ubicación GPS de tu cámara).
           </p>
+        </section>
+
+        <section className="about-page__section">
+          <h2>
+            <Landmark size={20} aria-hidden="true" /> Fuentes de datos y licencia
+          </h2>
+          <p>
+            El mapa combina dos fuentes que <strong>nunca se mezclan en un mismo contador</strong>:
+            los registros <strong>vecinales</strong> que aporta la ciudadanía y, cuando activas la
+            fuente <strong>oficial</strong>, el registro público de viviendas de uso turístico de
+            Andalucía.
+          </p>
+          <p>
+            Los datos oficiales proceden de{' '}
+            <strong>«OpenRTA — Registro de Turismo de Andalucía»</strong> de la{' '}
+            <strong>Junta de Andalucía</strong> (Registro de Turismo de Andalucía, RTA), publicados
+            en su portal de datos abiertos y catalogados en datos.gob.es. Se distribuyen bajo la
+            licencia{' '}
+            <a
+              className="text-link"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Creative Commons Reconocimiento 4.0 Internacional (CC BY 4.0){' '}
+              <ExternalLink size={15} />
+            </a>
+            .
+          </p>
+          <p>
+            <strong>Modificaciones que aplicamos</strong> (la licencia obliga a indicarlas): se
+            filtran a viviendas de uso turístico publicadas en el RTA abierto, se reproyectan las
+            coordenadas de UTM (ETRS89 / UTM 30N, EPSG:25830) a latitud/longitud (WGS84) y se
+            calculan estadísticas agregadas por municipio. Solo se refleja un subconjunto de
+            municipios andaluces.
+          </p>
+          <p>
+            <strong>La Junta de Andalucía no respalda ni avala este proyecto</strong>: la cita es un
+            crédito neutral de la fuente y no implica relación ni aprobación alguna. Los datos
+            oficiales se ofrecen «tal cual», sin garantías.
+          </p>
+          <a
+            className="text-link"
+            href="https://datos.gob.es/es/catalogo/a01002820-openrta"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver el conjunto de datos OpenRTA en datos.gob.es <ExternalLink size={15} />
+          </a>
         </section>
 
         <section className="about-page__section">
