@@ -8,7 +8,10 @@ import type {
   LatLng,
   Listing,
   MapBounds,
+  OfficialPin,
+  OfficialStats,
   SearchPlace,
+  SourceMode,
   VoteKind,
 } from './domain/types';
 import { AboutPage } from './components/AboutPage';
@@ -160,6 +163,9 @@ export default function App() {
   const [donateOpen, setDonateOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingImpact, setPendingImpact] = useState<PendingImpact | null>(null);
+  const [sourceMode, setSourceMode] = useState<SourceMode>('citizens');
+  const [officialStatsList, setOfficialStatsList] = useState<OfficialStats[] | null>(null);
+  const [officialPins, setOfficialPins] = useState<OfficialPin[]>([]);
   const resolvedScope = useVisibleScope(center, zoom, cityHint);
   const {
     aggregate,
@@ -167,6 +173,45 @@ export default function App() {
     error: aggregateError,
   } = useAggregate(service, resolvedScope.scope);
   const listingState = useListingsInBounds(service, bounds, service.mode === 'demo' || zoom >= 8);
+
+  // Official registry data (OpenRTA mirror) loads lazily, on first opt-in.
+  useEffect(() => {
+    if (sourceMode === 'citizens' || officialStatsList !== null || service.mode !== 'firebase') {
+      return;
+    }
+    let active = true;
+    service
+      .listOfficialStats()
+      .then((stats) => {
+        if (active) setOfficialStatsList(stats);
+      })
+      .catch(() => {
+        if (active) setOfficialStatsList([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [officialStatsList, service, sourceMode]);
+
+  useEffect(() => {
+    if (sourceMode === 'citizens' || zoom < 14 || service.mode !== 'firebase') {
+      setOfficialPins([]);
+      return;
+    }
+    let active = true;
+    const timeout = window.setTimeout(() => {
+      service
+        .listOfficialInBounds(bounds)
+        .then((pins) => {
+          if (active) setOfficialPins(pins);
+        })
+        .catch(() => undefined);
+    }, 350);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [bounds, service, sourceMode, zoom]);
   const selectedListing =
     listingState.listings.find((listing) => listing.id === selectedId) ??
     (selectedFallback?.id === selectedId ? selectedFallback : null);
@@ -203,6 +248,31 @@ export default function App() {
       updatedAt: null,
     };
   }, [bounds, listingState.error, listingState.listings, resolvedScope.scope, viewportMode]);
+  const officialScopeStats = useMemo<OfficialStats | null>(() => {
+    if (!officialStatsList || officialStatsList.length === 0) return null;
+    const cityId = resolvedScope.scope.cityId;
+    if (cityId) return officialStatsList.find((stats) => stats.cityId === cityId) ?? null;
+    // Country view: aggregate every mirrored municipality.
+    return officialStatsList.reduce<OfficialStats>(
+      (accumulator, stats) => ({
+        ...accumulator,
+        total: accumulator.total + stats.total,
+        entireHomes: accumulator.entireHomes + stats.entireHomes,
+        roomsOnly: accumulator.roomsOnly + stats.roomsOnly,
+        places: accumulator.places + stats.places,
+      }),
+      {
+        cityId: 'andalucia',
+        municipality: 'Andalucía',
+        total: 0,
+        entireHomes: 0,
+        roomsOnly: 0,
+        places: 0,
+        updatedAt: null,
+      },
+    );
+  }, [officialStatsList, resolvedScope.scope.cityId]);
+
   const displayedAggregate = useMemo(() => {
     if (viewportAggregate) return viewportAggregate;
     if (
@@ -588,6 +658,10 @@ export default function App() {
             : aggregateLoading || resolvedScope.loading
         }
         mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
+        sourceMode={sourceMode}
+        onSourceModeChange={setSourceMode}
+        officialStats={officialScopeStats}
+        sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
         onOpenDonate={() => setDonateOpen(true)}
@@ -598,7 +672,8 @@ export default function App() {
           center={center}
           zoom={zoom}
           bounds={bounds}
-          listings={listingState.listings}
+          listings={sourceMode === 'official' ? [] : listingState.listings}
+          officialPins={sourceMode === 'citizens' ? [] : officialPins}
           selectedId={selectedId}
           activeNeighborhood={resolvedScope.activeNeighborhood}
           placementMode={placementMode}

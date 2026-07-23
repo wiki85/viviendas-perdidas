@@ -3,6 +3,7 @@ import type { CityDefinition, LatLng } from '../domain/types';
 export const HOUSEHOLD_SIZE = 2.5;
 export const NEIGHBORHOOD_ZOOM = 14;
 export const MAX_LISTINGS_PER_VIEW = 500;
+export const MAX_OFFICIAL_PINS = 400;
 export const SPAIN_CENTER: LatLng = { lat: 40.2085, lng: -3.713 };
 export const SPAIN_ZOOM = 5.6;
 

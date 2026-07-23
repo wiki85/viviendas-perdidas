@@ -1,5 +1,11 @@
 import { lazy, Suspense } from 'react';
-import type { LatLng, Listing, MapBounds, NeighborhoodFeature } from '../../domain/types';
+import type {
+  LatLng,
+  Listing,
+  MapBounds,
+  NeighborhoodFeature,
+  OfficialPin,
+} from '../../domain/types';
 import { appConfig } from '../../lib/config';
 import { DemoMap } from './DemoMap';
 
@@ -10,6 +16,8 @@ export type MapStageProps = {
   zoom: number;
   bounds: MapBounds;
   listings: Listing[];
+  /** Official registry pins (OpenRTA layer), already filtered by source mode. */
+  officialPins: OfficialPin[];
   selectedId: string | null;
   // Only for the demo map's watermark label; polygons are no longer drawn
   // (the bundled boundaries are placeholder rectangles, not real limits).

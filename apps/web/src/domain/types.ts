@@ -48,9 +48,36 @@ export type Listing = {
   reports: number;
   /** Facade photo contributed by the community and approved by moderation. */
   photo?: { url: string } | null;
+  /** Match against the official tourism registry (OpenRTA). */
+  officialMatch?: {
+    registrationCode: string;
+    addressText?: string;
+    reviewStatus: 'pending' | 'reviewed';
+  } | null;
+  /** The declared licence exists in the official registry. */
+  licenseVerified?: boolean;
   createdAt: string;
   updatedAt: string;
 };
+
+export type OfficialStats = {
+  cityId: string;
+  municipality: string;
+  total: number;
+  entireHomes: number;
+  roomsOnly: number;
+  places: number;
+  updatedAt: string | null;
+};
+
+export type OfficialPin = {
+  id: string;
+  location: LatLng;
+  registrationCode: string;
+  name: string;
+};
+
+export type SourceMode = 'citizens' | 'official' | 'both';
 
 export type Aggregate = {
   scopeId: string;
@@ -129,6 +156,14 @@ export type CreateListingInput = {
   /** Panorama previewed by the user, so the server stores exactly what they saw. */
   streetViewPanoId?: string;
   duplicateAcknowledged?: boolean;
+  officialMatchAcknowledged?: boolean;
+};
+
+export type OfficialMatchSummary = {
+  registrationCode: string;
+  addressText: string;
+  places: number;
+  entire: boolean;
 };
 
 export type DuplicateSummary = Partial<Listing> & {
@@ -149,6 +184,12 @@ export type CreateListingResult =
       reason: 'possible_duplicate';
       canCreate: boolean;
       duplicates: DuplicateSummary[];
+    }
+  | {
+      created: false;
+      reason: 'official_match';
+      canCreate: boolean;
+      official: OfficialMatchSummary;
     };
 
 export type VoteResult = {
@@ -199,7 +240,11 @@ export interface ListingsService {
     imageBase64: string,
     deviceFingerprintHash: string,
   ): Promise<void>;
+  listOfficialStats(): Promise<OfficialStats[]>;
+  listOfficialInBounds(bounds: MapBounds): Promise<OfficialPin[]>;
   adminSignIn(): Promise<{ email: string; moderator: boolean }>;
+  adminResolveOfficialMatch(listingId: string): Promise<void>;
+  adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;
   listPendingPhotos(): Promise<PendingPhoto[]>;
   getPendingPhotoImage(photoId: string): Promise<string>;
   reviewListingPhoto(photoId: string, decision: PhotoDecision): Promise<void>;

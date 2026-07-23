@@ -1,5 +1,14 @@
-import { CircleHelp, Coffee, House, MapPinned, Share2, Store, UsersRound } from 'lucide-react';
-import type { Aggregate, SearchPlace } from '../domain/types';
+import {
+  CircleHelp,
+  Coffee,
+  House,
+  Landmark,
+  MapPinned,
+  Share2,
+  Store,
+  UsersRound,
+} from 'lucide-react';
+import type { Aggregate, OfficialStats, SearchPlace, SourceMode } from '../domain/types';
 import { useCountUp } from '../hooks/use-count-up';
 import { formatInteger } from '../lib/impact';
 import { BrandMark } from './BrandMark';
@@ -10,10 +19,21 @@ type Props = {
   viewportMode: boolean;
   loading: boolean;
   mapsEnabled: boolean;
+  sourceMode: SourceMode;
+  onSourceModeChange: (mode: SourceMode) => void;
+  /** Official registry stats for the visible scope's city (null outside Andalucía). */
+  officialStats: OfficialStats | null;
+  sourceToggleAvailable: boolean;
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
   onOpenDonate: () => void;
   onShare: () => void;
+};
+
+const SOURCE_LABELS: Record<SourceMode, string> = {
+  citizens: 'Vecinal',
+  official: 'Oficial',
+  both: 'Ambas',
 };
 
 function Metric({ value, label, icon }: { value: number; label: string; icon: React.ReactNode }) {
@@ -34,6 +54,10 @@ export function TopBar({
   viewportMode,
   loading,
   mapsEnabled,
+  sourceMode,
+  onSourceModeChange,
+  officialStats,
+  sourceToggleAvailable,
   onSelectPlace,
   onOpenAbout,
   onOpenDonate,
@@ -88,19 +112,55 @@ export function TopBar({
         </span>
         {loading && <span className="scope-line__pulse" aria-label="Actualizando" />}
       </div>
-      <div className="metrics" aria-label={`Impacto estimado en ${aggregate.name}`}>
-        <Metric value={aggregate.lostDwellings} label="viviendas" icon={<House size={16} />} />
-        <Metric
-          value={aggregate.lostInhabitants}
-          label="habitantes"
-          icon={<UsersRound size={17} />}
-        />
-        <Metric value={aggregate.lostCommercial} label="locales" icon={<Store size={16} />} />
-      </div>
-      <p className="topbar__records">
-        <span>{formatInteger(aggregate.listingsCount)}</span>{' '}
-        {aggregate.listingsCount === 1 ? 'registro colaborativo' : 'registros colaborativos'}
-      </p>
+      {sourceToggleAvailable && (
+        <div className="source-toggle" role="radiogroup" aria-label="Fuente de datos">
+          {(['citizens', 'official', 'both'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              role="radio"
+              aria-checked={sourceMode === mode}
+              className={sourceMode === mode ? 'is-selected' : ''}
+              onClick={() => onSourceModeChange(mode)}
+            >
+              {SOURCE_LABELS[mode]}
+            </button>
+          ))}
+        </div>
+      )}
+      {sourceMode !== 'official' && (
+        <>
+          <div className="metrics" aria-label={`Impacto estimado en ${aggregate.name}`}>
+            <Metric value={aggregate.lostDwellings} label="viviendas" icon={<House size={16} />} />
+            <Metric
+              value={aggregate.lostInhabitants}
+              label="habitantes"
+              icon={<UsersRound size={17} />}
+            />
+            <Metric value={aggregate.lostCommercial} label="locales" icon={<Store size={16} />} />
+          </div>
+          <p className="topbar__records">
+            <span>{formatInteger(aggregate.listingsCount)}</span>{' '}
+            {aggregate.listingsCount === 1 ? 'registro colaborativo' : 'registros colaborativos'}
+          </p>
+        </>
+      )}
+      {sourceMode !== 'citizens' && (
+        <p className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}>
+          <Landmark size={15} aria-hidden="true" />
+          {officialStats ? (
+            <span>
+              Registro oficial (RTA): <strong>{formatInteger(officialStats.entireHomes)}</strong>{' '}
+              viviendas turísticas completas en {officialStats.municipality.toLocaleLowerCase('es')}
+              {officialStats.roomsOnly > 0
+                ? ` (+${formatInteger(officialStats.roomsOnly)} por habitaciones)`
+                : ''}
+            </span>
+          ) : (
+            <span>Sin datos oficiales para esta zona (disponibles en Andalucía).</span>
+          )}
+        </p>
+      )}
     </header>
   );
 }

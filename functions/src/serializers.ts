@@ -34,6 +34,8 @@ export function serializeListing(id: string, listing: ListingData): Record<strin
     status: listing.status,
     confirmations: listing.confirmations,
     reports: listing.reports,
+    officialMatch: listing.officialMatch ?? null,
+    licenseVerified: listing.licenseVerified === true,
     photo: listing.photo?.url ? { url: listing.photo.url } : null,
     createdAt: listing.createdAt.toDate().toISOString(),
     updatedAt: listing.updatedAt.toDate().toISOString(),

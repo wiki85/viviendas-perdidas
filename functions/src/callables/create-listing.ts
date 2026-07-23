@@ -12,6 +12,11 @@ import { createListingSchema, type CreateListingInput } from '../schemas.js';
 import { googleMapsServerApiKey } from '../secrets.js';
 import { serializeDuplicate, serializeListing } from '../serializers.js';
 import { findDuplicateCandidates } from '../services/duplicates.js';
+import {
+  findOfficialVutMatch,
+  licenseExistsInRta,
+  type OfficialVutMatch,
+} from '../services/official-match.js';
 import { GeocodingError, geocodeInSpain, type GeocodingInput } from '../services/geocoding.js';
 import { resolveNeighborhood } from '../services/geo.js';
 import { describeCaughtError, recordClientError } from '../services/error-log.js';
@@ -33,7 +38,14 @@ interface CreatedResponse {
   warnings: Record<string, unknown>[];
 }
 
-type CreateListingResponse = DuplicateResponse | CreatedResponse;
+interface OfficialMatchResponse {
+  created: false;
+  reason: 'official_match';
+  canCreate: boolean;
+  official: OfficialVutMatch;
+}
+
+type CreateListingResponse = DuplicateResponse | OfficialMatchResponse | CreatedResponse;
 
 class PortalAlreadyHasBuildingError extends Error {
   constructor(public readonly listingId: string) {
@@ -174,6 +186,23 @@ export const createListing = onCall(
         return duplicateResponse(duplicates.possible, true);
       }
 
+      // Cross-check against the mirrored official registry (OpenRTA): homes
+      // and buildings only — converted commercial premises are out of scope.
+      const officialMatch =
+        input.type === 'commercial' ? null : await findOfficialVutMatch(cityId, geocoded.address);
+      if (officialMatch !== null && input.officialMatchAcknowledged !== true) {
+        return {
+          created: false as const,
+          reason: 'official_match' as const,
+          canCreate: true,
+          official: officialMatch,
+        };
+      }
+      const licenseVerified =
+        input.evidence?.licenseNumber !== undefined && input.evidence.licenseNumber !== null
+          ? await licenseExistsInRta(input.evidence.licenseNumber)
+          : false;
+
       const streetView = await resolveStreetView(
         location,
         input.streetViewHeading ?? null,
@@ -207,6 +236,15 @@ export const createListing = onCall(
         cityId,
         streetView,
         evidence: normalizedEvidence(input),
+        officialMatch:
+          officialMatch !== null
+            ? {
+                registrationCode: officialMatch.registrationCode,
+                addressText: officialMatch.addressText,
+                reviewStatus: 'pending',
+              }
+            : null,
+        licenseVerified,
         status: 'active',
         confirmations: 0,
         reports: 0,

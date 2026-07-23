@@ -7,6 +7,7 @@ import { photoRejectionReason } from '../domain/photos.js';
 import { db, storageBucket } from '../firebase.js';
 import {
   adminDeleteListingSchema,
+  adminResolveOfficialMatchSchema,
   adminSetListingPhotoSchema,
   adminUpdateListingSchema,
 } from '../schemas.js';
@@ -98,6 +99,28 @@ export const adminUpdateListing = onCall(
     });
     logger.info('Admin updated listing', { listingId: input.listingId, moderator });
     return { updated: true };
+  },
+);
+
+export const adminResolveOfficialMatch = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
+  async (request) => {
+    const moderator = requireModerator(request);
+    const parsed = adminResolveOfficialMatchSchema.safeParse(request.data as unknown);
+    if (!parsed.success) throw invalidPayload(parsed.error);
+    const reference = db.collection('listings').doc(parsed.data.listingId);
+    await db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(reference);
+      if (!snapshot.exists) throw new HttpsError('not-found', 'El registro no existe.');
+      const officialMatch = snapshot.get('officialMatch') as { registrationCode?: string } | null;
+      if (!officialMatch) throw new HttpsError('failed-precondition', 'Sin coincidencia oficial.');
+      transaction.update(reference, {
+        'officialMatch.reviewStatus': 'reviewed',
+        updatedAt: Timestamp.now(),
+      });
+    });
+    logger.info('Admin resolved official match', { listingId: parsed.data.listingId, moderator });
+    return { resolved: true };
   },
 );
 

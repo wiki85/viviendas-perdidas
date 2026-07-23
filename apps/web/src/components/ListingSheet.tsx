@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Building2,
   CalendarDays,
+  BadgeCheck,
   Check,
   Flag,
   House,
   ImageOff,
+  Landmark,
   MapPin,
   ShieldAlert,
   Store,
@@ -193,6 +195,17 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
                 {listing.commercialUnitsCount === 1
                   ? 'local comercial eliminado'
                   : 'locales comerciales eliminados'}
+              </span>
+            )}
+            {listing.licenseVerified && (
+              <span className="listing-verified">
+                <BadgeCheck size={15} /> Licencia verificada en el registro oficial
+              </span>
+            )}
+            {listing.officialMatch && (
+              <span className="listing-verified">
+                <Landmark size={15} /> Figura en el registro oficial de turismo (
+                {listing.officialMatch.registrationCode})
               </span>
             )}
             {listing.evidence.licenseNumber && (

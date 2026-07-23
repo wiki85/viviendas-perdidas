@@ -62,6 +62,7 @@ export const createListingSchema = z
       .nullable()
       .optional(),
     duplicateAcknowledged: z.boolean().optional(),
+    officialMatchAcknowledged: z.boolean().optional(),
   })
   .strict()
   .superRefine((input, context) => {
@@ -195,6 +196,8 @@ export const adminUpdateListingSchema = z
   });
 
 export const adminDeleteListingSchema = z.object({ listingId: firestoreIdSchema }).strict();
+
+export const adminResolveOfficialMatchSchema = z.object({ listingId: firestoreIdSchema }).strict();
 
 export const adminSetListingPhotoSchema = z
   .object({

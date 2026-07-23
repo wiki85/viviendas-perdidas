@@ -9,6 +9,7 @@ import {
   House,
   ImageOff,
   Info,
+  Landmark,
   LoaderCircle,
   LocateFixed,
   MapPin,
@@ -322,7 +323,10 @@ export function RegisterWizard({
           ? noteValidation.valid && licenseValidation.valid
           : true;
 
-  const payload = (duplicateAcknowledged = false): CreateListingInput => {
+  const payload = (
+    duplicateAcknowledged = false,
+    officialMatchAcknowledged = false,
+  ): CreateListingInput => {
     if (!location) throw new Error('Selecciona una ubicación.');
     return {
       type,
@@ -347,15 +351,16 @@ export function RegisterWizard({
       streetViewHeading: metadata.available ? heading : null,
       ...(metadata.available && metadata.panoId ? { streetViewPanoId: metadata.panoId } : {}),
       duplicateAcknowledged,
+      ...(officialMatchAcknowledged ? { officialMatchAcknowledged: true } : {}),
     };
   };
 
-  const submit = async (duplicateAcknowledged = false) => {
+  const submit = async (duplicateAcknowledged = false, officialMatchAcknowledged = false) => {
     setSubmitting(true);
     setError(null);
     try {
       const result = await onCreate(
-        payload(duplicateAcknowledged),
+        payload(duplicateAcknowledged, officialMatchAcknowledged),
         photoBase64 && photoConsent ? photoBase64 : null,
       );
       if (!result.created) setDuplicateResult(result);
@@ -366,7 +371,61 @@ export function RegisterWizard({
     }
   };
 
-  if (duplicateResult) {
+  if (duplicateResult?.reason === 'official_match') {
+    const official = duplicateResult.official;
+    return (
+      <div className="sheet-layer sheet-layer--wizard">
+        <section
+          className="bottom-sheet register-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="official-title"
+        >
+          <span className="sheet-handle" aria-hidden="true" />
+          <button
+            ref={closeButton}
+            className="sheet-close"
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            <X size={20} />
+          </button>
+          <div className="wizard-result">
+            <span className="wizard-result__icon">
+              <Landmark size={28} />
+            </span>
+            <p className="eyebrow">Registro oficial</p>
+            <h2 id="official-title">Esta dirección figura en el registro oficial de turismo</h2>
+            <div className="duplicate-card">
+              <strong>{official.registrationCode}</strong>
+              <span>{official.addressText}</span>
+              {official.places > 0 && <span>{official.places} plazas · Junta de Andalucía</span>}
+            </div>
+            <p>
+              La Junta de Andalucía ya tiene una vivienda de uso turístico registrada aquí. Puedes
+              añadir tu registro igualmente (quedará marcado para revisión) o cancelar si prefieres
+              no duplicar la información.
+            </p>
+            <button
+              className="button button--primary"
+              type="button"
+              disabled={submitting}
+              onClick={() => void submit(true, true)}
+            >
+              {submitting ? <LoaderCircle className="spin" size={18} /> : <Check size={18} />}
+              Registrarlo igualmente
+            </button>
+            <button className="button button--ghost" type="button" onClick={onClose}>
+              No registrarlo
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (duplicateResult && duplicateResult.reason === 'possible_duplicate') {
     const duplicate = duplicateResult.duplicates[0];
     return (
       <div className="sheet-layer sheet-layer--wizard">

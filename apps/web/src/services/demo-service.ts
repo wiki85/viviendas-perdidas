@@ -5,6 +5,8 @@ import type {
   Listing,
   ListingsService,
   MapBounds,
+  OfficialPin,
+  OfficialStats,
   PendingPhoto,
   PhotoDecision,
   Unsubscribe,
@@ -228,6 +230,26 @@ export class DemoListingsService implements ListingsService {
       createdAt: new Date().toISOString(),
       imageDataUrl: `data:image/jpeg;base64,${imageBase64}`,
     });
+  }
+
+  async listOfficialStats(): Promise<OfficialStats[]> {
+    return [];
+  }
+
+  async listOfficialInBounds(): Promise<OfficialPin[]> {
+    return [];
+  }
+
+  async adminResolveOfficialMatch(listingId: string): Promise<void> {
+    const listing = this.listings.find((candidate) => candidate.id === listingId);
+    if (listing?.officialMatch) {
+      listing.officialMatch = { ...listing.officialMatch, reviewStatus: 'reviewed' };
+      this.emit();
+    }
+  }
+
+  async adminSyncOfficialData(): Promise<{ municipalities: number; records: number }> {
+    return { municipalities: 0, records: 0 };
   }
 
   async adminSignIn(): Promise<{ email: string; moderator: boolean }> {

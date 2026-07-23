@@ -15,6 +15,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Mirror of the public OpenRTA registry (Junta de Andalucía): read-only
+    // public data, written exclusively by the sync function.
+    match /officialVut/{recordId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /officialStats/{cityId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Votes, rate-limit buckets, and every future internal collection are
     // server-only. Admin SDK writes from Cloud Functions bypass these rules.
     match /votes/{voteId} {

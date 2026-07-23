@@ -34,6 +34,8 @@ import type {
   Listing,
   ListingsService,
   MapBounds,
+  OfficialPin,
+  OfficialStats,
   PendingPhoto,
   PhotoDecision,
   Unsubscribe,
@@ -43,7 +45,7 @@ import type {
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { distanceMeters, listingIsInBounds } from '../lib/geo';
-import { MAX_LISTINGS_PER_VIEW } from '../lib/constants';
+import { MAX_LISTINGS_PER_VIEW, MAX_OFFICIAL_PINS } from '../lib/constants';
 
 function toIsoString(value: unknown) {
   if (value && typeof value === 'object' && 'toDate' in value) {
@@ -112,6 +114,22 @@ export function normalizeListing(id: string, raw: DocumentData): Listing {
       raw.photo && typeof (raw.photo as { url?: unknown }).url === 'string'
         ? { url: (raw.photo as { url: string }).url }
         : null,
+    officialMatch:
+      raw.officialMatch &&
+      typeof (raw.officialMatch as { registrationCode?: unknown }).registrationCode === 'string'
+        ? {
+            registrationCode: (raw.officialMatch as { registrationCode: string }).registrationCode,
+            addressText:
+              typeof (raw.officialMatch as { addressText?: unknown }).addressText === 'string'
+                ? (raw.officialMatch as { addressText: string }).addressText
+                : undefined,
+            reviewStatus:
+              (raw.officialMatch as { reviewStatus?: unknown }).reviewStatus === 'reviewed'
+                ? 'reviewed'
+                : 'pending',
+          }
+        : null,
+    licenseVerified: raw.licenseVerified === true,
     createdAt: toIsoString(raw.createdAt),
     updatedAt: toIsoString(raw.updatedAt),
   };
@@ -270,6 +288,76 @@ export class FirebaseListingsService implements ListingsService {
       { queued: boolean }
     >(this.functions, 'submitListingPhoto');
     await callable({ listingId, imageBase64, deviceFingerprintHash });
+  }
+
+  async listOfficialStats(): Promise<OfficialStats[]> {
+    const snapshot = await getDocs(collection(this.db, 'officialStats'));
+    return snapshot.docs.map((document) => {
+      const data = document.data();
+      return {
+        cityId: document.id,
+        municipality: typeof data.municipality === 'string' ? data.municipality : document.id,
+        total: typeof data.total === 'number' ? data.total : 0,
+        entireHomes: typeof data.entireHomes === 'number' ? data.entireHomes : 0,
+        roomsOnly: typeof data.roomsOnly === 'number' ? data.roomsOnly : 0,
+        places: typeof data.places === 'number' ? data.places : 0,
+        updatedAt: data.updatedAt ? toIsoString(data.updatedAt) : null,
+      };
+    });
+  }
+
+  async listOfficialInBounds(bounds: MapBounds): Promise<OfficialPin[]> {
+    const center = {
+      lat: (bounds.north + bounds.south) / 2,
+      lng: (bounds.east + bounds.west) / 2,
+    };
+    const corner = { lat: bounds.north, lng: bounds.east };
+    const radius = Math.max(100, distanceMeters(center, corner));
+    const ranges = geohashQueryBounds([center.lat, center.lng], radius);
+    const perRange = Math.max(50, Math.ceil(MAX_OFFICIAL_PINS / Math.max(1, ranges.length)));
+    const snapshots = await Promise.all(
+      ranges.map(([start, end]) =>
+        getDocs(
+          query(
+            collection(this.db, 'officialVut'),
+            orderBy('geohash'),
+            startAt(start),
+            endAt(end),
+            limit(perRange),
+          ),
+        ),
+      ),
+    );
+    const merged = new Map<string, OfficialPin>();
+    for (const snapshot of snapshots) {
+      for (const document of snapshot.docs) {
+        const data = document.data();
+        if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') continue;
+        const location = { lat: data.latitude, lng: data.longitude };
+        if (!listingIsInBounds(location, bounds)) continue;
+        merged.set(document.id, {
+          id: document.id,
+          location,
+          registrationCode: typeof data.registrationCode === 'string' ? data.registrationCode : '',
+          name: typeof data.name === 'string' ? data.name : '',
+        });
+      }
+    }
+    return Array.from(merged.values()).slice(0, MAX_OFFICIAL_PINS);
+  }
+
+  async adminResolveOfficialMatch(listingId: string): Promise<void> {
+    const callable = httpsCallable(this.functions, 'adminResolveOfficialMatch');
+    await callable({ listingId });
+  }
+
+  async adminSyncOfficialData(): Promise<{ municipalities: number; records: number }> {
+    const callable = httpsCallable<
+      Record<string, never>,
+      { municipalities: number; records: number }
+    >(this.functions, 'adminSyncOfficialData');
+    const response = await callable({});
+    return response.data;
   }
 
   async adminSignIn(): Promise<{ email: string; moderator: boolean }> {

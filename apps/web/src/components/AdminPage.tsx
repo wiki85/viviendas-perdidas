@@ -4,6 +4,7 @@ import {
   Camera,
   Check,
   ImageOff,
+  Landmark,
   LoaderCircle,
   LogIn,
   RefreshCw,
@@ -71,6 +72,8 @@ export function AdminPage({ service, onClose }: Props) {
   const [listings, setListings] = useState<Listing[] | null>(null);
   const [filter, setFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [onlyOfficialMatches, setOnlyOfficialMatches] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
   const [drafts, setDrafts] = useState<
     Record<string, { type: ListingType; dwellings: number; locales: number }>
@@ -225,6 +228,41 @@ export function AdminPage({ service, onClose }: Props) {
     }
   };
 
+  const resolveOfficialMatch = async (listing: Listing) => {
+    setBusyId(listing.id);
+    setError(null);
+    try {
+      await service.adminResolveOfficialMatch(listing.id);
+      setListings(
+        (current) =>
+          current?.map((entry) =>
+            entry.id === listing.id && entry.officialMatch
+              ? { ...entry, officialMatch: { ...entry.officialMatch, reviewStatus: 'reviewed' } }
+              : entry,
+          ) ?? null,
+      );
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const syncOfficialData = async () => {
+    setSyncing(true);
+    setError(null);
+    try {
+      const summary = await service.adminSyncOfficialData();
+      setError(
+        `Sincronización completada: ${summary.records.toLocaleString('es-ES')} registros oficiales en ${summary.municipalities} municipios.`,
+      );
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const deleteListing = async (listing: Listing) => {
     const confirmed = window.confirm(
       `¿Eliminar el registro de ${listing.address.formatted}? Los contadores se revertirán y dejará de mostrarse en el mapa.`,
@@ -297,6 +335,7 @@ export function AdminPage({ service, onClose }: Props) {
 
   const filteredListings = (listings ?? []).filter((listing) => {
     if (cityFilter && (listing.cityId || listing.address.locality) !== cityFilter) return false;
+    if (onlyOfficialMatches && listing.officialMatch?.reviewStatus !== 'pending') return false;
     const needle = filter.trim().toLocaleLowerCase('es');
     if (!needle) return true;
     return (
@@ -304,6 +343,9 @@ export function AdminPage({ service, onClose }: Props) {
       listing.address.postalCode.startsWith(needle)
     );
   });
+  const pendingOfficialCount = (listings ?? []).filter(
+    (listing) => listing.officialMatch?.reviewStatus === 'pending',
+  ).length;
 
   return (
     <main className="admin-page">
@@ -496,6 +538,28 @@ export function AdminPage({ service, onClose }: Props) {
                   onChange={(event) => setFilter(event.target.value)}
                 />
               </div>
+              <div className="admin-official-bar">
+                <label className="admin-official-toggle">
+                  <input
+                    type="checkbox"
+                    checked={onlyOfficialMatches}
+                    onChange={(event) => setOnlyOfficialMatches(event.target.checked)}
+                  />
+                  Solo posibles duplicados oficiales
+                  {pendingOfficialCount > 0 && (
+                    <span className="admin-official-count">{pendingOfficialCount}</span>
+                  )}
+                </label>
+                <button
+                  className="button button--ghost"
+                  type="button"
+                  disabled={syncing}
+                  onClick={() => void syncOfficialData()}
+                >
+                  {syncing ? <LoaderCircle className="spin" size={16} /> : <Landmark size={16} />}
+                  Sincronizar registro oficial
+                </button>
+              </div>
               <input
                 ref={fileInput}
                 type="file"
@@ -535,6 +599,12 @@ export function AdminPage({ service, onClose }: Props) {
                           )}
                           <div>
                             <strong>{listing.address.formatted}</strong>
+                            {listing.officialMatch?.reviewStatus === 'pending' && (
+                              <span className="admin-official-flag">
+                                <Landmark size={13} /> Posible duplicado oficial (
+                                {listing.officialMatch.registrationCode})
+                              </span>
+                            )}
                             <small>
                               {typeLabel(listing.type)} ·{' '}
                               {listing.type === 'commercial'
@@ -645,6 +715,16 @@ export function AdminPage({ service, onClose }: Props) {
                                   onClick={() => void removePhoto(listing)}
                                 >
                                   <ImageOff size={16} /> Quitar foto
+                                </button>
+                              )}
+                              {listing.officialMatch?.reviewStatus === 'pending' && (
+                                <button
+                                  className="button button--ghost"
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => void resolveOfficialMatch(listing)}
+                                >
+                                  <Check size={16} /> Marcar revisado
                                 </button>
                               )}
                               <button

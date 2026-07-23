@@ -46,6 +46,14 @@ export interface ListingData {
   status: ListingStatus;
   confirmations: number;
   reports: number;
+  /** Match against the official tourism registry (OpenRTA), for moderation. */
+  officialMatch?: {
+    registrationCode: string;
+    addressText: string;
+    reviewStatus: 'pending' | 'reviewed';
+  } | null;
+  /** The declared licence exists in the mirrored official registry. */
+  licenseVerified?: boolean;
   photo?: { url: string; approvedAt: Timestamp } | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;

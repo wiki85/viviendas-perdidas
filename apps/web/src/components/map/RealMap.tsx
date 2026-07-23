@@ -7,11 +7,35 @@ import {
   useMap,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
-import type { Listing } from '../../domain/types';
+import type { Listing, OfficialPin } from '../../domain/types';
 import { MAP_STYLE } from '../../lib/constants';
 import type { MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
+
+function OfficialLayer({ pins }: { pins: OfficialPin[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map || pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
+    const markers = pins.map((pin) => {
+      const content = document.createElement('span');
+      content.className = 'map-marker--official';
+      content.title = `${pin.registrationCode} · Registro oficial (RTA)`;
+      return new google.maps.marker.AdvancedMarkerElement({
+        map,
+        position: pin.location,
+        content,
+        zIndex: 1,
+      });
+    });
+    return () => {
+      markers.forEach((marker) => {
+        marker.map = null;
+      });
+    };
+  }, [map, pins]);
+  return null;
+}
 
 function MarkerLayer({
   listings,
@@ -83,6 +107,7 @@ function MapContent(props: RealMapProps) {
           if (props.placementMode && event.detail.latLng) props.onPickLocation(event.detail.latLng);
         }}
       >
+        <OfficialLayer pins={props.officialPins} />
         <MarkerLayer
           listings={props.listings}
           selectedId={props.selectedId}
