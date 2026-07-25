@@ -137,9 +137,12 @@ export function MethodologyPage({ onClose }: Props) {
             filtran a viviendas de uso turístico publicadas en el RTA abierto, se reproyectan las
             coordenadas de UTM (ETRS89 / UTM 30N, EPSG:25830) a latitud/longitud (WGS84), se
             calculan estadísticas agregadas por municipio y se agrupan las viviendas en celdas
-            geográficas (geohash) para dibujarlas y contarlas según el nivel de zoom. Solo se
-            refleja un subconjunto de municipios andaluces; el pequeño porcentaje de registros
-            publicados sin coordenadas (&lt;1%) no puede dibujarse ni contarse en el mapa.
+            geográficas (geohash) para dibujarlas y contarlas según el nivel de zoom. Las
+            coordenadas de origen manifiestamente erróneas (algunas fichas del RTA vienen tecleadas
+            a cientos de km de su municipio) se descartan y se recolocan geocodificando la dirección
+            publicada. Solo se refleja un subconjunto de municipios andaluces; el pequeño porcentaje
+            de registros que no puede ubicarse con precisión de calle no se dibuja ni se cuenta en
+            el mapa.
           </p>
           <p>
             <strong>La Junta de Andalucía no respalda ni avala este proyecto</strong>: la cita es un

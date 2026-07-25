@@ -162,7 +162,10 @@ export function TopBar({
             {official && official.total > 0 ? (
               <span>
                 Registro oficial (RTA): <strong>{formatInteger(official.entireHomes)}</strong>{' '}
-                viviendas turísticas completas en la zona visible
+                {official.entireHomes === 1
+                  ? 'vivienda turística completa'
+                  : 'viviendas turísticas completas'}{' '}
+                en la zona visible
                 {official.roomsOnly > 0
                   ? ` (+${formatInteger(official.roomsOnly)} por habitaciones)`
                   : ''}

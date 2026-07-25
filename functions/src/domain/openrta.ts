@@ -1,5 +1,6 @@
 import proj4 from 'proj4';
 import { normalizeStreet, normalizeStreetNumber, slugifyCity } from './address.js';
+import { distanceMeters } from './geo.js';
 
 /** ETRS89 / UTM zone 30N, the SRID OpenRTA publishes coordinates in. */
 const EPSG_25830 = '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
@@ -41,6 +42,57 @@ export function extractStreetNumber(addressText: string): string {
   return match?.[1] ?? '';
 }
 
+/**
+ * 'CALLE X Nº 8 Plta/Piso 2 Pta/Letra G' → 'CALLE X Nº 8'. Floor and door
+ * noise degrades Geocoding API answers to locality level; block and portal
+ * are kept because they help locate the building.
+ */
+export function cleanAddressForGeocoding(addressText: string): string {
+  return addressText
+    .replace(/\s+(?:Plta(?:\/Piso)?|Piso|Pta(?:\/Letra)?|Letra|Esc(?:alera)?\.?)\b.*$/iu, '')
+    .trim();
+}
+
+/**
+ * City centers and a generous municipal radius for the mirrored
+ * municipalities. Some RTA records carry coordinates typed by the operator
+ * that fall hundreds of km away (Madrid, Cantabria…); anything beyond the
+ * radius is treated as not geolocated so it can be repaired by address.
+ */
+export const MUNICIPALITY_CENTERS: Record<
+  string,
+  { latitude: number; longitude: number; radiusKm: number }
+> = {
+  SEVILLA: { latitude: 37.3891, longitude: -5.9845, radiusKm: 30 },
+  MÁLAGA: { latitude: 36.7213, longitude: -4.4214, radiusKm: 30 },
+  GRANADA: { latitude: 37.1773, longitude: -3.5986, radiusKm: 25 },
+  CÓRDOBA: { latitude: 37.8882, longitude: -4.7794, radiusKm: 45 },
+  CÁDIZ: { latitude: 36.5297, longitude: -6.2927, radiusKm: 20 },
+  HUELVA: { latitude: 37.2614, longitude: -6.9447, radiusKm: 25 },
+  JAÉN: { latitude: 37.7796, longitude: -3.7849, radiusKm: 30 },
+  ALMERÍA: { latitude: 36.834, longitude: -2.4637, radiusKm: 35 },
+  'JEREZ DE LA FRONTERA': { latitude: 36.6866, longitude: -6.1372, radiusKm: 45 },
+  MARBELLA: { latitude: 36.5101, longitude: -4.8825, radiusKm: 30 },
+};
+
+/** True when the point is inside the municipality's plausible radius (or the
+ * municipality is unknown to us, in which case we cannot judge). */
+export function coordinatesPlausibleForMunicipality(
+  municipality: string,
+  latitude: number,
+  longitude: number,
+): boolean {
+  const center = MUNICIPALITY_CENTERS[municipality.toLocaleUpperCase('es')];
+  if (center === undefined) return true;
+  return (
+    distanceMeters(
+      { latitude, longitude },
+      { latitude: center.latitude, longitude: center.longitude },
+    ) <=
+    center.radiusKm * 1000
+  );
+}
+
 export function utmToWgs84(x: number, y: number): { latitude: number; longitude: number } | null {
   if (!Number.isFinite(x) || !Number.isFinite(y) || x === 0 || y === 0) return null;
   const [longitude, latitude] = proj4(EPSG_25830, proj4.WGS84, [x, y]);
@@ -75,9 +127,16 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
       : typeof sridValue === 'number'
         ? String(sridValue)
         : '';
-  const coordinates =
+  const projected =
     srid === '25830'
       ? utmToWgs84(parseSpanishDecimal(raw.coord_x), parseSpanishDecimal(raw.coord_y))
+      : null;
+  // Some source rows carry coordinates typed hundreds of km away from their
+  // own municipality; drop them so the sync can repair them by address.
+  const coordinates =
+    projected !== null &&
+    coordinatesPlausibleForMunicipality(municipality, projected.latitude, projected.longitude)
+      ? projected
       : null;
   return {
     rtaId,

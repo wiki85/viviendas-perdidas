@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { BedDouble, House, Landmark, MapPin, UsersRound, X } from 'lucide-react';
+import { BadgeCheck, BedDouble, Landmark, MapPin, UsersRound, X } from 'lucide-react';
 import type { OfficialPin } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
 
@@ -8,10 +8,28 @@ type Props = {
   onClose: () => void;
 };
 
+const LOWERCASE_CONNECTORS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y']);
+
+/** 'JEREZ DE LA FRONTERA' → 'Jerez de la Frontera' for display. */
+function displayMunicipality(value: string): string {
+  return value
+    .toLocaleLowerCase('es')
+    .split(/\s+/u)
+    .map((word, index) =>
+      index > 0 && LOWERCASE_CONNECTORS.has(word)
+        ? word
+        : word.charAt(0).toLocaleUpperCase('es') + word.slice(1),
+    )
+    .join(' ');
+}
+
 /** Detail card for a dwelling from the official registry (OpenRTA). */
 export function OfficialSheet({ pin, onClose }: Props) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const impact = calculateImpact(pin.entire ? 1 : 0);
+  const locality = [pin.postalCode, pin.municipality ? displayMunicipality(pin.municipality) : '']
+    .filter((part) => part.length > 0)
+    .join(' · ');
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -54,31 +72,43 @@ export function OfficialSheet({ pin, onClose }: Props) {
             {pin.entire ? 'Vivienda de uso turístico' : 'Vivienda turística por habitaciones'}
           </h2>
           <p className="listing-address">
-            <MapPin size={17} /> {pin.addressText || pin.name}
-            {pin.postalCode ? ` · ${pin.postalCode}` : ''}{' '}
-            {pin.municipality ? `· ${pin.municipality.toLocaleLowerCase('es')}` : ''}
+            <MapPin size={17} />
+            <span>
+              {pin.addressText || pin.name}
+              {locality && <span className="listing-address__meta">{locality}</span>}
+            </span>
           </p>
-          <div className="impact-callout">
-            <div>
-              <House size={19} />
-              <span>Licencia</span>
-              <strong>{pin.registrationCode}</strong>
+          <dl className="official-spec">
+            <div className="official-spec__row">
+              <dt>
+                <BadgeCheck size={17} aria-hidden="true" /> Licencia turística
+              </dt>
+              <dd>
+                <strong className="official-spec__code">{pin.registrationCode}</strong>
+              </dd>
             </div>
-            <div>
-              <BedDouble size={19} />
-              <span>Capacidad</span>
-              <strong>{pin.places > 0 ? `${pin.places} plazas` : 'No declarada'}</strong>
+            <div className="official-spec__row">
+              <dt>
+                <BedDouble size={17} aria-hidden="true" /> Capacidad
+              </dt>
+              <dd>{pin.places > 0 ? `${pin.places} plazas` : 'No declarada'}</dd>
             </div>
-          </div>
-          {pin.entire ? (
-            <div className="impact-callout">
-              <div>
-                <UsersRound size={19} />
-                <span>Equivale a</span>
-                <strong>1 vivienda · ≈{impact.lostInhabitants} habitantes</strong>
-              </div>
+            <div className="official-spec__row">
+              <dt>
+                <UsersRound size={17} aria-hidden="true" /> Equivalencia
+              </dt>
+              <dd>
+                {pin.entire ? (
+                  <>
+                    1 vivienda · <strong>≈{impact.lostInhabitants} habitantes</strong>
+                  </>
+                ) : (
+                  'No cuenta como hogar desplazado'
+                )}
+              </dd>
             </div>
-          ) : (
+          </dl>
+          {!pin.entire && (
             <p className="listing-note">
               Alquiler por habitaciones: el titular puede seguir residiendo en la vivienda, por lo
               que no la contamos como hogar desplazado.

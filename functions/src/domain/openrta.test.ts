@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cleanAddressForGeocoding,
+  coordinatesPlausibleForMunicipality,
   extractStreetNumber,
   normalizeLicenseKey,
   parseRtaRecord,
@@ -29,9 +31,32 @@ describe('utmToWgs84', () => {
     expect(result?.longitude).toBeCloseTo(-5.99, 1);
   });
 
+  it('rejects coordinates far away from the record municipality', () => {
+    // Laredo (Cantabria) — a real error found in the RTA for a Marbella VUT.
+    expect(coordinatesPlausibleForMunicipality('MARBELLA', 43.4195, -3.4431)).toBe(false);
+    expect(coordinatesPlausibleForMunicipality('GRANADA', 40.4737, -3.686)).toBe(false);
+    expect(coordinatesPlausibleForMunicipality('MARBELLA', 36.5101, -4.8825)).toBe(true);
+    // San Pedro de Alcántara still belongs to Marbella.
+    expect(coordinatesPlausibleForMunicipality('MARBELLA', 36.4849, -4.9921)).toBe(true);
+    // Unknown municipalities cannot be judged: give them the benefit of the doubt.
+    expect(coordinatesPlausibleForMunicipality('OTRO SITIO', 43.4195, -3.4431)).toBe(true);
+  });
+
   it('rejects zero or non-finite coordinates', () => {
     expect(utmToWgs84(0, 0)).toBeNull();
     expect(utmToWgs84(Number.NaN, 10)).toBeNull();
+  });
+});
+
+describe('cleanAddressForGeocoding', () => {
+  it('drops floor and door noise but keeps block and portal', () => {
+    expect(
+      cleanAddressForGeocoding('URBANIZACION Las lomas de Rio Real Nº 35 Plta/Piso 2 Pta/Letra G'),
+    ).toBe('URBANIZACION Las lomas de Rio Real Nº 35');
+    expect(
+      cleanAddressForGeocoding('CONJUNTO LAS ADELFAS FASE II Blq. 10 Portal 3 Plta/Piso 1'),
+    ).toBe('CONJUNTO LAS ADELFAS FASE II Blq. 10 Portal 3');
+    expect(cleanAddressForGeocoding('CALLE Manzanares Nº 8')).toBe('CALLE Manzanares Nº 8');
   });
 });
 
@@ -69,6 +94,17 @@ describe('parseRtaRecord', () => {
   it('keeps a record without usable coordinates but no location', () => {
     const record = parseRtaRecord({ ...base, srid: '', coord_x: null, coord_y: null });
     expect(record).toMatchObject({ cityId: 'sevilla', latitude: null });
+  });
+
+  it('nullifies coordinates implausibly far from the municipality', () => {
+    // Real case: a MARBELLA record whose UTM points at Laredo (Cantabria).
+    const record = parseRtaRecord({
+      ...base,
+      municipalities: 'MARBELLA',
+      coord_x: '464126,82',
+      coord_y: '4807497,74',
+    });
+    expect(record).toMatchObject({ cityId: 'marbella', latitude: null, longitude: null });
   });
 });
 

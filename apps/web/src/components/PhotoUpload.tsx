@@ -32,6 +32,7 @@ function loadImageElement(file: File): Promise<HTMLImageElement> {
  * Re-encodes any input image to a downscaled JPEG. Going through a canvas also
  * strips EXIF metadata (GPS position, device details) before anything is sent.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- helper tied to this uploader; hot reload of this pair is acceptable
 export async function encodeJpegBase64(file: File): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('Selecciona un archivo de imagen.');
   const bitmap =

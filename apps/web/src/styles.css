@@ -494,6 +494,69 @@ textarea:focus-visible,
   padding-top: 34px;
 }
 
+.listing-address__meta {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #315d4c;
+  text-transform: none;
+}
+
+/* Spec list of the official dwelling card: one row per fact, hairline
+   separated, label left and value right. */
+.official-spec {
+  margin: 2px 0 12px;
+  background: #fff;
+  border: 1px solid rgba(49, 93, 76, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.official-spec__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+}
+
+.official-spec__row + .official-spec__row {
+  border-top: 1px solid rgba(49, 93, 76, 0.13);
+}
+
+.official-spec__row dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.official-spec__row dt svg {
+  color: #315d4c;
+  flex-shrink: 0;
+}
+
+.official-spec__row dd {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.official-spec__row dd strong {
+  color: #315d4c;
+}
+
+.official-spec__code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-size: 0.86rem;
+}
+
 .listing-sheet__body--official .listing-badge--official {
   position: static;
   align-self: flex-start;
