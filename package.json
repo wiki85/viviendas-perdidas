@@ -16,7 +16,7 @@
     "dev": "npm run dev --workspace @viviendas-perdidas/web",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --project scripts/tsconfig.json --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0 && npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:integration": "npm run test:integration --workspace @viviendas-perdidas/functions",
     "format": "prettier --write .",

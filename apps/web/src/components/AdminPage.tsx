@@ -22,7 +22,7 @@ import type {
   PhotoDecision,
 } from '../domain/types';
 import { BrandMark } from './BrandMark';
-import { encodeJpegBase64 } from './PhotoUpload';
+import { encodeJpegBase64 } from '../lib/photo';
 
 type Props = {
   service: ListingsService;
