@@ -63,6 +63,20 @@ export function MethodologyPage({ onClose }: Props) {
             barrio y el tipo de vivienda. Preferimos una cifra prudente y explicable a un modelo
             opaco.
           </p>
+          <p>
+            Las <strong>páginas de ciudad</strong> traducen además esos hogares a impactos
+            concretos, siempre con estadística pública: el{' '}
+            <strong>consumo anual que pierde el barrio</strong> multiplica los hogares desplazados
+            por el gasto medio por hogar de la Encuesta de Presupuestos Familiares 2024 del INE
+            (34.044 €, de los que el 15,8% es alimentación); los{' '}
+            <strong>menores que dejan de vivir</strong> en esas casas aplican el 13,8% de población
+            menor de 15 años (INE) y se expresan en aulas de 21 alumnos (media estatal, Ministerio
+            de Educación); y la <strong>presión sobre la vivienda</strong> compara las viviendas
+            turísticas oficiales con los hogares principales del Censo 2021 (IECA/SIMA), citando la
+            evidencia académica de García-López et al. (<em>Journal of Urban Economics</em>, 2020)
+            sobre el efecto del alquiler turístico en alquileres y precios. Cada página enlaza sus
+            fuentes.
+          </p>
           <a
             className="text-link"
             href="https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736176952&menu=ultiDatos&idp=1254735572981"

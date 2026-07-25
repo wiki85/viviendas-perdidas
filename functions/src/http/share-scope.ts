@@ -2,10 +2,15 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
 import { inhabitantsForDwellings } from '../domain/aggregates.js';
-import { escapeHtml, integer, jsonForInlineScript, requestOrigin } from './html.js';
+import {
+  escapeHtml,
+  integer,
+  jsonForInlineScript,
+  requestOrigin,
+  titleCaseSpanish,
+} from './html.js';
 
 const SCOPE_ID_PATTERN = /^[a-z0-9-]+(?:__[a-z0-9-]+)?$/u;
-const LOWERCASE_CONNECTORS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y']);
 
 function queryNumber(value: unknown): number | null {
   const candidate: unknown = Array.isArray(value) ? value[0] : value;
@@ -17,19 +22,6 @@ function queryNumber(value: unknown): number | null {
 function queryText(value: unknown): string | null {
   const candidate: unknown = Array.isArray(value) ? value[0] : value;
   return typeof candidate === 'string' ? candidate : null;
-}
-
-/** 'JEREZ DE LA FRONTERA' → 'Jerez de la Frontera' for card titles. */
-function titleCaseMunicipality(value: string): string {
-  return value
-    .toLocaleLowerCase('es')
-    .split(/\s+/u)
-    .map((word, index) =>
-      index > 0 && LOWERCASE_CONNECTORS.has(word)
-        ? word
-        : word.charAt(0).toLocaleUpperCase('es') + word.slice(1),
-    )
-    .join(' ');
 }
 
 export const shareScope = onRequest(
@@ -75,7 +67,7 @@ export const shareScope = onRequest(
       typeof data.name === 'string' && data.name.length > 0
         ? data.name
         : official !== null && official.municipality.length > 0
-          ? titleCaseMunicipality(official.municipality)
+          ? titleCaseSpanish(official.municipality)
           : scopeId;
     let families = integer(data.lostFamilies);
     let dwellings = integer(data.lostDwellings);

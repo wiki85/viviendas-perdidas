@@ -2,13 +2,15 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { Timestamp } from 'firebase-admin/firestore';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
-import { integer } from './html.js';
+import { integer, titleCaseSpanish } from './html.js';
 import {
   renderCitiesIndex,
   renderCityPage,
   renderSitemap,
+  type CityIndexEntry,
   type CityStats,
   type NeighborhoodStats,
+  type OfficialCityStats,
 } from './render-city.js';
 
 const CITY_ID_PATTERN = /^[a-z0-9-]+$/u;
@@ -17,8 +19,9 @@ const PAGE_HEADERS = {
   // CDN keeps pages for an hour and refreshes in the background: fresh
   // enough for slowly-moving aggregates, cheap enough to survive crawlers.
   'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+  // Inline script allowed: the share button enhancement lives in the page.
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
 } as const;
 
@@ -39,12 +42,64 @@ function cityFromDoc(id: string, data: FirebaseFirestore.DocumentData): CityStat
   };
 }
 
-async function listCities(): Promise<CityStats[]> {
-  const snapshot = await db.collection('aggregates').where('scope', '==', 'city').get();
-  return snapshot.docs
-    .map((doc) => cityFromDoc(doc.id, doc.data()))
-    .filter((city) => city.listingsCount > 0)
-    .sort((a, b) => b.lostDwellings - a.lostDwellings || a.name.localeCompare(b.name, 'es'));
+function officialFromDoc(data: FirebaseFirestore.DocumentData): OfficialCityStats {
+  return {
+    total: integer(data.total),
+    entireHomes: integer(data.entireHomes),
+    roomsOnly: integer(data.roomsOnly),
+    places: integer(data.places),
+    updatedAt: toDate(data.updatedAt),
+  };
+}
+
+function emptyCity(id: string, name: string): CityStats {
+  return {
+    id,
+    name,
+    listingsCount: 0,
+    lostDwellings: 0,
+    lostFamilies: 0,
+    lostInhabitants: 0,
+    lostCommercial: 0,
+    updatedAt: null,
+  };
+}
+
+/**
+ * Cities with community listings plus RTA-mirrored cities that only have
+ * official data yet — those deserve a page (and a sitemap entry) too.
+ */
+async function listCities(): Promise<CityIndexEntry[]> {
+  const [aggregatesSnapshot, officialSnapshot] = await Promise.all([
+    db.collection('aggregates').where('scope', '==', 'city').get(),
+    db.collection('officialStats').get(),
+  ]);
+  const merged = new Map<string, CityIndexEntry>();
+  for (const doc of aggregatesSnapshot.docs) {
+    const city = cityFromDoc(doc.id, doc.data());
+    if (city.listingsCount > 0) merged.set(doc.id, { ...city, officialTotal: 0 });
+  }
+  for (const doc of officialSnapshot.docs) {
+    const data = doc.data();
+    const total = integer(data.total);
+    if (total === 0) continue;
+    const existing = merged.get(doc.id);
+    if (existing) {
+      existing.officialTotal = total;
+      continue;
+    }
+    const municipality = typeof data.municipality === 'string' ? data.municipality : doc.id;
+    merged.set(doc.id, {
+      ...emptyCity(doc.id, titleCaseSpanish(municipality)),
+      updatedAt: toDate(data.updatedAt),
+      officialTotal: total,
+    });
+  }
+  return [...merged.values()].sort(
+    (a, b) =>
+      b.lostDwellings + (b.officialTotal ?? 0) - (a.lostDwellings + (a.officialTotal ?? 0)) ||
+      a.name.localeCompare(b.name, 'es'),
+  );
 }
 
 async function listNeighborhoods(cityId: string): Promise<NeighborhoodStats[]> {
@@ -89,21 +144,38 @@ export const cityPage = onRequest(
       response.status(404).send('No encontrado');
       return;
     }
-    const snapshot = await db.collection('aggregates').doc(cityId).get();
+    const [snapshot, officialSnapshot] = await Promise.all([
+      db.collection('aggregates').doc(cityId).get(),
+      db.collection('officialStats').doc(cityId).get(),
+    ]);
     const data = snapshot.data();
-    if (!snapshot.exists || data?.scope !== 'city') {
+    const officialData = officialSnapshot.data();
+    const official =
+      officialSnapshot.exists && officialData !== undefined && integer(officialData.total) > 0
+        ? officialFromDoc(officialData)
+        : null;
+    const hasCommunity =
+      snapshot.exists && data?.scope === 'city' && integer(data?.listingsCount) > 0;
+    if (!hasCommunity && official === null) {
+      // A city without community listings nor official registry data would
+      // be an empty page: better out of the index than indexed as thin content.
       response.status(404).send('No encontrado');
       return;
     }
-    const city = cityFromDoc(snapshot.id, data ?? {});
-    if (city.listingsCount === 0) {
-      // A city whose listings were all removed would be an empty page:
-      // better out of the index than indexed as thin content.
-      response.status(404).send('No encontrado');
-      return;
-    }
+    const city = hasCommunity
+      ? cityFromDoc(snapshot.id, data ?? {})
+      : emptyCity(
+          cityId,
+          typeof officialData?.municipality === 'string'
+            ? titleCaseSpanish(officialData.municipality)
+            : cityId,
+        );
     const neighborhoods = await listNeighborhoods(city.id);
-    response.set(PAGE_HEADERS).status(200).type('html').send(renderCityPage(city, neighborhoods));
+    response
+      .set(PAGE_HEADERS)
+      .status(200)
+      .type('html')
+      .send(renderCityPage(city, neighborhoods, official));
   },
 );
 

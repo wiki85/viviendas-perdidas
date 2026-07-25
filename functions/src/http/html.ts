@@ -20,6 +20,21 @@ export function jsonForInlineScript(value: unknown): string {
   return JSON.stringify(value).replace(/</gu, '\\u003c');
 }
 
+const LOWERCASE_CONNECTORS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y']);
+
+/** 'JEREZ DE LA FRONTERA' → 'Jerez de la Frontera' for page titles. */
+export function titleCaseSpanish(value: string): string {
+  return value
+    .toLocaleLowerCase('es')
+    .split(/\s+/u)
+    .map((word, index) =>
+      index > 0 && LOWERCASE_CONNECTORS.has(word)
+        ? word
+        : word.charAt(0).toLocaleUpperCase('es') + word.slice(1),
+    )
+    .join(' ');
+}
+
 /**
  * Public origin the visitor used. Behind the Hosting rewrite the Host header
  * is the internal Cloud Run hostname; the real one travels in X-Forwarded-Host.
