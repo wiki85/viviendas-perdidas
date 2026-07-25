@@ -98,6 +98,12 @@ export function MethodologyPage({ onClose }: Props) {
             automáticamente, y las fotos pasan por una revisión humana previa; además, al
             prepararlas se eliminan sus metadatos (como la ubicación GPS de tu cámara).
           </p>
+          <p>
+            Para entender cuánta gente visita el mapa usamos{' '}
+            <strong>Cloudflare Web Analytics</strong>, una medición de audiencia agregada que
+            funciona <strong>sin cookies y sin identificadores</strong>: cuenta visitas y páginas
+            vistas, pero no crea perfiles ni rastrea a nadie entre sitios.
+          </p>
         </section>
 
         <section className="about-page__section">

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Info, X } from 'lucide-react';
 
-const NOTICE_KEY = 'viviendas-perdidas-map-notice-v1';
+const NOTICE_KEY = 'viviendas-perdidas-map-notice-v2';
 
 export function CookieNotice() {
   const [visible, setVisible] = useState(() => localStorage.getItem(NOTICE_KEY) !== 'seen');
@@ -10,8 +10,9 @@ export function CookieNotice() {
     <aside className="cookie-notice" aria-label="Información sobre Google Maps">
       <Info size={19} aria-hidden="true" />
       <p>
-        Este sitio usa Google Maps, que puede establecer sus propias cookies. No usamos analítica ni
-        cookies de seguimiento propias.{' '}
+        Este sitio usa Google Maps, que puede establecer sus propias cookies, y mide las visitas de
+        forma agregada y sin cookies (Cloudflare Web Analytics). No usamos cookies de seguimiento
+        propias.{' '}
         <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
           Política de Google
         </a>
