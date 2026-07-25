@@ -17,6 +17,7 @@ import type {
 } from './domain/types';
 import { AboutPage } from './components/AboutPage';
 import { AdminPage } from './components/AdminPage';
+import { CityImpactBanner } from './components/CityImpactBanner';
 import { MethodologyPage } from './components/MethodologyPage';
 import { CookieNotice } from './components/CookieNotice';
 import { DonateSheet } from './components/DonateSheet';
@@ -37,6 +38,7 @@ import {
   neighborhoodCenter,
 } from './lib/geo';
 import { getDeviceFingerprintHash } from './lib/device';
+import { summarizeCityImpact, type CityImpactSummary } from './lib/city-impact';
 import { calculateImpact } from './lib/impact';
 import { municipalityFromGeocoderResult } from './lib/google-geocode';
 import {
@@ -189,6 +191,14 @@ export default function App() {
   // so panning at street zoom only fetches the cells that enter the view.
   const pinCellCache = useRef(new Map<string, OfficialPin[]>());
   const [selectedOfficial, setSelectedOfficial] = useState<OfficialPin | null>(null);
+  // City impact report: powers the ephemeral banner and the header link.
+  const [cityReport, setCityReport] = useState<{
+    id: string;
+    name: string;
+    summary: CityImpactSummary;
+  } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const cityImpactCache = useRef(new Map<string, CityImpactSummary | null>());
   const resolvedScope = useVisibleScope(center, zoom, cityHint);
   const {
     aggregate,
@@ -232,6 +242,54 @@ export default function App() {
       window.clearTimeout(timeout);
     };
   }, [bounds, service, sourceMode, zoom]);
+  // When the map settles on a city with data, load its report figures once
+  // (cached per session) and show the ephemeral banner the first time.
+  const resolvedCityId = resolvedScope.scope.cityId;
+  const resolvedCityName = resolvedScope.city?.name ?? resolvedScope.scope.name;
+  useEffect(() => {
+    if (!resolvedCityId) {
+      setCityReport(null);
+      setBannerVisible(false);
+      return;
+    }
+    let active = true;
+    const apply = (summary: CityImpactSummary | null) => {
+      if (!active) return;
+      if (summary === null) {
+        setCityReport(null);
+        setBannerVisible(false);
+        return;
+      }
+      setCityReport({ id: resolvedCityId, name: resolvedCityName, summary });
+      const seenKey = `vp-impact-banner-${resolvedCityId}`;
+      let alreadySeen = false;
+      try {
+        alreadySeen = window.sessionStorage.getItem(seenKey) === '1';
+        if (!alreadySeen) window.sessionStorage.setItem(seenKey, '1');
+      } catch {
+        // Storage unavailable (private mode): the banner just shows again.
+      }
+      if (!alreadySeen) setBannerVisible(true);
+    };
+    const cached = cityImpactCache.current.get(resolvedCityId);
+    if (cached !== undefined) {
+      apply(cached);
+      return;
+    }
+    service
+      .getCityImpactSources(resolvedCityId)
+      .then((sources) => {
+        const summary = summarizeCityImpact(resolvedCityId, sources);
+        cityImpactCache.current.set(resolvedCityId, summary);
+        apply(summary);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [resolvedCityId, resolvedCityName, service]);
+  const closeBanner = useCallback(() => setBannerVisible(false), []);
+
   const selectedListing =
     listingState.listings.find((listing) => listing.id === selectedId) ??
     (selectedFallback?.id === selectedId ? selectedFallback : null);
@@ -717,6 +775,7 @@ export default function App() {
         sourceMode={sourceMode}
         onSourceModeChange={setSourceMode}
         official={officialViewport}
+        report={cityReport ? { id: cityReport.id, name: cityReport.name } : null}
         sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
@@ -765,6 +824,15 @@ export default function App() {
           <div className="map-busy" role="status">
             <span /> Actualizando registros…
           </div>
+        )}
+        {bannerVisible && cityReport && !registrationOpen && (
+          <CityImpactBanner
+            key={cityReport.id}
+            cityId={cityReport.id}
+            cityName={cityReport.name}
+            summary={cityReport.summary}
+            onClose={closeBanner}
+          />
         )}
         {!registrationOpen && !selectedListing && (
           <button

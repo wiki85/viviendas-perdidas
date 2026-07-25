@@ -5,6 +5,7 @@ import {
   connectFirestoreEmulator,
   doc,
   documentId,
+  getDoc,
   getDocs,
   getFirestore,
   limit,
@@ -29,6 +30,7 @@ import { geohashQueryBounds } from 'geofire-common';
 import type {
   Address,
   Aggregate,
+  CityImpactSources,
   CreateListingInput,
   CreateListingResult,
   ErrorLogEntry,
@@ -364,6 +366,43 @@ export class FirebaseListingsService implements ListingsService {
       }
     }
     return cells;
+  }
+
+  async getCityImpactSources(cityId: string): Promise<CityImpactSources> {
+    const [aggregateSnapshot, officialSnapshot] = await Promise.all([
+      getDoc(doc(this.db, 'aggregates', cityId)),
+      getDoc(doc(this.db, 'officialStats', cityId)),
+    ]);
+    const aggregate = aggregateSnapshot.exists() ? aggregateSnapshot.data() : null;
+    const official = officialSnapshot.exists() ? officialSnapshot.data() : null;
+    const communityValid =
+      aggregate !== null &&
+      aggregate.scope === 'city' &&
+      typeof aggregate.listingsCount === 'number' &&
+      aggregate.listingsCount > 0;
+    return {
+      community: communityValid
+        ? {
+            lostDwellings:
+              typeof aggregate.lostDwellings === 'number' ? aggregate.lostDwellings : 0,
+            lostFamilies: typeof aggregate.lostFamilies === 'number' ? aggregate.lostFamilies : 0,
+            lostInhabitants:
+              typeof aggregate.lostInhabitants === 'number' ? aggregate.lostInhabitants : 0,
+            listingsCount: aggregate.listingsCount,
+            lostCommercial:
+              typeof aggregate.lostCommercial === 'number' ? aggregate.lostCommercial : 0,
+          }
+        : null,
+      official:
+        official !== null && typeof official.total === 'number' && official.total > 0
+          ? {
+              total: official.total,
+              entireHomes: typeof official.entireHomes === 'number' ? official.entireHomes : 0,
+              roomsOnly: typeof official.roomsOnly === 'number' ? official.roomsOnly : 0,
+              places: typeof official.places === 'number' ? official.places : 0,
+            }
+          : null,
+    };
   }
 
   async adminResolveOfficialMatch(listingId: string): Promise<void> {

@@ -97,6 +97,23 @@ export type OfficialViewportStats = {
   roomsOnly: number;
 };
 
+/** City-level figures backing the impact banner and the report link. */
+export type CityImpactSources = {
+  community: {
+    lostDwellings: number;
+    lostFamilies: number;
+    lostInhabitants: number;
+    listingsCount: number;
+    lostCommercial: number;
+  } | null;
+  official: {
+    total: number;
+    entireHomes: number;
+    roomsOnly: number;
+    places: number;
+  } | null;
+};
+
 export type SourceMode = 'citizens' | 'official' | 'both';
 
 export type Aggregate = {
@@ -262,6 +279,7 @@ export interface ListingsService {
   ): Promise<void>;
   listOfficialCells(bounds: MapBounds, precision: number): Promise<OfficialCell[]>;
   listOfficialPinCells(cellIds: string[]): Promise<OfficialPinCell[]>;
+  getCityImpactSources(cityId: string): Promise<CityImpactSources>;
   adminSignIn(): Promise<{ email: string; moderator: boolean }>;
   adminResolveOfficialMatch(listingId: string): Promise<void>;
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;

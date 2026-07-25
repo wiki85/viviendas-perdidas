@@ -73,6 +73,10 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.listOfficialCells(bounds, precision));
   }
 
+  getCityImpactSources(cityId: string) {
+    return this.load().then((service) => service.getCityImpactSources(cityId));
+  }
+
   listOfficialPinCells(cellIds: string[]) {
     return this.load().then((service) => service.listOfficialPinCells(cellIds));
   }

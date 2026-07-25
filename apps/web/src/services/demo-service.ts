@@ -1,5 +1,6 @@
 import type {
   Aggregate,
+  CityImpactSources,
   CreateListingInput,
   CreateListingResult,
   Listing,
@@ -234,6 +235,29 @@ export class DemoListingsService implements ListingsService {
 
   async listOfficialCells(): Promise<OfficialCell[]> {
     return [];
+  }
+
+  async getCityImpactSources(cityId: string): Promise<CityImpactSources> {
+    const aggregate = this.aggregateFor({
+      scopeId: cityId,
+      scope: 'city',
+      cityId,
+      neighborhoodId: null,
+      name: cityId,
+    });
+    return {
+      community:
+        aggregate.listingsCount > 0
+          ? {
+              lostDwellings: aggregate.lostDwellings,
+              lostFamilies: aggregate.lostFamilies,
+              lostInhabitants: aggregate.lostInhabitants,
+              listingsCount: aggregate.listingsCount,
+              lostCommercial: aggregate.lostCommercial,
+            }
+          : null,
+      official: null,
+    };
   }
 
   async listOfficialPinCells(): Promise<OfficialPinCell[]> {

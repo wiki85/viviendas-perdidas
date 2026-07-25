@@ -927,6 +927,136 @@ textarea:focus-visible,
   top: auto;
 }
 
+/* Ephemeral city impact banner: slides in from the top of the map. */
+.impact-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 28;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 10px 10px 10px 16px;
+  background: rgba(255, 253, 248, 0.97);
+  border: 1px solid rgba(49, 93, 76, 0.28);
+  border-radius: 15px;
+  box-shadow: 0 12px 32px rgba(30, 43, 39, 0.2);
+  backdrop-filter: blur(10px);
+  animation: impact-banner-in 0.35s ease;
+}
+
+@keyframes impact-banner-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -18px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.impact-banner--leaving {
+  opacity: 0;
+  transform: translate(-50%, -18px);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.impact-banner__body {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.impact-banner__facts {
+  display: block;
+  font-weight: 650;
+  color: #9b3b30;
+}
+
+.impact-banner__link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 13px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  background: #315d4c;
+  border-radius: 999px;
+}
+
+.impact-banner__close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.impact-banner__close:hover {
+  background: rgba(30, 43, 39, 0.08);
+}
+
+@media (min-width: 700px) {
+  .impact-banner {
+    left: auto;
+    right: 18px;
+    transform: none;
+    max-width: 480px;
+  }
+
+  @keyframes impact-banner-in {
+    from {
+      opacity: 0;
+      transform: translateY(-18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .impact-banner--leaving {
+    transform: translateY(-18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impact-banner {
+    animation: none;
+  }
+
+  .impact-banner--leaving {
+    transition: none;
+  }
+}
+
+.topbar__report {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px 2px 0;
+  justify-self: end;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: #315d4c;
+}
+
 .mode-notice,
 .map-busy {
   position: absolute;
