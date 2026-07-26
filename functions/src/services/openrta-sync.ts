@@ -8,6 +8,7 @@ import {
   type OfficialVutRecord,
 } from '../domain/openrta.js';
 import { buildOfficialCells } from '../domain/openrta-cells.js';
+import { contentHash, isSuspiciousDrop } from '../domain/sync-integrity.js';
 
 const SEARCH_URL = 'https://datos.juntadeandalucia.es/api/v0/openrta/search';
 const PAGE_SIZE = 10_000;
@@ -29,6 +30,8 @@ export const SYNCED_MUNICIPALITIES: readonly string[] = [
   'JEREZ DE LA FRONTERA',
   'MARBELLA',
 ];
+
+type GeohashFn = (location: [number, number], precision?: number) => string;
 
 async function fetchPage(
   municipality: string,
@@ -85,26 +88,102 @@ async function fetchMunicipality(
   return records;
 }
 
-async function writeBatched(records: OfficialVutRecord[], geohashFor: GeohashFn): Promise<void> {
-  const CHUNK = 400;
-  for (let index = 0; index < records.length; index += CHUNK) {
-    const batch = db.batch();
-    for (const record of records.slice(index, index + CHUNK)) {
-      const reference = db.collection('officialVut').doc(`rta-${record.rtaId}`);
-      batch.set(reference, {
-        ...record,
-        geohash:
-          record.latitude !== null && record.longitude !== null
-            ? geohashFor([record.latitude, record.longitude])
-            : null,
-        syncedAt: Timestamp.now(),
-      });
-    }
-    await batch.commit();
+/* ------------------------- Differential mirror I/O ------------------------ */
+
+const BATCH_SIZE = 400;
+const PARALLEL_BATCHES = 5;
+
+interface DiffDoc {
+  id: string;
+  /** Persisted fields, timestamps excluded from the hash. */
+  data: Record<string, unknown>;
+  hash: string;
+}
+
+interface DiffCounters {
+  written: number;
+  skipped: number;
+  deleted: number;
+}
+
+/** Ids → stored contentHash ('' for legacy docs written before hashing). */
+async function loadExistingHashes(name: string): Promise<Map<string, string>> {
+  const snapshot = await db.collection(name).select('contentHash').get();
+  const hashes = new Map<string, string>();
+  for (const document of snapshot.docs) {
+    const value: unknown = document.get('contentHash');
+    hashes.set(document.id, typeof value === 'string' ? value : '');
+  }
+  return hashes;
+}
+
+async function commitChunks(operations: Array<(batch: FirebaseFirestore.WriteBatch) => void>) {
+  const chunks: Array<Array<(batch: FirebaseFirestore.WriteBatch) => void>> = [];
+  for (let index = 0; index < operations.length; index += BATCH_SIZE) {
+    chunks.push(operations.slice(index, index + BATCH_SIZE));
+  }
+  for (let index = 0; index < chunks.length; index += PARALLEL_BATCHES) {
+    await Promise.all(
+      chunks.slice(index, index + PARALLEL_BATCHES).map((chunk) => {
+        const batch = db.batch();
+        for (const operation of chunk) operation(batch);
+        return batch.commit();
+      }),
+    );
   }
 }
 
-type GeohashFn = (location: [number, number], precision?: number) => string;
+/** Writes only the documents whose content changed since the last sync. */
+async function writeDocsDiff(
+  name: string,
+  documents: DiffDoc[],
+  existing: Map<string, string>,
+  counters: DiffCounters,
+): Promise<void> {
+  const stamp = Timestamp.now();
+  const operations: Array<(batch: FirebaseFirestore.WriteBatch) => void> = [];
+  for (const { id, data, hash } of documents) {
+    if (existing.get(id) === hash) {
+      counters.skipped += 1;
+      continue;
+    }
+    operations.push((batch) =>
+      batch.set(db.collection(name).doc(id), { ...data, contentHash: hash, updatedAt: stamp }),
+    );
+    counters.written += 1;
+  }
+  await commitChunks(operations);
+}
+
+async function deleteDocs(name: string, ids: string[], counters: DiffCounters): Promise<void> {
+  counters.deleted += ids.length;
+  await commitChunks(ids.map((id) => (batch) => batch.delete(db.collection(name).doc(id))));
+}
+
+/* ------------------------------ Sync lock -------------------------------- */
+
+const LOCK_LEASE_MS = 45 * 60 * 1000;
+
+/**
+ * Lease-based mutual exclusion between the weekly job and the admin-panel
+ * trigger: two concurrent runs would interleave their diffs and deletions.
+ */
+async function acquireSyncLock(): Promise<() => Promise<void>> {
+  const reference = db.doc('syncLocks/openrta');
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(reference);
+    const lockedAt: unknown = snapshot.exists ? snapshot.get('lockedAt') : undefined;
+    if (lockedAt instanceof Timestamp && Date.now() - lockedAt.toMillis() < LOCK_LEASE_MS) {
+      throw new Error('Ya hay una sincronización de OpenRTA en curso.');
+    }
+    transaction.set(reference, { lockedAt: Timestamp.now() });
+  });
+  return async () => {
+    await reference.delete().catch(() => undefined);
+  };
+}
+
+/* --------------------- Coordinate repair (geocoding) ---------------------- */
 
 /**
  * Address-based repair for records whose source coordinates are missing or
@@ -122,6 +201,10 @@ const GEOCODE_QUERY_VERSION = 4;
 /** Pace towards the Geocoding API: ~2 requests/second keeps us well under
  * the per-minute quota that OVER_QUERY_LIMIT enforces. */
 const GEOCODE_PACE_MS = 500;
+
+/** Wall-clock budget for the whole repair phase: a degraded network must
+ * never eat the function timeout and lose the run mid-way. */
+const GEOCODE_TIME_BUDGET_MS = 12 * 60 * 1000;
 
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -156,8 +239,9 @@ interface GeocodeState {
   apiKey: string;
   remaining: number;
   failures: Record<string, number>;
-  /** Consecutive rate-limited addresses; trips the circuit breaker. */
-  rateLimitedStreak: number;
+  /** Consecutive transient failures; trips the circuit breaker. */
+  transientStreak: number;
+  startedAt: number;
 }
 
 interface GeoCacheEntry {
@@ -258,6 +342,10 @@ async function repairMissingCoordinates(
       if (cached.version >= GEOCODE_QUERY_VERSION) continue;
     }
     if (state.apiKey.length === 0 || state.remaining <= 0) continue;
+    if (Date.now() - state.startedAt > GEOCODE_TIME_BUDGET_MS) {
+      state.remaining = 0;
+      continue;
+    }
     state.remaining -= 1;
     let outcome: GeocodeOutcome = { located: null, failure: 'exception' };
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -273,17 +361,17 @@ async function repairMissingCoordinates(
     if (located === null) {
       const failure = 'failure' in outcome ? outcome.failure : 'unknown';
       state.failures[failure] = (state.failures[failure] ?? 0) + 1;
-      if (failure === 'status_OVER_QUERY_LIMIT') {
-        state.rateLimitedStreak += 1;
-        // Quota is exhausted for this run: stop burning time and retry on
-        // the next sync (transient failures are never cached).
-        if (state.rateLimitedStreak >= 5) state.remaining = 0;
-      } else {
-        state.rateLimitedStreak = 0;
+      if (isTransientGeocodeFailure(failure)) {
+        state.transientStreak += 1;
+        // The upstream is down or the quota is spent: stop burning time and
+        // retry on the next sync (transient failures are never cached).
+        const breakerLimit = failure === 'status_OVER_QUERY_LIMIT' ? 5 : 10;
+        if (state.transientStreak >= breakerLimit) state.remaining = 0;
+        continue;
       }
-      if (isTransientGeocodeFailure(failure)) continue;
+      state.transientStreak = 0;
     } else {
-      state.rateLimitedStreak = 0;
+      state.transientStreak = 0;
     }
     cacheWrites.push({
       id,
@@ -303,44 +391,15 @@ async function repairMissingCoordinates(
       repaired += 1;
     }
   }
-  const CHUNK = 400;
-  for (let index = 0; index < cacheWrites.length; index += CHUNK) {
-    const batch = db.batch();
-    for (const { id, data } of cacheWrites.slice(index, index + CHUNK)) {
+  await commitChunks(
+    cacheWrites.map(({ id, data }) => (batch: FirebaseFirestore.WriteBatch) => {
       batch.set(db.collection(GEO_CACHE_COLLECTION).doc(id), data);
-    }
-    await batch.commit();
-  }
+    }),
+  );
   return repaired;
 }
 
-/**
- * Overwrites a mirror collection with the freshly computed documents and
- * deletes any document that no longer exists (stale cells after a resync).
- */
-async function replaceCollection(
-  name: string,
-  documents: Array<{ id: string; data: Record<string, unknown> }>,
-): Promise<void> {
-  const existing = await db.collection(name).select().get();
-  const nextIds = new Set(documents.map((document) => document.id));
-  const stale = existing.docs.map((snapshot) => snapshot.id).filter((id) => !nextIds.has(id));
-  const CHUNK = 400;
-  for (let index = 0; index < documents.length; index += CHUNK) {
-    const batch = db.batch();
-    for (const { id, data } of documents.slice(index, index + CHUNK)) {
-      batch.set(db.collection(name).doc(id), data);
-    }
-    await batch.commit();
-  }
-  for (let index = 0; index < stale.length; index += CHUNK) {
-    const batch = db.batch();
-    for (const id of stale.slice(index, index + CHUNK)) {
-      batch.delete(db.collection(name).doc(id));
-    }
-    await batch.commit();
-  }
-}
+/* --------------------------------- Run ------------------------------------ */
 
 export interface OpenRtaSyncSummary {
   municipalities: number;
@@ -352,83 +411,142 @@ export async function runOpenRtaSync(
   geohashFor: GeohashFn,
   geocodeApiKey = '',
 ): Promise<OpenRtaSyncSummary> {
-  let total = 0;
-  let repairedTotal = 0;
-  const geocodeState: GeocodeState = {
-    apiKey: geocodeApiKey,
-    remaining: MAX_GEOCODES_PER_RUN,
-    failures: {},
-    rateLimitedStreak: 0,
-  };
-  const allRecords: OfficialVutRecord[] = [];
-  for (const municipality of SYNCED_MUNICIPALITIES) {
-    const records = await fetchMunicipality(municipality, fetchImplementation);
-    const repaired = await repairMissingCoordinates(records, geocodeState, fetchImplementation);
-    repairedTotal += repaired;
-    allRecords.push(...records);
-    await writeBatched(records, geohashFor);
-    const cityId = records[0]?.cityId;
-    if (cityId !== undefined) {
-      const entire = records.filter((record) => record.entire);
-      await db
-        .collection('officialStats')
-        .doc(cityId)
-        .set({
-          cityId,
-          municipality,
-          total: records.length,
-          entireHomes: entire.length,
-          roomsOnly: records.length - entire.length,
-          places: records.reduce((sum, record) => sum + record.places, 0),
-          withLocation: records.filter((record) => record.latitude !== null).length,
-          source: 'openrta',
-          updatedAt: Timestamp.now(),
-        });
-    }
-    total += records.length;
-    logger.info('OpenRTA municipality synced', {
-      municipality,
-      records: records.length,
-      repairedCoordinates: repaired,
-    });
-  }
-  logger.info('OpenRTA coordinate repair', {
-    repaired: repairedTotal,
-    geocodesLeft: geocodeState.remaining,
-    failures: geocodeState.failures,
-  });
+  const releaseLock = await acquireSyncLock();
+  try {
+    let total = 0;
+    let repairedTotal = 0;
+    const geocodeState: GeocodeState = {
+      apiKey: geocodeApiKey,
+      remaining: MAX_GEOCODES_PER_RUN,
+      failures: {},
+      transientStreak: 0,
+      startedAt: Date.now(),
+    };
 
-  // Geohash cell mirror: the map reads these aggregated bubbles (and the
-  // embedded pins at street zoom) instead of querying 50k individual docs.
-  const { cells, pinCells } = buildOfficialCells(allRecords, geohashFor);
-  const builtAt = Timestamp.now();
-  await replaceCollection(
-    'officialCells',
-    cells.map((cell) => ({
-      id: cell.id,
-      data: {
+    // Previous totals guard partial upstream responses; existing hashes
+    // drive the differential writes and the ghost purge.
+    const [existingVut, statsSnapshot] = await Promise.all([
+      loadExistingHashes('officialVut'),
+      db.collection('officialStats').get(),
+    ]);
+    const previousTotals = new Map<string, number>();
+    for (const document of statsSnapshot.docs) {
+      const municipality: unknown = document.get('municipality');
+      const previous: unknown = document.get('total');
+      if (typeof municipality === 'string' && typeof previous === 'number') {
+        previousTotals.set(municipality, previous);
+      }
+    }
+
+    const vutCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
+    const allRecords: OfficialVutRecord[] = [];
+    for (const municipality of SYNCED_MUNICIPALITIES) {
+      const records = await fetchMunicipality(municipality, fetchImplementation);
+      const previous = previousTotals.get(municipality) ?? 0;
+      if (isSuspiciousDrop(previous, records.length)) {
+        // Abort the whole run: writing (and later purging/rebuilding cells)
+        // from a partial response would blank this city for a week.
+        throw new Error(
+          `OpenRTA devolvió ${records.length} registros para ${municipality} (antes ${previous}); sincronización abortada.`,
+        );
+      }
+      const repaired = await repairMissingCoordinates(records, geocodeState, fetchImplementation);
+      repairedTotal += repaired;
+      allRecords.push(...records);
+      await writeDocsDiff(
+        'officialVut',
+        records.map((record) => {
+          const geohash =
+            record.latitude !== null && record.longitude !== null
+              ? geohashFor([record.latitude, record.longitude])
+              : null;
+          const data = { ...record, geohash };
+          return { id: `rta-${record.rtaId}`, data, hash: contentHash(data) };
+        }),
+        existingVut,
+        vutCounters,
+      );
+      const cityId = records[0]?.cityId;
+      if (cityId !== undefined) {
+        const entire = records.filter((record) => record.entire);
+        await db
+          .collection('officialStats')
+          .doc(cityId)
+          .set({
+            cityId,
+            municipality,
+            total: records.length,
+            entireHomes: entire.length,
+            roomsOnly: records.length - entire.length,
+            places: records.reduce((sum, record) => sum + record.places, 0),
+            withLocation: records.filter((record) => record.latitude !== null).length,
+            source: 'openrta',
+            updatedAt: Timestamp.now(),
+          });
+      }
+      total += records.length;
+      logger.info('OpenRTA municipality synced', {
+        municipality,
+        records: records.length,
+        repairedCoordinates: repaired,
+      });
+    }
+    logger.info('OpenRTA coordinate repair', {
+      repaired: repairedTotal,
+      geocodesLeft: geocodeState.remaining,
+      failures: geocodeState.failures,
+    });
+
+    // Ghost purge: registrations withdrawn from the RTA must stop verifying
+    // licences and blocking community submissions.
+    const freshIds = new Set(allRecords.map((record) => `rta-${record.rtaId}`));
+    const staleVut = [...existingVut.keys()].filter((id) => !freshIds.has(id));
+    await deleteDocs('officialVut', staleVut, vutCounters);
+    logger.info('OpenRTA mirror diff', vutCounters);
+
+    // Geohash cell mirror: the map reads these aggregated bubbles (and the
+    // embedded pins at street zoom) instead of querying 50k individual docs.
+    const { cells, pinCells } = buildOfficialCells(allRecords, geohashFor);
+    const cellCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
+    const [existingCells, existingPinCells] = await Promise.all([
+      loadExistingHashes('officialCells'),
+      loadExistingHashes('officialCellPins'),
+    ]);
+    const cellDocs: DiffDoc[] = cells.map((cell) => {
+      const data = {
         precision: cell.precision,
         lat: cell.lat,
         lng: cell.lng,
         count: cell.count,
         entireCount: cell.entireCount,
-        updatedAt: builtAt,
-      },
-    })),
-  );
-  await replaceCollection(
-    'officialCellPins',
-    pinCells.map((cell) => ({
-      id: cell.id,
-      data: {
-        lat: cell.lat,
-        lng: cell.lng,
-        count: cell.count,
-        pins: cell.pins,
-        updatedAt: builtAt,
-      },
-    })),
-  );
-  logger.info('OpenRTA cells rebuilt', { cells: cells.length, pinCells: pinCells.length });
-  return { municipalities: SYNCED_MUNICIPALITIES.length, records: total };
+      };
+      return { id: cell.id, data, hash: contentHash(data) };
+    });
+    const pinCellDocs: DiffDoc[] = pinCells.map((cell) => {
+      const data = { lat: cell.lat, lng: cell.lng, count: cell.count, pins: cell.pins };
+      return { id: cell.id, data, hash: contentHash(data) };
+    });
+    await writeDocsDiff('officialCells', cellDocs, existingCells, cellCounters);
+    await writeDocsDiff('officialCellPins', pinCellDocs, existingPinCells, cellCounters);
+    const cellIds = new Set(cellDocs.map((docItem) => docItem.id));
+    const pinCellIds = new Set(pinCellDocs.map((docItem) => docItem.id));
+    await deleteDocs(
+      'officialCells',
+      [...existingCells.keys()].filter((id) => !cellIds.has(id)),
+      cellCounters,
+    );
+    await deleteDocs(
+      'officialCellPins',
+      [...existingPinCells.keys()].filter((id) => !pinCellIds.has(id)),
+      cellCounters,
+    );
+    logger.info('OpenRTA cells rebuilt', {
+      cells: cells.length,
+      pinCells: pinCells.length,
+      ...cellCounters,
+    });
+    return { municipalities: SYNCED_MUNICIPALITIES.length, records: total };
+  } finally {
+    await releaseLock();
+  }
 }
