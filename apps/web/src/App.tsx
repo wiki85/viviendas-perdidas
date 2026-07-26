@@ -23,7 +23,7 @@ import { CookieNotice } from './components/CookieNotice';
 import { DonateSheet } from './components/DonateSheet';
 import { ListingSheet } from './components/ListingSheet';
 import { OfficialSheet } from './components/OfficialSheet';
-import { MapStage } from './components/map/MapStage';
+import { MapStage, type CameraCommand } from './components/map/MapStage';
 import { RegisterWizard } from './components/RegisterWizard';
 import { TopBar } from './components/TopBar';
 import { useAggregate } from './hooks/use-aggregate';
@@ -199,6 +199,18 @@ export default function App() {
   const pinCellCache = useRef(new Map<string, OfficialPin[]>());
   const userNavigatedRef = useRef(false);
   const [selectedOfficial, setSelectedOfficial] = useState<OfficialPin | null>(null);
+  // Programmatic camera moves (search, GPS, shared links, previews). The
+  // real map is uncontrolled, so these travel as explicit commands; the
+  // state mirror keeps data effects and the demo map in sync.
+  const cameraCommandId = useRef(0);
+  const [cameraCommand, setCameraCommand] = useState<CameraCommand | null>(null);
+  const flyTo = useCallback((nextCenter: LatLng, nextZoom: number, nextBounds?: MapBounds) => {
+    setCenter(nextCenter);
+    setZoom(nextZoom);
+    setBounds(nextBounds ?? approximateBounds(nextCenter, nextZoom));
+    cameraCommandId.current += 1;
+    setCameraCommand({ center: nextCenter, zoom: nextZoom, id: cameraCommandId.current });
+  }, []);
   // City impact report: powers the ephemeral banner and the header link.
   const [cityReport, setCityReport] = useState<{
     id: string;
@@ -452,15 +464,12 @@ export default function App() {
         // A late GPS fix must not hijack the map from a user who already
         // searched or navigated somewhere meanwhile.
         if (userNavigatedRef.current) return;
-        const next = { lat: coords.latitude, lng: coords.longitude };
-        setCenter(next);
-        setZoom(14);
-        setBounds(approximateBounds(next, 14));
+        flyTo({ lat: coords.latitude, lng: coords.longitude }, 14);
       },
       () => undefined,
       { enableHighAccuracy: false, timeout: 5_000, maximumAge: 300_000 },
     );
-  }, [sharedScopeId]);
+  }, [flyTo, sharedScopeId]);
 
   useEffect(() => {
     if (!sharedScopeId) return;
@@ -491,16 +500,14 @@ export default function App() {
         }
       }
       if (!active) return;
-      setCenter(nextCenter);
-      setZoom(nextZoom);
-      setBounds(approximateBounds(nextCenter, nextZoom));
+      flyTo(nextCenter, nextZoom);
       setCityHint(city);
       window.history.replaceState({}, '', '/');
     });
     return () => {
       active = false;
     };
-  }, [sharedLocation, sharedScopeId]);
+  }, [flyTo, sharedLocation, sharedScopeId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -613,9 +620,7 @@ export default function App() {
 
   const selectPlace = (place: SearchPlace) => {
     userNavigatedRef.current = true;
-    setCenter(place.position);
-    setZoom(place.zoom);
-    setBounds(place.bounds ?? approximateBounds(place.position, place.zoom));
+    flyTo(place.position, place.zoom, place.bounds);
     setCityHint(
       place.cityId
         ? syntheticCityDefinition(
@@ -692,9 +697,7 @@ export default function App() {
     setSelectedFallback(listing);
     listingState.insertOptimistic(listing);
     setSelectedId(listing.id);
-    setCenter(listing.location);
-    setZoom(17);
-    setBounds(approximateBounds(listing.location, 17));
+    flyTo(listing.location, 17);
     if (listing.cityId) {
       setCityHint(
         syntheticCityDefinition(
@@ -848,6 +851,7 @@ export default function App() {
           center={center}
           zoom={zoom}
           bounds={bounds}
+          cameraCommand={cameraCommand}
           listings={sourceMode === 'official' ? NO_LISTINGS : listingState.listings}
           officialCells={officialData?.kind === 'cells' ? officialData.cells : NO_OFFICIAL_CELLS}
           officialPins={officialData?.kind === 'pins' ? officialData.pins : NO_OFFICIAL_PINS}
@@ -925,9 +929,7 @@ export default function App() {
           mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
           onPlacementModeChange={setPlacementMode}
           onPreviewLocation={(position) => {
-            setCenter(position);
-            setZoom(17);
-            setBounds(approximateBounds(position, 17));
+            flyTo(position, 17);
             // Drop the draggable pin so the user can fine-tune the exact portal.
             setPickedPosition(position);
           }}

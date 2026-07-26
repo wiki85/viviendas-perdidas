@@ -10,9 +10,19 @@ import {
 import type { Listing, OfficialCell, OfficialPin } from '../../domain/types';
 import { MAP_STYLE, SPAIN_BOUNDS } from '../../lib/constants';
 import { formatCellCount } from '../../lib/official-cells';
-import type { MapStageProps } from './MapStage';
+import type { CameraCommand, MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
+
+/** Applies programmatic camera moves (search, GPS, shared links). */
+function CameraCommander({ command }: { command: CameraCommand | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map || !command) return;
+    map.moveCamera({ center: command.center, zoom: command.zoom });
+  }, [map, command]);
+  return null;
+}
 
 /** Zoom applied when tapping a bubble: jumps into the next, finer band. */
 const CELL_ZOOM_AFTER_CLICK: Record<number, number> = { 4: 10, 5: 13, 6: 15.4, 7: 17.2 };
@@ -158,11 +168,27 @@ function MarkerLayer({
 }
 
 function MapContent(props: RealMapProps) {
+  // Camera events fire on every frame of a gesture. The map is uncontrolled
+  // (defaultCenter/defaultZoom), so React state only needs the settled view:
+  // a trailing ~120ms throttle turns 60 renders/s of the whole app into ~8.
+  const latestCamera = useRef<{
+    center: { lat: number; lng: number };
+    zoom: number;
+    bounds: MapStageProps['bounds'];
+  } | null>(null);
+  const cameraTimer = useRef<number | null>(null);
+  const onViewportChangeRef = useRef(props.onViewportChange);
+  onViewportChangeRef.current = props.onViewportChange;
+  useEffect(() => {
+    return () => {
+      if (cameraTimer.current !== null) window.clearTimeout(cameraTimer.current);
+    };
+  }, []);
   return (
     <>
       <Map
-        center={props.center}
-        zoom={props.zoom}
+        defaultCenter={props.center}
+        defaultZoom={props.zoom}
         mapId={props.mapId}
         className="real-map"
         gestureHandling="greedy"
@@ -171,15 +197,20 @@ function MapContent(props: RealMapProps) {
         restriction={{ latLngBounds: SPAIN_BOUNDS, strictBounds: false }}
         styles={props.mapId === 'DEMO_MAP_ID' ? MAP_STYLE : undefined}
         onCameraChanged={(event) => {
-          // Camera events fire during gestures; syncing state continuously keeps
-          // this controlled map draggable/zoomable instead of snapping back.
           const { center, zoom, bounds } = event.detail;
-          props.onViewportChange({ lat: center.lat, lng: center.lng }, zoom, bounds);
+          latestCamera.current = { center: { lat: center.lat, lng: center.lng }, zoom, bounds };
+          if (cameraTimer.current !== null) return;
+          cameraTimer.current = window.setTimeout(() => {
+            cameraTimer.current = null;
+            const settled = latestCamera.current;
+            if (settled) onViewportChangeRef.current(settled.center, settled.zoom, settled.bounds);
+          }, 120);
         }}
         onClick={(event: MapMouseEvent) => {
           if (props.placementMode && event.detail.latLng) props.onPickLocation(event.detail.latLng);
         }}
       >
+        <CameraCommander command={props.cameraCommand} />
         <OfficialCellsLayer cells={props.officialCells} />
         <OfficialPinsLayer pins={props.officialPins} onSelect={props.onSelectOfficial} />
         <MarkerLayer

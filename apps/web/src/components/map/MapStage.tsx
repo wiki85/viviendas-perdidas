@@ -12,10 +12,16 @@ import { DemoMap } from './DemoMap';
 
 const RealMap = lazy(() => import('./RealMap'));
 
+/** Explicit camera move (search, GPS, shared link). The real map is
+ * uncontrolled — center/zoom state echoes would fight the user's gesture —
+ * so programmatic moves travel through this command channel instead. */
+export type CameraCommand = { center: LatLng; zoom: number; id: number };
+
 export type MapStageProps = {
   center: LatLng;
   zoom: number;
   bounds: MapBounds;
+  cameraCommand: CameraCommand | null;
   listings: Listing[];
   /** Official registry bubbles (aggregated cells), filtered by source mode. */
   officialCells: OfficialCell[];
