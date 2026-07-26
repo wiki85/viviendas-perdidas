@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import {
   AdvancedMarker,
@@ -67,10 +67,12 @@ function OfficialPinsLayer({
   onSelect: (pin: OfficialPin) => void;
 }) {
   const map = useMap();
-  const layerData = useMemo(() => ({ pins, onSelect }), [pins, onSelect]);
+  // Ref indirection: a new onSelect identity must not tear down the layer.
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
   useEffect(() => {
-    if (!map || layerData.pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
-    const markers = layerData.pins.map((pin) => {
+    if (!map || pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
+    const markers = pins.map((pin) => {
       const content = document.createElement('button');
       content.type = 'button';
       content.className = 'map-marker--official';
@@ -82,7 +84,7 @@ function OfficialPinsLayer({
         content,
         zIndex: 1,
       });
-      marker.addListener('click', () => layerData.onSelect(pin));
+      marker.addListener('click', () => onSelectRef.current(pin));
       return marker;
     });
     const clusterer = new MarkerClusterer({
@@ -101,12 +103,11 @@ function OfficialPinsLayer({
       },
     });
     return () => {
-      clusterer.clearMarkers();
-      markers.forEach((marker) => {
-        marker.map = null;
-      });
+      // setMap(null) runs onRemove: detaches the clusterer's map 'idle'
+      // listener and unmaps every marker — clearMarkers() alone leaks both.
+      clusterer.setMap(null);
     };
-  }, [map, layerData]);
+  }, [map, pins]);
   return null;
 }
 
@@ -120,17 +121,16 @@ function MarkerLayer({
   onSelect: (listing: Listing) => void;
 }) {
   const map = useMap();
-  const markerData = useMemo(
-    () => ({ listings, selectedId, onSelect }),
-    [listings, onSelect, selectedId],
-  );
+  // Ref indirection: a new onSelect identity must not tear down the layer.
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     if (!map || !google.maps.marker?.AdvancedMarkerElement) return;
-    const markers = markerData.listings.map((listing) => {
+    const markers = listings.map((listing) => {
       const content = document.createElement('button');
       content.type = 'button';
-      content.className = `map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''} ${markerData.selectedId === listing.id ? 'map-marker--selected' : ''}`;
+      content.className = `map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''} ${selectedId === listing.id ? 'map-marker--selected' : ''}`;
       content.setAttribute(
         'aria-label',
         listing.type === 'commercial'
@@ -144,17 +144,16 @@ function MarkerLayer({
         content,
         title: listing.address.formatted,
       });
-      marker.addListener('click', () => markerData.onSelect(listing));
+      marker.addListener('click', () => onSelectRef.current(listing));
       return marker;
     });
     const clusterer = new MarkerClusterer({ map, markers });
     return () => {
-      clusterer.clearMarkers();
-      markers.forEach((marker) => {
-        marker.map = null;
-      });
+      // setMap(null) runs onRemove: detaches the clusterer's map 'idle'
+      // listener and unmaps every marker — clearMarkers() alone leaks both.
+      clusterer.setMap(null);
     };
-  }, [map, markerData]);
+  }, [map, listings, selectedId]);
   return null;
 }
 

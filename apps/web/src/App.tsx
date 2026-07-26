@@ -51,6 +51,12 @@ import { SPAIN_CENTER, SPAIN_ZOOM } from './lib/constants';
 import { getListingsService } from './services';
 
 type Toast = { kind: 'success' | 'error'; message: string };
+
+// Stable empty arrays: fresh `[]` per render would re-run the map layer
+// effects (and tear down markers) even when there is nothing to draw.
+const NO_LISTINGS: Listing[] = [];
+const NO_OFFICIAL_CELLS: OfficialCell[] = [];
+const NO_OFFICIAL_PINS: OfficialPin[] = [];
 type PendingImpact = {
   scopeId: string;
   dwellings: number;
@@ -546,6 +552,22 @@ export default function App() {
     setSelectedId(null);
     setSelectedFallback(null);
   }, []);
+  // Stable identities: inline handlers would tear down and rebuild every
+  // map marker layer on each render (60×/s during a drag gesture).
+  const selectListing = useCallback((listing: Listing) => {
+    setSelectedFallback(null);
+    setSelectedOfficial(null);
+    setSelectedId(listing.id);
+  }, []);
+  const selectOfficialPin = useCallback((pin: OfficialPin) => {
+    setSelectedId(null);
+    setSelectedFallback(null);
+    setSelectedOfficial(pin);
+  }, []);
+  const pickLocation = useCallback((position: LatLng) => {
+    setPickedPosition(position);
+    setPlacementMode(false);
+  }, []);
   const closeRegistration = useCallback(() => {
     setRegistrationOpen(false);
     setPlacementMode(false);
@@ -786,28 +808,17 @@ export default function App() {
           center={center}
           zoom={zoom}
           bounds={bounds}
-          listings={sourceMode === 'official' ? [] : listingState.listings}
-          officialCells={officialData?.kind === 'cells' ? officialData.cells : []}
-          officialPins={officialData?.kind === 'pins' ? officialData.pins : []}
+          listings={sourceMode === 'official' ? NO_LISTINGS : listingState.listings}
+          officialCells={officialData?.kind === 'cells' ? officialData.cells : NO_OFFICIAL_CELLS}
+          officialPins={officialData?.kind === 'pins' ? officialData.pins : NO_OFFICIAL_PINS}
           selectedId={selectedId}
           activeNeighborhood={resolvedScope.activeNeighborhood}
           placementMode={placementMode}
           placementPosition={pickedPosition}
           onViewportChange={updateViewport}
-          onSelectListing={(listing) => {
-            setSelectedFallback(null);
-            setSelectedOfficial(null);
-            setSelectedId(listing.id);
-          }}
-          onSelectOfficial={(pin) => {
-            setSelectedId(null);
-            setSelectedFallback(null);
-            setSelectedOfficial(pin);
-          }}
-          onPickLocation={(position) => {
-            setPickedPosition(position);
-            setPlacementMode(false);
-          }}
+          onSelectListing={selectListing}
+          onSelectOfficial={selectOfficialPin}
+          onPickLocation={pickLocation}
         />
         {(capabilityNotice || aggregateError || listingState.error) && (
           <div className="mode-notice" role="status">
