@@ -31,6 +31,11 @@ function toDate(value: unknown): Date | null {
   return value instanceof Timestamp ? value.toDate() : null;
 }
 
+/** Crawler noise (invalid city ids) must not re-invoke the function. */
+function sendNotFound(response: Response): void {
+  response.set('Cache-Control', 'public, s-maxage=600').status(404).send('No encontrado');
+}
+
 /** Friendly 503 for visitors landing from shared/indexed links. */
 function sendUnavailable(response: Response): void {
   response
@@ -142,7 +147,7 @@ export const cityPage = onRequest(
   async (request, response) => {
     try {
       if (request.method !== 'GET') {
-        response.status(404).send('No encontrado');
+        sendNotFound(response);
         return;
       }
       const segments = request.path.split('/').filter(Boolean);
@@ -155,7 +160,7 @@ export const cityPage = onRequest(
 
       const cityId = segments[1] ?? '';
       if (segments[0] !== 'ciudad' || !CITY_ID_PATTERN.test(cityId) || cityId.length > 120) {
-        response.status(404).send('No encontrado');
+        sendNotFound(response);
         return;
       }
       const [snapshot, officialSnapshot] = await Promise.all([
@@ -173,7 +178,7 @@ export const cityPage = onRequest(
       if (!hasCommunity && official === null) {
         // A city without community listings nor official registry data would
         // be an empty page: better out of the index than indexed as thin content.
-        response.status(404).send('No encontrado');
+        sendNotFound(response);
         return;
       }
       const city = hasCommunity
@@ -204,7 +209,7 @@ export const sitemap = onRequest(
   async (request, response) => {
     try {
       if (request.method !== 'GET') {
-        response.status(404).send('No encontrado');
+        sendNotFound(response);
         return;
       }
       const cities = await listCities();

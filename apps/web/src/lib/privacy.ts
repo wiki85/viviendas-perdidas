@@ -1,6 +1,11 @@
+// KEEP IN SYNC with functions/src/domain/sanitize.ts: the server is the
+// authority, and any note the client accepts but the server rejects makes
+// the user complete all four wizard steps just to fail at the end.
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
-const PHONE_PATTERN = /(?:\+?34[\s.-]*)?(?:\d[\s.-]*){9}/;
-const URL_PATTERN = /(?:https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|es|net|org)\b)/i;
+const PHONE_PATTERN = /(?:\+?34[\s.-]*)?(?:[6789][\s.-]*)?(?:\d[\s.-]*){8,9}/;
+const URL_PATTERN = /(?:https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|net|org|es|io|co|me)\b)/i;
+const HTML_PATTERN = /<\/?[a-z][^>]*>/i;
+const CONTROL_CHARACTER_PATTERN = /(?![\t\n\r])\p{Cc}/u;
 
 export type NoteValidation = { valid: true } | { valid: false; message: string };
 
@@ -29,6 +34,12 @@ export function validateEvidenceNote(note: string): NoteValidation {
   }
   if (URL_PATTERN.test(normalized)) {
     return { valid: false, message: 'No incluyas enlaces en la nota.' };
+  }
+  if (HTML_PATTERN.test(normalized)) {
+    return { valid: false, message: 'La nota no puede contener código ni etiquetas.' };
+  }
+  if (CONTROL_CHARACTER_PATTERN.test(normalized)) {
+    return { valid: false, message: 'La nota contiene caracteres no válidos.' };
   }
   return { valid: true };
 }

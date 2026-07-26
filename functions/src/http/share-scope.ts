@@ -30,7 +30,7 @@ export const shareScope = onRequest(
   async (request, response) => {
     const scopeId = request.path.split('/').filter(Boolean).at(-1) ?? '';
     if (request.method !== 'GET' || !SCOPE_ID_PATTERN.test(scopeId) || scopeId.length > 120) {
-      response.status(404).send('No encontrado');
+      response.set('Cache-Control', 'public, s-maxage=600').status(404).send('No encontrado');
       return;
     }
     try {
@@ -59,7 +59,7 @@ export const shareScope = onRequest(
             }
           : null;
       if (!snapshot.exists && official === null) {
-        response.status(404).send('No encontrado');
+        response.set('Cache-Control', 'public, s-maxage=600').status(404).send('No encontrado');
         return;
       }
 

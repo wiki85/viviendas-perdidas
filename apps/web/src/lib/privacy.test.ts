@@ -29,3 +29,14 @@ describe('validateLicenseNumber', () => {
     expect(validateLicenseNumber('SOLO-LETRAS').valid).toBe(false);
   });
 });
+
+describe('paridad con la validación del servidor', () => {
+  it('rechaza teléfonos de 8 dígitos, TLDs extra, HTML y caracteres de control', async () => {
+    const { validateEvidenceNote } = await import('./privacy');
+    expect(validateEvidenceNote('expediente 45678901').valid).toBe(false);
+    expect(validateEvidenceNote('anuncio en pisos.io').valid).toBe(false);
+    expect(validateEvidenceNote('mira <b>esto</b>').valid).toBe(false);
+    expect(validateEvidenceNote('texto con \u0007 control').valid).toBe(false);
+    expect(validateEvidenceNote('Anunciado todo el verano en la esquina.').valid).toBe(true);
+  });
+});
