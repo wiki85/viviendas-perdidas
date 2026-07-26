@@ -166,6 +166,9 @@ export function RegisterWizard({
   const closeButton = useRef<HTMLButtonElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Explicit consent for overriding the official-registry warning: the old
+  // one-click primary button let users skip the notice without reading it.
+  const [officialAckConfirmed, setOfficialAckConfirmed] = useState(false);
   const [duplicateResult, setDuplicateResult] = useState<Extract<
     CreateListingResult,
     { created: false }
@@ -412,33 +415,44 @@ export function RegisterWizard({
           >
             <X size={20} />
           </button>
-          <div className="wizard-result">
-            <span className="wizard-result__icon">
+          <div className="wizard-result wizard-result--official">
+            <span className="wizard-result__icon wizard-result__icon--official">
               <Landmark size={28} />
             </span>
-            <p className="eyebrow">Registro oficial</p>
+            <p className="eyebrow">⚠ Ya está en el registro oficial</p>
             <h2 id="official-title">Esta dirección figura en el registro oficial de turismo</h2>
-            <div className="duplicate-card">
-              <strong>{official.registrationCode}</strong>
+            <div className="duplicate-card duplicate-card--official">
+              <strong>Licencia {official.registrationCode}</strong>
               <span>{official.addressText}</span>
               {official.places > 0 && <span>{official.places} plazas · Junta de Andalucía</span>}
             </div>
             <p>
-              La Junta de Andalucía ya tiene una vivienda de uso turístico registrada aquí. Puedes
-              añadir tu registro igualmente (quedará marcado para revisión) o cancelar si prefieres
-              no duplicar la información.
+              La Junta de Andalucía ya tiene una vivienda de uso turístico registrada en esta
+              dirección, y el mapa ya la cuenta en la fuente «Oficial». Registrarla también como
+              aporte vecinal puede duplicar la información.
             </p>
+            <label className="official-ack">
+              <input
+                type="checkbox"
+                checked={officialAckConfirmed}
+                onChange={(event) => setOfficialAckConfirmed(event.target.checked)}
+              />
+              <span>
+                Entiendo que ya figura en el registro oficial y quiero añadirla igualmente (quedará
+                marcada para revisión).
+              </span>
+            </label>
+            <button className="button button--primary" type="button" onClick={onClose}>
+              <Check size={18} /> No registrarla (recomendado)
+            </button>
             <button
-              className="button button--primary"
+              className="button button--ghost"
               type="button"
-              disabled={submitting}
+              disabled={submitting || !officialAckConfirmed}
               onClick={() => void submit(true, true)}
             >
-              {submitting ? <LoaderCircle className="spin" size={18} /> : <Check size={18} />}
-              Registrarlo igualmente
-            </button>
-            <button className="button button--ghost" type="button" onClick={onClose}>
-              No registrarlo
+              {submitting ? <LoaderCircle className="spin" size={18} /> : null}
+              Registrarla de todos modos
             </button>
           </div>
         </section>

@@ -1879,6 +1879,42 @@ textarea:focus-visible,
   margin-top: 8px;
 }
 
+/* Official-registry warning inside the wizard: unmistakably distinct. */
+.wizard-result--official .eyebrow {
+  color: #315d4c;
+}
+
+.wizard-result__icon--official {
+  color: #315d4c;
+  background: rgba(49, 93, 76, 0.12);
+}
+
+.duplicate-card--official {
+  border: 1px solid rgba(49, 93, 76, 0.35);
+  border-left: 4px solid #315d4c;
+}
+
+.official-ack {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 4px 0 10px;
+  padding: 11px 13px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--ink);
+  background: rgba(49, 93, 76, 0.07);
+  border: 1px solid rgba(49, 93, 76, 0.22);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.official-ack input {
+  margin-top: 2px;
+  accent-color: #315d4c;
+}
+
 /* Recovery screen rendered by the ErrorBoundary on a fatal render crash. */
 .crash-screen {
   display: grid;

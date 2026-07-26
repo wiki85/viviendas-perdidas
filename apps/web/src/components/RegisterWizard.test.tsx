@@ -65,6 +65,60 @@ describe('RegisterWizard mobile flow', () => {
     );
   });
 
+  it('exige confirmación explícita cuando la dirección figura en el registro oficial', async () => {
+    const onCreate = vi
+      .fn()
+      .mockResolvedValueOnce({
+        created: false,
+        reason: 'official_match',
+        canCreate: true,
+        official: {
+          registrationCode: 'VUT/SE/07731',
+          addressText: 'CALLE REPOSO Nº 1 Pta/Letra 5',
+          places: 4,
+          entire: true,
+        },
+      })
+      .mockResolvedValueOnce({ created: true, listing: { id: 'created' }, warnings: [] });
+    render(
+      <RegisterWizard
+        center={{ lat: 37.4021, lng: -5.9936 }}
+        pickedPosition={null}
+        mapsEnabled={false}
+        onPlacementModeChange={vi.fn()}
+        onPreviewLocation={vi.fn()}
+        onClose={vi.fn()}
+        onCreate={onCreate}
+        onSelectDuplicate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /usar el centro/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
+    fireEvent.click(screen.getByLabelText(/confirmo que la ubicación/i));
+    fireEvent.click(screen.getByRole('button', { name: /confirmar registro/i }));
+
+    // El aviso aparece con la licencia y el botón de forzar deshabilitado.
+    await waitFor(() =>
+      expect(screen.getByText(/figura en el registro oficial de turismo/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/VUT\/SE\/07731/)).toBeInTheDocument();
+    const force = screen.getByRole('button', { name: /registrarla de todos modos/i });
+    expect(force).toBeDisabled();
+
+    fireEvent.click(screen.getByLabelText(/entiendo que ya figura/i));
+    expect(force).toBeEnabled();
+    fireEvent.click(force);
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenLastCalledWith(
+        expect.objectContaining({ officialMatchAcknowledged: true, duplicateAcknowledged: true }),
+        null,
+      ),
+    );
+  });
+
   it('lets the user clear a count field without rewriting a zero (mobile keyboards)', () => {
     render(
       <RegisterWizard

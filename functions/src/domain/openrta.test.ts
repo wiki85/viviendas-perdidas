@@ -22,6 +22,13 @@ describe('extractStreetNumber', () => {
     expect(extractStreetNumber('AVENIDA de la Constitución No 22')).toBe('22');
     expect(extractStreetNumber('Sin número')).toBe('');
   });
+
+  it('falls back to the trailing number when the Nº marker is missing', () => {
+    expect(extractStreetNumber('CALLE FERIA 106')).toBe('106');
+    expect(extractStreetNumber('AVENIDA 28 DE FEBRERO 3')).toBe('3');
+    expect(extractStreetNumber('CALLE FERIA 106 Plta/Piso 2 Pta/Letra B')).toBe('106');
+    expect(extractStreetNumber('CALLE SIN PORTAL')).toBe('');
+  });
 });
 
 describe('utmToWgs84', () => {
@@ -109,6 +116,12 @@ describe('parseRtaRecord', () => {
 });
 
 describe('streetsLooselyMatch', () => {
+  it('rejects lookalike prefixes that are different roads', () => {
+    expect(streetsLooselyMatch('calle sol', 'calle soledad')).toBe(false);
+    expect(streetsLooselyMatch('calle reposo', 'reposo')).toBe(true);
+    expect(streetsLooselyMatch('avenida de la constitucion', 'constitucion')).toBe(true);
+  });
+
   it('matches identical and containing street names', () => {
     expect(streetsLooselyMatch('calle manzanares', 'manzanares')).toBe(true);
     expect(streetsLooselyMatch('manzanares', 'calle manzanares')).toBe(true);

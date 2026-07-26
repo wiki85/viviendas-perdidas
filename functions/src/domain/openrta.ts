@@ -39,7 +39,13 @@ export function normalizeLicenseKey(value: string): string {
 /** Extracts the street number from 'CALLE Manzanares Nº 8 Plta/Piso 9 …'. */
 export function extractStreetNumber(addressText: string): string {
   const match = /N[ºo°]?\s*\.?\s*(\d+)/iu.exec(addressText);
-  return match?.[1] ?? '';
+  if (match?.[1] !== undefined) return match[1];
+  // Fallback for RTA rows without the Nº marker ('CALLE FERIA 106'): the
+  // last standalone 1-4 digit token once floor/door qualifiers are cut off.
+  // Without this, those records can never match a community submission.
+  const trimmed = cleanAddressForGeocoding(addressText);
+  const numbers = [...trimmed.matchAll(/(?:^|[\s,])(\d{1,4})(?=[\s,.]|$)/gu)];
+  return numbers.at(-1)?.[1] ?? '';
 }
 
 /**
@@ -156,9 +162,46 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
   };
 }
 
-/** True when both normalized streets plausibly name the same road. */
+/** Street-type words and connectors that don't identify the road itself. */
+const STREET_STOPWORDS = new Set([
+  'calle',
+  'avenida',
+  'paseo',
+  'plaza',
+  'ronda',
+  'camino',
+  'carretera',
+  'travesia',
+  'urbanizacion',
+  'conjunto',
+  'barriada',
+  'pasaje',
+  'glorieta',
+  'de',
+  'del',
+  'la',
+  'las',
+  'los',
+  'el',
+  'y',
+]);
+
+function significantStreetTokens(street: string): string[] {
+  return street.split(' ').filter((token) => token.length > 0 && !STREET_STOPWORDS.has(token));
+}
+
+/**
+ * True when both normalized streets plausibly name the same road. Compares
+ * whole significant words: raw substring matching produced false positives
+ * ('calle sol' ⊂ 'calle soledad') that mislabelled community submissions.
+ */
 export function streetsLooselyMatch(a: string, b: string): boolean {
   if (a.length === 0 || b.length === 0) return false;
   if (a === b) return true;
-  return a.includes(b) || b.includes(a);
+  const tokensA = significantStreetTokens(a);
+  const tokensB = significantStreetTokens(b);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+  const [shorter, longer] =
+    tokensA.length <= tokensB.length ? [tokensA, tokensB] : [tokensB, tokensA];
+  return shorter.every((token) => longer.includes(token));
 }
