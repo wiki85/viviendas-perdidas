@@ -76,23 +76,24 @@ export const shareScope = onRequest(
     let sourceNote = 'Datos colaborativos y no oficiales.';
     if (fuente !== null && official !== null) {
       const officialInhabitants = inhabitantsForDwellings(official.entireHomes, cityId);
+      // Attribution and source breakdown live on the landing page itself;
+      // the social snippet stays short and impactful.
       if (fuente === 'oficial') {
         families = official.entireHomes;
         dwellings = official.entireHomes;
         inhabitants = officialInhabitants;
-        sourceNote = `Fuente: Registro de Turismo de Andalucía (${formatter.format(official.total)} viviendas turísticas), datos adaptados · CC BY 4.0. Sin respaldo oficial.`;
+        sourceNote = `${formatter.format(official.total)} viviendas en el registro oficial de turismo.`;
       } else {
         families += official.entireHomes;
         dwellings += official.entireHomes;
         inhabitants += officialInhabitants;
-        sourceNote =
-          'Datos colaborativos + Registro de Turismo de Andalucía (CC BY 4.0). Sin respaldo oficial.';
+        sourceNote = '';
       }
     } else if (fuente !== null) {
-      sourceNote = 'Datos colaborativos; el mapa se abre con el registro oficial activado.';
+      sourceNote = '';
     }
     const title = `${name} ha perdido ${formatter.format(families)} familias`;
-    const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados. ${sourceNote}`;
+    const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados.${sourceNote.length > 0 ? ` ${sourceNote}` : ''}`;
     const origin = requestOrigin(request);
     const mapParams = new URLSearchParams({ scope: scopeId });
     const latitude = queryNumber(request.query.lat);

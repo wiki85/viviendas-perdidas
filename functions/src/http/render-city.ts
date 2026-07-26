@@ -215,7 +215,7 @@ export function renderCityPage(
   const title = `Viviendas perdidas en ${name}: ${n(totalDwellings)} viviendas dedicadas al turismo`;
   const description =
     households > 0
-      ? `${name} dedica ${n(totalDwellings)} viviendas al alquiler turístico (registros vecinales${official ? ' + registro oficial RTA' : ''}): unas ${n(households)} familias desplazadas, ${euros(impact.annualSpendEur)} al año que pierde la economía de barrio y el equivalente a ${n(impact.classrooms)} aulas escolares.`
+      ? `${name} dedica ${n(totalDwellings)} viviendas al alquiler turístico: unas ${n(households)} familias desplazadas, ${euros(impact.annualSpendEur)} al año que pierde la economía de barrio y el equivalente a ${n(impact.classrooms)} aulas escolares.`
       : `Datos colaborativos de viviendas convertidas en alojamiento turístico en ${name}.`;
   const updatedAt = city.updatedAt ?? official?.updatedAt ?? null;
   const updatedLine = updatedAt

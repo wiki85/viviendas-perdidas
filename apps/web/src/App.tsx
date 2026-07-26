@@ -705,7 +705,7 @@ export default function App() {
         : `${window.location.origin}/compartir/${encodeURIComponent(metricsAggregate.scopeId)}?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&zoom=${zoom}${fuenteParam ? `&fuente=${fuenteParam}` : ''}`;
     const shareData = {
       title: document.title,
-      text: `${metricsAggregate.name}: ${metricsAggregate.lostFamilies.toLocaleString('es-ES')} familias y ${metricsAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes estimados.${fuenteParam ? ' Incluye el registro oficial de turismo.' : ''}`,
+      text: `${metricsAggregate.name}: ${metricsAggregate.lostFamilies.toLocaleString('es-ES')} familias y ${metricsAggregate.lostInhabitants.toLocaleString('es-ES')} habitantes estimados.`,
       url,
     };
     try {
