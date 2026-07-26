@@ -3,7 +3,7 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import {
   AdvancedMarker,
   APIProvider,
-  Map,
+  Map as GoogleMap,
   useMap,
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
@@ -68,7 +68,12 @@ function OfficialCellsLayer({ cells }: { cells: OfficialCell[] }) {
   return null;
 }
 
-/** Exact official pins at street zoom, clustered like the community ones. */
+/**
+ * Exact official pins at street zoom, clustered like the community ones.
+ * The clusterer lives once per map and pins are diffed by id: panning only
+ * creates/removes the markers entering or leaving the view. A full rebuild
+ * of ~1000 DOM markers per pan froze the map for seconds.
+ */
 function OfficialPinsLayer({
   pins,
   onSelect,
@@ -80,26 +85,14 @@ function OfficialPinsLayer({
   // Ref indirection: a new onSelect identity must not tear down the layer.
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+  const markersRef = useRef(new Map<string, google.maps.marker.AdvancedMarkerElement>());
+
   useEffect(() => {
-    if (!map || pins.length === 0 || !google.maps.marker?.AdvancedMarkerElement) return;
-    const markers = pins.map((pin) => {
-      const content = document.createElement('button');
-      content.type = 'button';
-      content.className = 'map-marker--official';
-      content.title = `${pin.registrationCode} · Registro oficial (RTA)`;
-      content.setAttribute('aria-label', `Vivienda turística oficial ${pin.registrationCode}`);
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: pin.location,
-        content,
-        zIndex: 1,
-      });
-      marker.addListener('click', () => onSelectRef.current(pin));
-      return marker;
-    });
+    if (!map || !google.maps.marker?.AdvancedMarkerElement) return;
     const clusterer = new MarkerClusterer({
       map,
-      markers,
+      markers: [],
       renderer: {
         render: ({ count, position }) =>
           new google.maps.marker.AdvancedMarkerElement({
@@ -112,13 +105,58 @@ function OfficialPinsLayer({
           }),
       },
     });
+    clustererRef.current = clusterer;
+    const markerStore = markersRef.current;
     return () => {
+      clustererRef.current = null;
+      markerStore.clear();
       // setMap(null) runs onRemove: detaches the clusterer's map 'idle'
       // listener and unmaps every marker — clearMarkers() alone leaks both.
       clusterer.setMap(null);
     };
+  }, [map]);
+
+  useEffect(() => {
+    const clusterer = clustererRef.current;
+    if (!clusterer || !map || !google.maps.marker?.AdvancedMarkerElement) return;
+    const current = markersRef.current;
+    const nextIds = new Set(pins.map((pin) => pin.id));
+    const removed: google.maps.marker.AdvancedMarkerElement[] = [];
+    for (const [id, marker] of current) {
+      if (!nextIds.has(id)) {
+        removed.push(marker);
+        current.delete(id);
+      }
+    }
+    const added: google.maps.marker.AdvancedMarkerElement[] = [];
+    for (const pin of pins) {
+      if (current.has(pin.id)) continue;
+      const content = document.createElement('button');
+      content.type = 'button';
+      content.className = 'map-marker--official';
+      content.title = `${pin.registrationCode} · Registro oficial (RTA)`;
+      content.setAttribute('aria-label', `Vivienda turística oficial ${pin.registrationCode}`);
+      // No `map` here: the clusterer decides what gets attached, so we skip
+      // mounting hundreds of elements that would be unmapped right after.
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        position: pin.location,
+        content,
+        zIndex: 1,
+      });
+      marker.addListener('click', () => onSelectRef.current(pin));
+      current.set(pin.id, marker);
+      added.push(marker);
+    }
+    if (removed.length > 0) clusterer.removeMarkers(removed, true);
+    if (added.length > 0) clusterer.addMarkers(added, true);
+    if (removed.length > 0 || added.length > 0) clusterer.render();
   }, [map, pins]);
   return null;
+}
+
+/** What forces rebuilding a community marker's DOM (type/status/counts). */
+function listingSignature(listing: Listing): string {
+  return `${listing.type}:${listing.status}:${listing.dwellingsCount}:${listing.commercialUnitsCount ?? 0}`;
 }
 
 function MarkerLayer({
@@ -134,13 +172,46 @@ function MarkerLayer({
   // Ref indirection: a new onSelect identity must not tear down the layer.
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+  const markersRef = useRef(
+    new Map<string, { marker: google.maps.marker.AdvancedMarkerElement; signature: string }>(),
+  );
 
   useEffect(() => {
     if (!map || !google.maps.marker?.AdvancedMarkerElement) return;
-    const markers = listings.map((listing) => {
+    const clusterer = new MarkerClusterer({ map, markers: [] });
+    clustererRef.current = clusterer;
+    const markerStore = markersRef.current;
+    return () => {
+      clustererRef.current = null;
+      markerStore.clear();
+      // setMap(null) runs onRemove: detaches the clusterer's map 'idle'
+      // listener and unmaps every marker — clearMarkers() alone leaks both.
+      clusterer.setMap(null);
+    };
+  }, [map]);
+
+  // Diff by id: each settled pan replaces the array with mostly the same
+  // listings, and rebuilding every marker (plus the clusterer index) is what
+  // used to stutter the map. Selection is a class toggle, not a rebuild.
+  useEffect(() => {
+    const clusterer = clustererRef.current;
+    if (!clusterer || !map || !google.maps.marker?.AdvancedMarkerElement) return;
+    const current = markersRef.current;
+    const next = new Map(listings.map((listing) => [listing.id, listing]));
+    const removed: google.maps.marker.AdvancedMarkerElement[] = [];
+    for (const [id, entry] of current) {
+      const listing = next.get(id);
+      if (listing && listingSignature(listing) === entry.signature) continue;
+      removed.push(entry.marker);
+      current.delete(id);
+    }
+    const added: google.maps.marker.AdvancedMarkerElement[] = [];
+    for (const listing of listings) {
+      if (current.has(listing.id)) continue;
       const content = document.createElement('button');
       content.type = 'button';
-      content.className = `map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''} ${selectedId === listing.id ? 'map-marker--selected' : ''}`;
+      content.className = `map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''}`;
       content.setAttribute(
         'aria-label',
         listing.type === 'commercial'
@@ -149,21 +220,27 @@ function MarkerLayer({
       );
       content.innerHTML = `<span aria-hidden="true">${listing.type === 'building' ? '🏢' : listing.type === 'commercial' ? '🏪' : '⌂'}</span>${listing.type === 'building' ? `<b>${listing.dwellingsCount}</b>` : ''}`;
       const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
         position: listing.location,
         content,
         title: listing.address.formatted,
       });
       marker.addListener('click', () => onSelectRef.current(listing));
-      return marker;
-    });
-    const clusterer = new MarkerClusterer({ map, markers });
-    return () => {
-      // setMap(null) runs onRemove: detaches the clusterer's map 'idle'
-      // listener and unmaps every marker — clearMarkers() alone leaks both.
-      clusterer.setMap(null);
-    };
-  }, [map, listings, selectedId]);
+      current.set(listing.id, { marker, signature: listingSignature(listing) });
+      added.push(marker);
+    }
+    if (removed.length > 0) clusterer.removeMarkers(removed, true);
+    if (added.length > 0) clusterer.addMarkers(added, true);
+    if (removed.length > 0 || added.length > 0) clusterer.render();
+  }, [map, listings]);
+
+  useEffect(() => {
+    for (const [id, entry] of markersRef.current) {
+      (entry.marker.content as HTMLElement | null)?.classList.toggle(
+        'map-marker--selected',
+        id === selectedId,
+      );
+    }
+  }, [selectedId, listings]);
   return null;
 }
 
@@ -186,7 +263,7 @@ function MapContent(props: RealMapProps) {
   }, []);
   return (
     <>
-      <Map
+      <GoogleMap
         defaultCenter={props.center}
         defaultZoom={props.zoom}
         mapId={props.mapId}
@@ -236,7 +313,7 @@ function MapContent(props: RealMapProps) {
             </span>
           </AdvancedMarker>
         )}
-      </Map>
+      </GoogleMap>
       {props.placementMode && (
         <div className="placement-hint" aria-live="polite">
           Toca el edificio o arrastra el pin

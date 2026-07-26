@@ -194,6 +194,10 @@ export default function App() {
     { kind: 'cells'; cells: OfficialCell[] } | { kind: 'pins'; pins: OfficialPin[] } | null
   >(null);
   const [officialError, setOfficialError] = useState(false);
+  // Content signature of the published official layer: identical fetch
+  // results (common while panning inside cached cells) must not re-publish
+  // a fresh array and ripple a no-op update through the map layers.
+  const officialSignatureRef = useRef('');
   // Street cells already downloaded this session (id → pins, [] when empty),
   // so panning at street zoom only fetches the cells that enter the view.
   const pinCellCache = useRef(new Map<string, OfficialPin[]>());
@@ -234,6 +238,7 @@ export default function App() {
     if (sourceMode === 'citizens' || service.mode !== 'firebase') {
       setOfficialData(null);
       setOfficialError(false);
+      officialSignatureRef.current = '';
       return;
     }
     let active = true;
@@ -252,13 +257,22 @@ export default function App() {
             for (const cell of fetched) cache.set(cell.id, cell.pins);
           }
           if (!active) return;
-          setOfficialData({ kind: 'pins', pins: ids.flatMap((id) => cache.get(id) ?? []) });
+          const pins = ids.flatMap((id) => cache.get(id) ?? []);
+          const signature = `pins:${pins.map((pin) => pin.id).join('|')}`;
+          if (signature !== officialSignatureRef.current) {
+            officialSignatureRef.current = signature;
+            setOfficialData({ kind: 'pins', pins });
+          }
           setOfficialError(false);
           return;
         }
         const cells = await service.listOfficialCells(bounds, officialPrecisionForZoom(zoom));
         if (active) {
-          setOfficialData({ kind: 'cells', cells });
+          const signature = `cells:${cells.map((cell) => cell.id).join('|')}`;
+          if (signature !== officialSignatureRef.current) {
+            officialSignatureRef.current = signature;
+            setOfficialData({ kind: 'cells', cells });
+          }
           setOfficialError(false);
         }
       };
