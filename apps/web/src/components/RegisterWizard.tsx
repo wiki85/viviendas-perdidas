@@ -28,6 +28,7 @@ import type {
 import { useStreetView } from '../hooks/use-street-view';
 import { appConfig } from '../lib/config';
 import { isTouchDevice } from '../lib/device';
+import { isInsideSpain } from '../lib/geo';
 import { calculateImpact } from '../lib/impact';
 import { validateEvidenceNote, validateLicenseNumber } from '../lib/privacy';
 import { buildStreetViewUrl } from '../lib/streetview';
@@ -254,6 +255,13 @@ export function RegisterWizard({
     navigator.geolocation.getCurrentPosition(
       (result) => {
         const position = { lat: result.coords.latitude, lng: result.coords.longitude };
+        if (!isInsideSpain(position)) {
+          setLocateError(
+            'Tu posición está fuera de España; el mapa solo cubre territorio español.',
+          );
+          setLocating(false);
+          return;
+        }
         const fallback: LocationChoice = {
           position,
           label: `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)} · tu posición actual`,

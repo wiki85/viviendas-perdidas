@@ -9,7 +9,7 @@ import type {
   NeighborhoodFeature,
   ResolvedScope,
 } from '../domain/types';
-import { EMPTY_SCOPE, FALLBACK_CITIES, NEIGHBORHOOD_ZOOM } from './constants';
+import { EMPTY_SCOPE, FALLBACK_CITIES, NEIGHBORHOOD_ZOOM, SPAIN_BOUNDS } from './constants';
 
 let citiesPromise: Promise<CityDefinition[]> | null = null;
 const neighborhoodPromises = new Map<string, Promise<NeighborhoodCollection | null>>();
@@ -185,6 +185,11 @@ export function boundsContain(bounds: MapBounds, position: LatLng) {
 
 export function listingIsInBounds(location: LatLng, bounds: MapBounds) {
   return boundsContain(bounds, location);
+}
+
+/** True inside the Spanish bounding box (peninsula, islands, Ceuta, Melilla). */
+export function isInsideSpain(position: LatLng) {
+  return containsPoint(SPAIN_BOUNDS, position);
 }
 
 export function neighborhoodCenter(feature: NeighborhoodFeature): LatLng {

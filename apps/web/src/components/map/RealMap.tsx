@@ -8,7 +8,7 @@ import {
   type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
 import type { Listing, OfficialCell, OfficialPin } from '../../domain/types';
-import { MAP_STYLE } from '../../lib/constants';
+import { MAP_STYLE, SPAIN_BOUNDS } from '../../lib/constants';
 import { formatCellCount } from '../../lib/official-cells';
 import type { MapStageProps } from './MapStage';
 
@@ -169,6 +169,7 @@ function MapContent(props: RealMapProps) {
         gestureHandling="greedy"
         disableDefaultUI
         clickableIcons={false}
+        restriction={{ latLngBounds: SPAIN_BOUNDS, strictBounds: false }}
         styles={props.mapId === 'DEMO_MAP_ID' ? MAP_STYLE : undefined}
         onCameraChanged={(event) => {
           // Camera events fire during gestures; syncing state continuously keeps

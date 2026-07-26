@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
+import { FileText, Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
 import type {
   Aggregate,
   CityDefinition,
@@ -775,7 +775,6 @@ export default function App() {
         sourceMode={sourceMode}
         onSourceModeChange={setSourceMode}
         official={officialViewport}
-        report={cityReport ? { id: cityReport.id, name: cityReport.name } : null}
         sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
@@ -833,6 +832,16 @@ export default function App() {
             summary={cityReport.summary}
             onClose={closeBanner}
           />
+        )}
+        {cityReport && !bannerVisible && !registrationOpen && (
+          <a
+            className="report-fab"
+            href={`/ciudad/${encodeURIComponent(cityReport.id)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FileText size={15} aria-hidden="true" /> Informe de {cityReport.name}
+          </a>
         )}
         {!registrationOpen && !selectedListing && (
           <button

@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   CircleHelp,
   Coffee,
   House,
@@ -24,8 +23,6 @@ type Props = {
   onSourceModeChange: (mode: SourceMode) => void;
   /** Official registry figures for the visible map area (null while loading). */
   official: OfficialViewportStats | null;
-  /** City with a published impact report (null when none applies). */
-  report: { id: string; name: string } | null;
   sourceToggleAvailable: boolean;
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
@@ -60,7 +57,6 @@ export function TopBar({
   sourceMode,
   onSourceModeChange,
   official,
-  report,
   sourceToggleAvailable,
   onSelectPlace,
   onOpenAbout,
@@ -157,16 +153,6 @@ export function TopBar({
           </>
         )}
       </p>
-      {report && (
-        <a
-          className="topbar__report"
-          href={`/ciudad/${encodeURIComponent(report.id)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Informe completo de {report.name} <ArrowUpRight size={13} aria-hidden="true" />
-        </a>
-      )}
       {sourceMode !== 'citizens' && (
         <>
           <p

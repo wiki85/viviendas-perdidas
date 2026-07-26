@@ -1046,15 +1046,63 @@ textarea:focus-visible,
   }
 }
 
-.topbar__report {
+/* Floating pill over the map linking to the visible city's impact report. */
+.report-fab {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 26;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin: 2px 2px 0;
-  justify-self: end;
-  font-size: 0.68rem;
-  font-weight: 650;
-  color: #315d4c;
+  gap: 7px;
+  max-width: calc(100% - 24px);
+  padding: 9px 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(49, 93, 76, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(30, 43, 39, 0.28);
+  backdrop-filter: blur(8px);
+  animation: report-fab-in 0.3s ease;
+}
+
+.report-fab:hover {
+  background: #274c3e;
+}
+
+.report-fab svg {
+  flex-shrink: 0;
+}
+
+@keyframes report-fab-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (min-width: 700px) {
+  /* Clear the floating search card on narrower desktop windows. */
+  .report-fab {
+    left: max(50%, 600px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-fab {
+    animation: none;
+  }
 }
 
 .mode-notice,

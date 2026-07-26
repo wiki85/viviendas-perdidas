@@ -1,6 +1,14 @@
-import type { CityDefinition, LatLng } from '../domain/types';
+import type { CityDefinition, LatLng, MapBounds } from '../domain/types';
 
 export const HOUSEHOLD_SIZE = 2.5;
+
+/** España completa: península, Baleares, Canarias, Ceuta y Melilla. */
+export const SPAIN_BOUNDS: MapBounds = {
+  north: 43.95,
+  south: 27.35,
+  east: 4.65,
+  west: -18.5,
+};
 export const NEIGHBORHOOD_ZOOM = 14;
 export const MAX_LISTINGS_PER_VIEW = 500;
 export const SPAIN_CENTER: LatLng = { lat: 40.2085, lng: -3.713 };
