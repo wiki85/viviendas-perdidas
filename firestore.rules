@@ -15,11 +15,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Mirror of the public OpenRTA registry (Junta de Andalucía): read-only
-    // public data, written exclusively by the sync function.
+    // Mirror of the public OpenRTA registry (Junta de Andalucía). Only Cloud
+    // Functions consume it (cross-check, license lookup) via the Admin SDK;
+    // the map reads the aggregated officialCells/officialCellPins instead.
+    // Closed to clients so nobody can page through 51k docs on our bill.
     match /officialVut/{recordId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if false;
     }
 
     match /officialStats/{cityId} {

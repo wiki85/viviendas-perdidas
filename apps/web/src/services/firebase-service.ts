@@ -271,12 +271,9 @@ export class FirebaseListingsService implements ListingsService {
   }
 
   async exportPublicData() {
-    const projectId = appConfig.firebase?.projectId;
-    const fallbackUrl = projectId
-      ? `https://${appConfig.firebaseRegion}-${projectId}.cloudfunctions.net/exportPublicData`
-      : null;
-    const url = appConfig.publicExportUrl ?? fallbackUrl;
-    if (!url) throw new Error('La exportación pública aún no está configurada.');
+    // Same-origin route through the Hosting rewrite: the CDN cache absorbs
+    // repeated downloads instead of billing a Firestore export per request.
+    const url = appConfig.publicExportUrl ?? '/datos/export';
     const response = await fetch(url);
     if (!response.ok) throw new Error('No se pudo preparar la descarga de datos.');
     return response.blob();

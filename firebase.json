@@ -47,6 +47,13 @@
         }
       },
       {
+        "source": "/datos/export",
+        "function": {
+          "functionId": "exportPublicData",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
