@@ -192,6 +192,28 @@ export function isInsideSpain(position: LatLng) {
   return containsPoint(SPAIN_BOUNDS, position);
 }
 
+/** Grows a box by `ratio` of its span on every side (0.3 → +30%). */
+export function expandBounds(bounds: MapBounds, ratio: number): MapBounds {
+  const latMargin = (bounds.north - bounds.south) * ratio;
+  const lngMargin = (bounds.east - bounds.west) * ratio;
+  return {
+    north: Math.min(90, bounds.north + latMargin),
+    south: Math.max(-90, bounds.south - latMargin),
+    east: bounds.east + lngMargin,
+    west: bounds.west - lngMargin,
+  };
+}
+
+/** True when `inner` fits completely inside `outer`. */
+export function boundsWithin(inner: MapBounds, outer: MapBounds): boolean {
+  return (
+    inner.south >= outer.south &&
+    inner.north <= outer.north &&
+    inner.west >= outer.west &&
+    inner.east <= outer.east
+  );
+}
+
 export function neighborhoodCenter(feature: NeighborhoodFeature): LatLng {
   const polygons =
     feature.geometry.type === 'Polygon'

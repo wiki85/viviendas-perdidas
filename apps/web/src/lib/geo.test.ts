@@ -65,3 +65,20 @@ describe('visible-scope point in polygon resolution', () => {
     });
   });
 });
+
+describe('expandBounds y boundsWithin', () => {
+  it('amplía el recuadro por ambos lados y detecta contención', async () => {
+    const { expandBounds, boundsWithin } = await import('./geo');
+    const bounds = { north: 37.4, south: 37.3, east: -5.9, west: -6.0 };
+    const expanded = expandBounds(bounds, 0.3);
+    expect(expanded.north).toBeCloseTo(37.43, 6);
+    expect(expanded.south).toBeCloseTo(37.27, 6);
+    expect(expanded.east).toBeCloseTo(-5.87, 6);
+    expect(expanded.west).toBeCloseTo(-6.03, 6);
+    expect(boundsWithin(bounds, expanded)).toBe(true);
+    expect(boundsWithin(expanded, bounds)).toBe(false);
+    // Un desplazamiento pequeño sigue contenido en el recuadro ampliado.
+    const panned = { north: 37.41, south: 37.31, east: -5.89, west: -5.99 };
+    expect(boundsWithin(panned, expanded)).toBe(true);
+  });
+});

@@ -48,9 +48,13 @@ import type {
   VoteResult,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
-import { distanceMeters, listingIsInBounds } from '../lib/geo';
+import { boundsWithin, distanceMeters, expandBounds, listingIsInBounds } from '../lib/geo';
 import { MAX_LISTINGS_PER_VIEW } from '../lib/constants';
 import { CELL_DEGREES } from '../lib/official-cells';
+
+const LISTINGS_CACHE_TTL_MS = 60_000;
+const CELL_BAND_CACHE_TTL_MS = 10 * 60_000;
+const CELL_BANDS_PER_PRECISION = 3;
 
 function toIsoString(value: unknown) {
   if (value && typeof value === 'object' && 'toDate' in value) {
@@ -153,6 +157,16 @@ function normalizeAggregate(scope: VisibleScope, raw?: DocumentData): Aggregate 
   };
 }
 
+function filterCellsByLongitude(
+  cells: OfficialCell[],
+  bounds: MapBounds,
+  lngPad: number,
+): OfficialCell[] {
+  const west = bounds.west - lngPad;
+  const east = bounds.east + lngPad;
+  return cells.filter((cell) => cell.location.lng >= west && cell.location.lng <= east);
+}
+
 function initializeFirebase(): { app: FirebaseApp; db: Firestore; functions: Functions } {
   if (!appConfig.firebase) throw new Error('Firebase no está configurado.');
   const app = initializeApp(appConfig.firebase);
@@ -179,6 +193,20 @@ export class FirebaseListingsService implements ListingsService {
   private readonly app: FirebaseApp;
   private readonly db: Firestore;
   private readonly functions: Functions;
+  // Containment cache: each settled pan used to re-download every visible
+  // listing even when the viewport barely moved. Fetches cover an expanded
+  // region so small pans and zoom-ins resolve without touching Firestore.
+  private listingsCache: {
+    bounds: MapBounds;
+    listings: Listing[];
+    truncated: boolean;
+    at: number;
+  } | null = null;
+
+  private cellBandCache = new Map<
+    number,
+    Array<{ south: number; north: number; cells: OfficialCell[]; at: number }>
+  >();
 
   constructor() {
     const clients = initializeFirebase();
@@ -187,12 +215,27 @@ export class FirebaseListingsService implements ListingsService {
     this.functions = clients.functions;
   }
 
+  /** Local mutations must not be masked by the read cache. */
+  private invalidateListings() {
+    this.listingsCache = null;
+  }
+
   async loadListings(bounds: MapBounds) {
+    const cached = this.listingsCache;
+    if (
+      cached !== null &&
+      !cached.truncated &&
+      Date.now() - cached.at < LISTINGS_CACHE_TTL_MS &&
+      boundsWithin(bounds, cached.bounds)
+    ) {
+      return cached.listings.filter((listing) => listingIsInBounds(listing.location, bounds));
+    }
+    const fetchBounds = expandBounds(bounds, 0.3);
     const center = {
-      lat: (bounds.north + bounds.south) / 2,
-      lng: (bounds.east + bounds.west) / 2,
+      lat: (fetchBounds.north + fetchBounds.south) / 2,
+      lng: (fetchBounds.east + fetchBounds.west) / 2,
     };
-    const corner = { lat: bounds.north, lng: bounds.east };
+    const corner = { lat: fetchBounds.north, lng: fetchBounds.east };
     const radius = Math.max(100, distanceMeters(center, corner));
     const ranges = geohashQueryBounds([center.lat, center.lng], radius);
     const perRange = Math.max(25, Math.ceil(MAX_LISTINGS_PER_VIEW / Math.max(1, ranges.length)));
@@ -214,12 +257,19 @@ export class FirebaseListingsService implements ListingsService {
     for (const snapshot of snapshots) {
       for (const document of snapshot.docs) {
         const listing = normalizeListing(document.id, document.data());
-        if (listing.status !== 'removed' && listingIsInBounds(listing.location, bounds)) {
+        if (listing.status !== 'removed' && listingIsInBounds(listing.location, fetchBounds)) {
           merged.set(listing.id, listing);
         }
       }
     }
-    return Array.from(merged.values()).slice(0, MAX_LISTINGS_PER_VIEW);
+    const listings = Array.from(merged.values()).slice(0, MAX_LISTINGS_PER_VIEW);
+    this.listingsCache = {
+      bounds: fetchBounds,
+      listings,
+      truncated: listings.length >= MAX_LISTINGS_PER_VIEW,
+      at: Date.now(),
+    };
+    return listings.filter((listing) => listingIsInBounds(listing.location, bounds));
   }
 
   subscribeAggregate(
@@ -247,6 +297,7 @@ export class FirebaseListingsService implements ListingsService {
     );
     const response = await callable(input);
     if (response.data.created) {
+      this.invalidateListings();
       return {
         created: true,
         listing: normalizeListing(response.data.listing.id, response.data.listing),
@@ -267,6 +318,7 @@ export class FirebaseListingsService implements ListingsService {
       VoteResult
     >(this.functions, 'voteListing');
     const response = await callable({ listingId, kind, deviceFingerprintHash });
+    this.invalidateListings();
     return response.data;
   }
 
@@ -294,27 +346,39 @@ export class FirebaseListingsService implements ListingsService {
 
   async listOfficialCells(bounds: MapBounds, precision: number): Promise<OfficialCell[]> {
     // One latitude band per query (any-SDK-safe single inequality); longitude
-    // is filtered client side. Cells are tiny docs, so the overfetch of other
-    // municipalities sharing the band is negligible.
+    // is filtered client side. Bands cache per session: cells only change
+    // with the weekly sync, so panning inside a cached band costs no reads.
     const pad = CELL_DEGREES[precision] ?? CELL_DEGREES[7];
+    const south = bounds.south - pad.lat;
+    const north = bounds.north + pad.lat;
+    const entries = this.cellBandCache.get(precision) ?? [];
+    const hit = entries.find(
+      (entry) =>
+        entry.south <= south &&
+        entry.north >= north &&
+        Date.now() - entry.at < CELL_BAND_CACHE_TTL_MS,
+    );
+    if (hit) return filterCellsByLongitude(hit.cells, bounds, pad.lng);
+
+    // Fetch a taller band than requested so vertical pans stay cached too.
+    const margin = (north - south) * 0.6;
+    const fetchSouth = south - margin;
+    const fetchNorth = north + margin;
     const snapshot = await getDocs(
       query(
         collection(this.db, 'officialCells'),
         where('precision', '==', precision),
-        where('lat', '>=', bounds.south - pad.lat),
-        where('lat', '<=', bounds.north + pad.lat),
+        where('lat', '>=', fetchSouth),
+        where('lat', '<=', fetchNorth),
         orderBy('lat'),
         limit(2000),
       ),
     );
-    const west = bounds.west - pad.lng;
-    const east = bounds.east + pad.lng;
-    const cells: OfficialCell[] = [];
+    const bandCells: OfficialCell[] = [];
     for (const document of snapshot.docs) {
       const data = document.data();
       if (typeof data.lat !== 'number' || typeof data.lng !== 'number') continue;
-      if (data.lng < west || data.lng > east) continue;
-      cells.push({
+      bandCells.push({
         id: document.id,
         precision,
         location: { lat: data.lat, lng: data.lng },
@@ -322,7 +386,15 @@ export class FirebaseListingsService implements ListingsService {
         entireCount: typeof data.entireCount === 'number' ? data.entireCount : 0,
       });
     }
-    return cells;
+    // A band cut off by the query limit is incomplete: serve it, don't cache it.
+    if (snapshot.size < 2000) {
+      const next = [
+        { south: fetchSouth, north: fetchNorth, cells: bandCells, at: Date.now() },
+        ...entries,
+      ].slice(0, CELL_BANDS_PER_PRECISION);
+      this.cellBandCache.set(precision, next);
+    }
+    return filterCellsByLongitude(bandCells, bounds, pad.lng);
   }
 
   async listOfficialPinCells(cellIds: string[]): Promise<OfficialPinCell[]> {
@@ -481,16 +553,19 @@ export class FirebaseListingsService implements ListingsService {
   ): Promise<void> {
     const callable = httpsCallable(this.functions, 'adminUpdateListing');
     await callable({ listingId, ...patch });
+    this.invalidateListings();
   }
 
   async adminDeleteListing(listingId: string): Promise<void> {
     const callable = httpsCallable(this.functions, 'adminDeleteListing');
     await callable({ listingId });
+    this.invalidateListings();
   }
 
   async adminSetListingPhoto(listingId: string, imageBase64: string | null): Promise<void> {
     const callable = httpsCallable(this.functions, 'adminSetListingPhoto');
     await callable({ listingId, imageBase64 });
+    this.invalidateListings();
   }
 
   async adminListErrors(): Promise<ErrorLogEntry[]> {
