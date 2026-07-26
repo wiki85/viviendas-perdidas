@@ -186,6 +186,16 @@ export function RegisterWizard({
     locationRef.current = location;
   }, [location]);
 
+  // A GPS fix arriving after the wizard closed must not move the map nor
+  // drop an orphan pin (getCurrentPosition cannot be aborted).
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!pickedPosition) return;
     onPlacementModeChange(false);
@@ -254,6 +264,7 @@ export function RegisterWizard({
     setLocateError(null);
     navigator.geolocation.getCurrentPosition(
       (result) => {
+        if (!aliveRef.current) return;
         const position = { lat: result.coords.latitude, lng: result.coords.longitude };
         if (!isInsideSpain(position)) {
           setLocateError(
@@ -268,6 +279,7 @@ export function RegisterWizard({
           source: 'map',
         };
         const finish = (choice: LocationChoice) => {
+          if (!aliveRef.current) return;
           setLocation(choice);
           onPreviewLocation(position);
           onPlacementModeChange(false);
@@ -297,6 +309,7 @@ export function RegisterWizard({
           .catch(() => finish(fallback));
       },
       (failure) => {
+        if (!aliveRef.current) return;
         setLocating(false);
         setLocateError(
           failure.code === failure.PERMISSION_DENIED

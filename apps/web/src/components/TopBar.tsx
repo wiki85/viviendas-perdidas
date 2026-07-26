@@ -23,6 +23,8 @@ type Props = {
   onSourceModeChange: (mode: SourceMode) => void;
   /** Official registry figures for the visible map area (null while loading). */
   official: OfficialViewportStats | null;
+  /** Whether the official figures are usable, still loading, or failed. */
+  officialStatus: 'ready' | 'loading' | 'error';
   sourceToggleAvailable: boolean;
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
@@ -57,6 +59,7 @@ export function TopBar({
   sourceMode,
   onSourceModeChange,
   official,
+  officialStatus,
   sourceToggleAvailable,
   onSelectPlace,
   onOpenAbout,
@@ -139,15 +142,21 @@ export function TopBar({
       </div>
       <p className="topbar__records">
         {sourceMode === 'official' ? (
-          <>
-            <span>{formatInteger(aggregate.listingsCount)}</span> viviendas del registro oficial a
-            la vista
-          </>
+          officialStatus === 'ready' ? (
+            <>
+              <span>{formatInteger(aggregate.listingsCount)}</span> viviendas del registro oficial a
+              la vista
+            </>
+          ) : officialStatus === 'loading' ? (
+            <>Cargando el registro oficial…</>
+          ) : (
+            <>No se ha podido cargar el registro oficial.</>
+          )
         ) : (
           <>
             <span>{formatInteger(aggregate.listingsCount)}</span>{' '}
             {aggregate.listingsCount === 1 ? 'registro colaborativo' : 'registros colaborativos'}
-            {sourceMode === 'both'
+            {sourceMode === 'both' && officialStatus === 'ready'
               ? ` + ${formatInteger(official?.total ?? 0)} del registro oficial`
               : ''}
           </>
@@ -159,7 +168,13 @@ export function TopBar({
             className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}
           >
             <Landmark size={15} aria-hidden="true" />
-            {official && official.total > 0 ? (
+            {officialStatus === 'loading' ? (
+              <span>Cargando el registro oficial de turismo…</span>
+            ) : officialStatus === 'error' ? (
+              <span>
+                No se ha podido cargar el registro oficial. Mueve el mapa para reintentarlo.
+              </span>
+            ) : official && official.total > 0 ? (
               <span>
                 Registro oficial (RTA): <strong>{formatInteger(official.entireHomes)}</strong>{' '}
                 {official.entireHomes === 1

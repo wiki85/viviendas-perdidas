@@ -1,3 +1,5 @@
+import type { Response } from 'express';
+import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { Timestamp } from 'firebase-admin/firestore';
 import { REGION } from '../config.js';
@@ -27,6 +29,17 @@ const PAGE_HEADERS = {
 
 function toDate(value: unknown): Date | null {
   return value instanceof Timestamp ? value.toDate() : null;
+}
+
+/** Friendly 503 for visitors landing from shared/indexed links. */
+function sendUnavailable(response: Response): void {
+  response
+    .set('Cache-Control', 'no-store')
+    .status(503)
+    .type('html')
+    .send(
+      `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vuelve en un momento</title><style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f7f3eb;color:#1e2b27;text-align:center;padding:20px}a{color:#315d4c;font-weight:700}</style></head><body><div><p>No hemos podido cargar esta página ahora mismo.</p><p><a href="/">Ir al mapa</a> o vuelve a intentarlo en un momento.</p></div></body></html>`,
+    );
 }
 
 function cityFromDoc(id: string, data: FirebaseFirestore.DocumentData): CityStats {
@@ -127,71 +140,85 @@ async function listNeighborhoods(cityId: string): Promise<NeighborhoodStats[]> {
 export const cityPage = onRequest(
   { region: REGION, timeoutSeconds: 15, maxInstances: 10 },
   async (request, response) => {
-    if (request.method !== 'GET') {
-      response.status(404).send('No encontrado');
-      return;
-    }
-    const segments = request.path.split('/').filter(Boolean);
+    try {
+      if (request.method !== 'GET') {
+        response.status(404).send('No encontrado');
+        return;
+      }
+      const segments = request.path.split('/').filter(Boolean);
 
-    if (segments[0] === 'ciudades') {
-      const cities = await listCities();
-      response.set(PAGE_HEADERS).status(200).type('html').send(renderCitiesIndex(cities));
-      return;
-    }
+      if (segments[0] === 'ciudades') {
+        const cities = await listCities();
+        response.set(PAGE_HEADERS).status(200).type('html').send(renderCitiesIndex(cities));
+        return;
+      }
 
-    const cityId = segments[1] ?? '';
-    if (segments[0] !== 'ciudad' || !CITY_ID_PATTERN.test(cityId)) {
-      response.status(404).send('No encontrado');
-      return;
+      const cityId = segments[1] ?? '';
+      if (segments[0] !== 'ciudad' || !CITY_ID_PATTERN.test(cityId) || cityId.length > 120) {
+        response.status(404).send('No encontrado');
+        return;
+      }
+      const [snapshot, officialSnapshot] = await Promise.all([
+        db.collection('aggregates').doc(cityId).get(),
+        db.collection('officialStats').doc(cityId).get(),
+      ]);
+      const data = snapshot.data();
+      const officialData = officialSnapshot.data();
+      const official =
+        officialSnapshot.exists && officialData !== undefined && integer(officialData.total) > 0
+          ? officialFromDoc(officialData)
+          : null;
+      const hasCommunity =
+        snapshot.exists && data?.scope === 'city' && integer(data?.listingsCount) > 0;
+      if (!hasCommunity && official === null) {
+        // A city without community listings nor official registry data would
+        // be an empty page: better out of the index than indexed as thin content.
+        response.status(404).send('No encontrado');
+        return;
+      }
+      const city = hasCommunity
+        ? cityFromDoc(snapshot.id, data ?? {})
+        : emptyCity(
+            cityId,
+            typeof officialData?.municipality === 'string'
+              ? titleCaseSpanish(officialData.municipality)
+              : cityId,
+          );
+      const neighborhoods = await listNeighborhoods(city.id);
+      response
+        .set(PAGE_HEADERS)
+        .status(200)
+        .type('html')
+        .send(renderCityPage(city, neighborhoods, official));
+    } catch (error) {
+      logger.error('cityPage failed', {
+        errorType: error instanceof Error ? error.name : typeof error,
+      });
+      sendUnavailable(response);
     }
-    const [snapshot, officialSnapshot] = await Promise.all([
-      db.collection('aggregates').doc(cityId).get(),
-      db.collection('officialStats').doc(cityId).get(),
-    ]);
-    const data = snapshot.data();
-    const officialData = officialSnapshot.data();
-    const official =
-      officialSnapshot.exists && officialData !== undefined && integer(officialData.total) > 0
-        ? officialFromDoc(officialData)
-        : null;
-    const hasCommunity =
-      snapshot.exists && data?.scope === 'city' && integer(data?.listingsCount) > 0;
-    if (!hasCommunity && official === null) {
-      // A city without community listings nor official registry data would
-      // be an empty page: better out of the index than indexed as thin content.
-      response.status(404).send('No encontrado');
-      return;
-    }
-    const city = hasCommunity
-      ? cityFromDoc(snapshot.id, data ?? {})
-      : emptyCity(
-          cityId,
-          typeof officialData?.municipality === 'string'
-            ? titleCaseSpanish(officialData.municipality)
-            : cityId,
-        );
-    const neighborhoods = await listNeighborhoods(city.id);
-    response
-      .set(PAGE_HEADERS)
-      .status(200)
-      .type('html')
-      .send(renderCityPage(city, neighborhoods, official));
   },
 );
 
 export const sitemap = onRequest(
   { region: REGION, timeoutSeconds: 15, maxInstances: 5 },
   async (request, response) => {
-    if (request.method !== 'GET') {
-      response.status(404).send('No encontrado');
-      return;
+    try {
+      if (request.method !== 'GET') {
+        response.status(404).send('No encontrado');
+        return;
+      }
+      const cities = await listCities();
+      response
+        .set('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400')
+        .set('X-Content-Type-Options', 'nosniff')
+        .status(200)
+        .type('application/xml')
+        .send(renderSitemap(cities));
+    } catch (error) {
+      logger.error('sitemap failed', {
+        errorType: error instanceof Error ? error.name : typeof error,
+      });
+      response.set('Cache-Control', 'no-store').status(503).send('Temporalmente no disponible');
     }
-    const cities = await listCities();
-    response
-      .set('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400')
-      .set('X-Content-Type-Options', 'nosniff')
-      .status(200)
-      .type('application/xml')
-      .send(renderSitemap(cities));
   },
 );

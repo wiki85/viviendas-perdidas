@@ -193,9 +193,11 @@ export default function App() {
   const [officialData, setOfficialData] = useState<
     { kind: 'cells'; cells: OfficialCell[] } | { kind: 'pins'; pins: OfficialPin[] } | null
   >(null);
+  const [officialError, setOfficialError] = useState(false);
   // Street cells already downloaded this session (id → pins, [] when empty),
   // so panning at street zoom only fetches the cells that enter the view.
   const pinCellCache = useRef(new Map<string, OfficialPin[]>());
+  const userNavigatedRef = useRef(false);
   const [selectedOfficial, setSelectedOfficial] = useState<OfficialPin | null>(null);
   // City impact report: powers the ephemeral banner and the header link.
   const [cityReport, setCityReport] = useState<{
@@ -219,6 +221,7 @@ export default function App() {
   useEffect(() => {
     if (sourceMode === 'citizens' || service.mode !== 'firebase') {
       setOfficialData(null);
+      setOfficialError(false);
       return;
     }
     let active = true;
@@ -227,21 +230,31 @@ export default function App() {
         if (zoom >= OFFICIAL_PIN_MIN_ZOOM) {
           const ids = enumeratePinCellIds(bounds);
           const cache = pinCellCache.current;
+          // Prune BEFORE computing what's missing: clearing afterwards would
+          // leave the still-visible cached cells empty until the next pan.
+          if (cache.size > 1500) cache.clear();
           const missing = ids.filter((id) => !cache.has(id));
           if (missing.length > 0) {
             const fetched = await service.listOfficialPinCells(missing);
-            if (cache.size > 1500) cache.clear();
             for (const id of missing) cache.set(id, []);
             for (const cell of fetched) cache.set(cell.id, cell.pins);
           }
           if (!active) return;
           setOfficialData({ kind: 'pins', pins: ids.flatMap((id) => cache.get(id) ?? []) });
+          setOfficialError(false);
           return;
         }
         const cells = await service.listOfficialCells(bounds, officialPrecisionForZoom(zoom));
-        if (active) setOfficialData({ kind: 'cells', cells });
+        if (active) {
+          setOfficialData({ kind: 'cells', cells });
+          setOfficialError(false);
+        }
       };
-      load().catch(() => undefined);
+      load().catch(() => {
+        // A network hiccup must read as an error, never as "no official
+        // dwellings here": the header switches to an explicit failure state.
+        if (active) setOfficialError(true);
+      });
     }, 300);
     return () => {
       active = false;
@@ -253,19 +266,15 @@ export default function App() {
   const resolvedCityId = resolvedScope.scope.cityId;
   const resolvedCityName = resolvedScope.city?.name ?? resolvedScope.scope.name;
   useEffect(() => {
-    if (!resolvedCityId) {
-      setCityReport(null);
-      setBannerVisible(false);
-      return;
-    }
+    // Reset first: the previous city's report (and its floating button)
+    // must never linger over a different city while the new one resolves.
+    setCityReport(null);
+    setBannerVisible(false);
+    if (!resolvedCityId) return;
     let active = true;
     const apply = (summary: CityImpactSummary | null) => {
       if (!active) return;
-      if (summary === null) {
-        setCityReport(null);
-        setBannerVisible(false);
-        return;
-      }
+      if (summary === null) return;
       setCityReport({ id: resolvedCityId, name: resolvedCityName, summary });
       const seenKey = `vp-impact-banner-${resolvedCityId}`;
       let alreadySeen = false;
@@ -369,12 +378,37 @@ export default function App() {
     };
   }, [aggregate, pendingImpact, viewportAggregate]);
 
+  // 'ready' when data (or the citizens mode) is in place; TopBar shows the
+  // loading/error states instead of a misleading "no official homes here".
+  const officialStatus: 'ready' | 'loading' | 'error' =
+    sourceMode === 'citizens' || officialViewport !== null
+      ? 'ready'
+      : officialError
+        ? 'error'
+        : 'loading';
+
   // Counters shown in the header. Official whole homes visible on the map
   // replace the community figures in 'official' mode and add to them in
   // 'both'; inhabitants use the same INE household-size formula so both
   // sources stay comparable. Rooms-only rentals never count as a lost home.
   const metricsAggregate = useMemo<Aggregate>(() => {
-    if (sourceMode === 'citizens' || !officialViewport) return displayedAggregate;
+    if (sourceMode === 'citizens') return displayedAggregate;
+    if (!officialViewport) {
+      // Official figures still loading (or failed). In pure official mode a
+      // zeroed board beats presenting community numbers as official ones;
+      // in 'both' the community subset alone is an honest partial value.
+      if (sourceMode === 'official') {
+        return {
+          ...displayedAggregate,
+          listingsCount: 0,
+          lostDwellings: 0,
+          lostFamilies: 0,
+          lostInhabitants: 0,
+          lostCommercial: 0,
+        };
+      }
+      return displayedAggregate;
+    }
     const officialImpact = calculateImpact(officialViewport.entireHomes);
     if (sourceMode === 'official') {
       return {
@@ -415,6 +449,9 @@ export default function App() {
     if (sharedScopeId || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        // A late GPS fix must not hijack the map from a user who already
+        // searched or navigated somewhere meanwhile.
+        if (userNavigatedRef.current) return;
         const next = { lat: coords.latitude, lng: coords.longitude };
         setCenter(next);
         setZoom(14);
@@ -575,6 +612,7 @@ export default function App() {
   }, []);
 
   const selectPlace = (place: SearchPlace) => {
+    userNavigatedRef.current = true;
     setCenter(place.position);
     setZoom(place.zoom);
     setBounds(place.bounds ?? approximateBounds(place.position, place.zoom));
@@ -645,6 +683,7 @@ export default function App() {
   };
 
   const selectDuplicate = (duplicate: DuplicateSummary) => {
+    userNavigatedRef.current = true;
     const fullListing = listingState.listings.find((listing) => listing.id === duplicate.id);
     const listing = fullListing ?? listingFromDuplicate(duplicate, center);
     setRegistrationOpen(false);
@@ -797,6 +836,7 @@ export default function App() {
         sourceMode={sourceMode}
         onSourceModeChange={setSourceMode}
         official={officialViewport}
+        officialStatus={officialStatus}
         sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}

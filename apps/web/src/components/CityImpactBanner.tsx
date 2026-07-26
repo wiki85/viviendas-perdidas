@@ -21,12 +21,13 @@ const LEAVE_ANIMATION_MS = 300;
 export function CityImpactBanner({ cityId, cityName, summary, onClose }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<number | null>(null);
+  const leaveTimer = useRef<number | null>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
   const leave = useCallback(() => {
     container.current?.classList.add('impact-banner--leaving');
-    window.setTimeout(() => onCloseRef.current(), LEAVE_ANIMATION_MS);
+    leaveTimer.current = window.setTimeout(() => onCloseRef.current(), LEAVE_ANIMATION_MS);
   }, []);
 
   const pause = useCallback(() => {
@@ -43,7 +44,12 @@ export function CityImpactBanner({ cityId, cityName, summary, onClose }: Props) 
 
   useEffect(() => {
     resume();
-    return pause;
+    return () => {
+      pause();
+      // An orphaned leave timeout would close the NEXT banner instance
+      // (onCloseRef points at the shared close handler in App).
+      if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current);
+    };
   }, [pause, resume]);
 
   const facts: string[] = [

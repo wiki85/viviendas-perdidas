@@ -1,3 +1,4 @@
+import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
@@ -28,108 +29,108 @@ export const shareScope = onRequest(
   { region: REGION, timeoutSeconds: 15, maxInstances: 10 },
   async (request, response) => {
     const scopeId = request.path.split('/').filter(Boolean).at(-1) ?? '';
-    if (request.method !== 'GET' || !SCOPE_ID_PATTERN.test(scopeId)) {
+    if (request.method !== 'GET' || !SCOPE_ID_PATTERN.test(scopeId) || scopeId.length > 120) {
       response.status(404).send('No encontrado');
       return;
     }
+    try {
+      const fuenteRaw = queryText(request.query.fuente);
+      const fuente = fuenteRaw === 'oficial' || fuenteRaw === 'ambas' ? fuenteRaw : null;
+      const cityId = scopeId.split('__')[0] ?? scopeId;
+      const cityLevelScope = !scopeId.includes('__');
 
-    const fuenteRaw = queryText(request.query.fuente);
-    const fuente = fuenteRaw === 'oficial' || fuenteRaw === 'ambas' ? fuenteRaw : null;
-    const cityId = scopeId.split('__')[0] ?? scopeId;
-    const cityLevelScope = !scopeId.includes('__');
+      const [snapshot, officialSnapshot] = await Promise.all([
+        db.collection('aggregates').doc(scopeId).get(),
+        // Official figures exist per municipality; sub-city scopes keep the
+        // community card (the map still opens with the official layer on).
+        fuente !== null && cityLevelScope
+          ? db.collection('officialStats').doc(cityId).get()
+          : Promise.resolve(null),
+      ]);
+      const official =
+        officialSnapshot?.exists === true
+          ? {
+              total: integer(officialSnapshot.data()?.total),
+              entireHomes: integer(officialSnapshot.data()?.entireHomes),
+              municipality:
+                typeof officialSnapshot.data()?.municipality === 'string'
+                  ? (officialSnapshot.data()?.municipality as string)
+                  : '',
+            }
+          : null;
+      if (!snapshot.exists && official === null) {
+        response.status(404).send('No encontrado');
+        return;
+      }
 
-    const [snapshot, officialSnapshot] = await Promise.all([
-      db.collection('aggregates').doc(scopeId).get(),
-      // Official figures exist per municipality; sub-city scopes keep the
-      // community card (the map still opens with the official layer on).
-      fuente !== null && cityLevelScope
-        ? db.collection('officialStats').doc(cityId).get()
-        : Promise.resolve(null),
-    ]);
-    const official =
-      officialSnapshot?.exists === true
-        ? {
-            total: integer(officialSnapshot.data()?.total),
-            entireHomes: integer(officialSnapshot.data()?.entireHomes),
-            municipality:
-              typeof officialSnapshot.data()?.municipality === 'string'
-                ? (officialSnapshot.data()?.municipality as string)
-                : '',
-          }
-        : null;
-    if (!snapshot.exists && official === null) {
-      response.status(404).send('No encontrado');
-      return;
-    }
-
-    const data = snapshot.data() ?? {};
-    const name =
-      typeof data.name === 'string' && data.name.length > 0
-        ? data.name
-        : official !== null && official.municipality.length > 0
-          ? titleCaseSpanish(official.municipality)
-          : scopeId;
-    let families = integer(data.lostFamilies);
-    let dwellings = integer(data.lostDwellings);
-    let inhabitants = integer(data.lostInhabitants);
-    const formatter = new Intl.NumberFormat('es-ES');
-    let sourceNote = 'Datos colaborativos y no oficiales.';
-    if (fuente !== null && official !== null) {
-      const officialInhabitants = inhabitantsForDwellings(official.entireHomes, cityId);
-      // Attribution and source breakdown live on the landing page itself;
-      // the social snippet stays short and impactful.
-      if (fuente === 'oficial') {
-        families = official.entireHomes;
-        dwellings = official.entireHomes;
-        inhabitants = officialInhabitants;
-        sourceNote = `${formatter.format(official.total)} viviendas en el registro oficial de turismo.`;
-      } else {
-        families += official.entireHomes;
-        dwellings += official.entireHomes;
-        inhabitants += officialInhabitants;
+      const data = snapshot.data() ?? {};
+      const name =
+        typeof data.name === 'string' && data.name.length > 0
+          ? data.name
+          : official !== null && official.municipality.length > 0
+            ? titleCaseSpanish(official.municipality)
+            : scopeId;
+      let families = integer(data.lostFamilies);
+      let dwellings = integer(data.lostDwellings);
+      let inhabitants = integer(data.lostInhabitants);
+      const formatter = new Intl.NumberFormat('es-ES');
+      let sourceNote = 'Datos colaborativos y no oficiales.';
+      if (fuente !== null && official !== null) {
+        const officialInhabitants = inhabitantsForDwellings(official.entireHomes, cityId);
+        // Attribution and source breakdown live on the landing page itself;
+        // the social snippet stays short and impactful.
+        if (fuente === 'oficial') {
+          families = official.entireHomes;
+          dwellings = official.entireHomes;
+          inhabitants = officialInhabitants;
+          sourceNote = `${formatter.format(official.total)} viviendas en el registro oficial de turismo.`;
+        } else {
+          families += official.entireHomes;
+          dwellings += official.entireHomes;
+          inhabitants += officialInhabitants;
+          sourceNote = '';
+        }
+      } else if (fuente !== null) {
         sourceNote = '';
       }
-    } else if (fuente !== null) {
-      sourceNote = '';
-    }
-    const title = `${name} ha perdido ${formatter.format(families)} familias`;
-    const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados.${sourceNote.length > 0 ? ` ${sourceNote}` : ''}`;
-    const origin = requestOrigin(request);
-    const mapParams = new URLSearchParams({ scope: scopeId });
-    const latitude = queryNumber(request.query.lat);
-    const longitude = queryNumber(request.query.lng);
-    const zoom = queryNumber(request.query.zoom);
-    if (
-      latitude !== null &&
-      longitude !== null &&
-      zoom !== null &&
-      latitude >= 27.4 &&
-      latitude <= 44.2 &&
-      longitude >= -18.5 &&
-      longitude <= 4.5 &&
-      zoom >= 5 &&
-      zoom <= 19
-    ) {
-      mapParams.set('lat', latitude.toFixed(6));
-      mapParams.set('lng', longitude.toFixed(6));
-      mapParams.set('zoom', String(Math.round(zoom)));
-    }
-    if (fuente !== null) mapParams.set('fuente', fuente);
-    const mapUrl = `${origin}/?${mapParams.toString()}`;
-    const shareParams = new URLSearchParams(mapParams);
-    shareParams.delete('scope');
-    const shareQuery = shareParams.size > 0 ? `?${shareParams.toString()}` : '';
-    const canonicalShareUrl = `${origin}/compartir/${scopeId}${shareQuery}`;
+      const title = `${name} ha perdido ${formatter.format(families)} familias`;
+      const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados.${sourceNote.length > 0 ? ` ${sourceNote}` : ''}`;
+      const origin = requestOrigin(request);
+      const mapParams = new URLSearchParams({ scope: scopeId });
+      const latitude = queryNumber(request.query.lat);
+      const longitude = queryNumber(request.query.lng);
+      const zoom = queryNumber(request.query.zoom);
+      if (
+        latitude !== null &&
+        longitude !== null &&
+        zoom !== null &&
+        latitude >= 27.4 &&
+        latitude <= 44.2 &&
+        longitude >= -18.5 &&
+        longitude <= 4.5 &&
+        zoom >= 5 &&
+        zoom <= 19
+      ) {
+        mapParams.set('lat', latitude.toFixed(6));
+        mapParams.set('lng', longitude.toFixed(6));
+        mapParams.set('zoom', String(Math.round(zoom)));
+      }
+      if (fuente !== null) mapParams.set('fuente', fuente);
+      const mapUrl = `${origin}/?${mapParams.toString()}`;
+      const shareParams = new URLSearchParams(mapParams);
+      shareParams.delete('scope');
+      const shareQuery = shareParams.size > 0 ? `?${shareParams.toString()}` : '';
+      const canonicalShareUrl = `${origin}/compartir/${scopeId}${shareQuery}`;
 
-    response
-      .set('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=3600')
-      .set(
-        'Content-Security-Policy',
-        "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
-      )
-      .set('X-Content-Type-Options', 'nosniff')
-      .status(200)
-      .type('html').send(`<!doctype html>
+      response
+        .set('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=3600')
+        .set(
+          'Content-Security-Policy',
+          "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+        )
+        .set('X-Content-Type-Options', 'nosniff')
+        .status(200)
+        .type('html').send(`<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8">
@@ -156,5 +157,13 @@ export const shareScope = onRequest(
     <script>location.replace(${jsonForInlineScript(mapUrl)})</script>
   </body>
 </html>`);
+    } catch (error) {
+      // The map itself works even when this card cannot be built: send the
+      // visitor there instead of showing a raw 500 from a shared link.
+      logger.error('shareScope failed', {
+        errorType: error instanceof Error ? error.name : typeof error,
+      });
+      response.set('Cache-Control', 'no-store').redirect(302, `/?scope=${scopeId}`);
+    }
   },
 );
