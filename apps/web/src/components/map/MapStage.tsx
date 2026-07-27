@@ -10,7 +10,11 @@ import type {
 import { appConfig } from '../../lib/config';
 import { DemoMap } from './DemoMap';
 
-const RealMap = lazy(() => import('./RealMap'));
+// Preload at module evaluation: the map is the page's main content, and
+// waiting for React to mount MapStage before fetching the chunk added a
+// full network hop to the startup cascade.
+const realMapPromise = appConfig.googleMapsApiKey ? import('./RealMap') : null;
+const RealMap = lazy(() => realMapPromise ?? import('./RealMap'));
 
 /** Explicit camera move (search, GPS, shared link). The real map is
  * uncontrolled — center/zoom state echoes would fight the user's gesture —

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Aggregate, ListingsService, VisibleScope } from '../domain/types';
 
 function emptyAggregate(scope: VisibleScope): Aggregate {
@@ -17,23 +17,45 @@ export function useAggregate(service: ListingsService, scope: VisibleScope) {
   const [aggregate, setAggregate] = useState<Aggregate>(() => emptyAggregate(scope));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const attemptsRef = useRef(0);
+
+  useEffect(() => {
+    attemptsRef.current = 0;
+  }, [scope]);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    setAggregate(emptyAggregate(scope));
-    return service.subscribeAggregate(
+    // Keep the previous figures while the new scope loads: dropping to zero
+    // reads as data loss and re-animates every counter on each pan.
+    let retryTimer: number | null = null;
+    const unsubscribe = service.subscribeAggregate(
       scope,
       (next) => {
+        attemptsRef.current = 0;
         setAggregate(next);
         setLoading(false);
       },
       () => {
         setError('No se han podido actualizar los contadores.');
         setLoading(false);
+        // A Firestore listener error is terminal for the SDK: without this
+        // retry the counters would stay frozen until the scope changes.
+        if (attemptsRef.current < 3) {
+          attemptsRef.current += 1;
+          retryTimer = window.setTimeout(
+            () => setRetryNonce((nonce) => nonce + 1),
+            4_000 * attemptsRef.current,
+          );
+        }
       },
     );
-  }, [scope, service]);
+    return () => {
+      unsubscribe();
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
+    };
+  }, [retryNonce, scope, service]);
 
   return { aggregate, loading, error };
 }

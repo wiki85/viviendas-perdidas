@@ -8,9 +8,11 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  initializeFirestore,
   limit,
   onSnapshot,
   orderBy,
+  persistentLocalCache,
   query,
   startAt,
   endAt,
@@ -179,7 +181,15 @@ function initializeFirebase(): { app: FirebaseApp; db: Firestore; functions: Fun
     });
   }
 
-  const db = getFirestore(app);
+  // Persistent local cache: repeat visits and flaky connections serve
+  // listings/cells from IndexedDB instead of an empty map. Falls back to
+  // the in-memory cache when unavailable (private mode, second tab race).
+  let db: Firestore;
+  try {
+    db = initializeFirestore(app, { localCache: persistentLocalCache() });
+  } catch {
+    db = getFirestore(app);
+  }
   const functions = getFunctions(app, appConfig.firebaseRegion);
   if (appConfig.useFirebaseEmulators) {
     connectFirestoreEmulator(db, '127.0.0.1', 8080);

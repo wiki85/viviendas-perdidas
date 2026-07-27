@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FileText, Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
 import type {
   Aggregate,
@@ -15,17 +15,37 @@ import type {
   SourceMode,
   VoteKind,
 } from './domain/types';
-import { AboutPage } from './components/AboutPage';
-import { AdminPage } from './components/AdminPage';
 import { CityImpactBanner } from './components/CityImpactBanner';
-import { MethodologyPage } from './components/MethodologyPage';
 import { CookieNotice } from './components/CookieNotice';
 import { DonateSheet } from './components/DonateSheet';
 import { ListingSheet } from './components/ListingSheet';
 import { OfficialSheet } from './components/OfficialSheet';
 import { MapStage, type CameraCommand } from './components/map/MapStage';
-import { RegisterWizard } from './components/RegisterWizard';
 import { TopBar } from './components/TopBar';
+
+// Secondary surfaces load on demand: they were ~30 kB gzip of the startup
+// chunk despite rendering only behind explicit navigation.
+const AboutPage = lazy(() =>
+  import('./components/AboutPage').then((module) => ({ default: module.AboutPage })),
+);
+const AdminPage = lazy(() =>
+  import('./components/AdminPage').then((module) => ({ default: module.AdminPage })),
+);
+const MethodologyPage = lazy(() =>
+  import('./components/MethodologyPage').then((module) => ({ default: module.MethodologyPage })),
+);
+const RegisterWizard = lazy(() =>
+  import('./components/RegisterWizard').then((module) => ({ default: module.RegisterWizard })),
+);
+
+function PageLoading() {
+  return (
+    <div className="map-loading" role="status">
+      <span />
+      Cargando…
+    </div>
+  );
+}
 import { useAggregate } from './hooks/use-aggregate';
 import { useListingsInBounds } from './hooks/use-listings-in-bounds';
 import { useVisibleScope } from './hooks/use-visible-scope';
@@ -801,30 +821,34 @@ export default function App() {
 
   if (adminOpen) {
     return (
-      <AdminPage
-        service={service}
-        onClose={() => {
-          window.history.pushState({}, '', '/');
-          setAdminOpen(false);
-        }}
-      />
+      <Suspense fallback={<PageLoading />}>
+        <AdminPage
+          service={service}
+          onClose={() => {
+            window.history.pushState({}, '', '/');
+            setAdminOpen(false);
+          }}
+        />
+      </Suspense>
     );
   }
 
   if (methodologyOpen) {
     return (
-      <MethodologyPage
-        onClose={() => {
-          window.history.pushState({}, '', '/');
-          setMethodologyOpen(false);
-        }}
-      />
+      <Suspense fallback={<PageLoading />}>
+        <MethodologyPage
+          onClose={() => {
+            window.history.pushState({}, '', '/');
+            setMethodologyOpen(false);
+          }}
+        />
+      </Suspense>
     );
   }
 
   if (aboutOpen) {
     return (
-      <>
+      <Suspense fallback={<PageLoading />}>
         <AboutPage
           onClose={closeAbout}
           onExport={exportData}
@@ -835,7 +859,7 @@ export default function App() {
           }}
         />
         {toast && <ToastMessage toast={toast} onClose={() => setToast(null)} />}
-      </>
+      </Suspense>
     );
   }
 
@@ -937,20 +961,22 @@ export default function App() {
         <OfficialSheet pin={selectedOfficial} onClose={() => setSelectedOfficial(null)} />
       )}
       {registrationOpen && (
-        <RegisterWizard
-          center={center}
-          pickedPosition={pickedPosition}
-          mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
-          onPlacementModeChange={setPlacementMode}
-          onPreviewLocation={(position) => {
-            flyTo(position, 17);
-            // Drop the draggable pin so the user can fine-tune the exact portal.
-            setPickedPosition(position);
-          }}
-          onClose={closeRegistration}
-          onCreate={createListing}
-          onSelectDuplicate={selectDuplicate}
-        />
+        <Suspense fallback={null}>
+          <RegisterWizard
+            center={center}
+            pickedPosition={pickedPosition}
+            mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
+            onPlacementModeChange={setPlacementMode}
+            onPreviewLocation={(position) => {
+              flyTo(position, 17);
+              // Drop the draggable pin so the user can fine-tune the exact portal.
+              setPickedPosition(position);
+            }}
+            onClose={closeRegistration}
+            onCreate={createListing}
+            onSelectDuplicate={selectDuplicate}
+          />
+        </Suspense>
       )}
       {donateOpen && <DonateSheet onClose={() => setDonateOpen(false)} />}
       <CookieNotice />

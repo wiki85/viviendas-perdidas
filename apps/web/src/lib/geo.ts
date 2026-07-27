@@ -1,5 +1,3 @@
-import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { point } from '@turf/helpers';
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import type {
   CityDefinition,
@@ -114,7 +112,12 @@ export function loadCityManifest(): Promise<CityDefinition[]> {
       return response.json() as Promise<unknown>;
     })
     .then(normalizeManifest)
-    .catch(() => FALLBACK_CITIES);
+    .catch(() => {
+      // Transient failure: drop the memoized promise so the next resolve
+      // retries, instead of degrading the whole session to the fallback.
+      citiesPromise = null;
+      return FALLBACK_CITIES;
+    });
   return citiesPromise;
 }
 
@@ -161,7 +164,13 @@ export function loadNeighborhoods(city: CityDefinition): Promise<NeighborhoodCol
 
   const promise = fetchCollection(city.geoJsonUrl)
     .catch(() => (city.geoJsonUrl === stableFallback ? null : fetchCollection(stableFallback)))
-    .catch(() => null);
+    .catch(() => null)
+    .then((collection) => {
+      // Don't memoize failures: a flaky first load would otherwise hide the
+      // neighbourhood breakdown for the whole session.
+      if (collection === null) neighborhoodPromises.delete(city.id);
+      return collection;
+    });
   neighborhoodPromises.set(city.id, promise);
   return promise;
 }
@@ -263,6 +272,12 @@ export async function resolveVisibleScope(
   }
 
   const neighborhoods = await loadNeighborhoods(city);
+  // Turf only matters at neighbourhood zoom: loading it on demand keeps
+  // ~8 kB gzip out of the startup chunk.
+  const [{ default: booleanPointInPolygon }, { point }] = await Promise.all([
+    import('@turf/boolean-point-in-polygon'),
+    import('@turf/helpers'),
+  ]);
   const activeNeighborhood =
     neighborhoods?.features.find((feature) =>
       booleanPointInPolygon(point([position.lng, position.lat]), feature),

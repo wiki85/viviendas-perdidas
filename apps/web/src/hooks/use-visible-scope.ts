@@ -21,7 +21,17 @@ export function useVisibleScope(center: LatLng, zoom: number, cityHint?: CityDef
       setLoading(true);
       void resolveVisibleScope(center, zoom, cityHint)
         .then((next) => {
-          if (requestId.current === currentRequest) setResolved(next);
+          if (requestId.current !== currentRequest) return;
+          // Same scope resolved again (usual case while panning inside a
+          // city): keep the previous object identity so consumers like
+          // useAggregate don't resubscribe and reset on every settle.
+          setResolved((previous) =>
+            previous.scope.scopeId === next.scope.scopeId &&
+            previous.city?.id === next.city?.id &&
+            previous.activeNeighborhood?.properties.id === next.activeNeighborhood?.properties.id
+              ? previous
+              : next,
+          );
         })
         .finally(() => {
           if (requestId.current === currentRequest) setLoading(false);
