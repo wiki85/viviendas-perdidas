@@ -62,6 +62,7 @@ describe('renderCityPage', () => {
       total: 9578,
       entireHomes: 8876,
       roomsOnly: 702,
+      roomsInhabitants: 1050,
       places: 40000,
       updatedAt: new Date('2026-07-20T04:30:00Z'),
     };
@@ -83,6 +84,7 @@ describe('renderCityPage', () => {
       total: 15754,
       entireHomes: 15000,
       roomsOnly: 754,
+      roomsInhabitants: 1130,
       places: 60000,
       updatedAt: new Date('2026-07-20T04:30:00Z'),
     };

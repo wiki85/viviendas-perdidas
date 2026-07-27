@@ -7,7 +7,7 @@ import {
   parseRtaRecord,
   type OfficialVutRecord,
 } from '../domain/openrta.js';
-import { buildOfficialCells } from '../domain/openrta-cells.js';
+import { buildOfficialCells, roomsInhabitantsForPlaces } from '../domain/openrta-cells.js';
 import { contentHash, isSuspiciousDrop } from '../domain/sync-integrity.js';
 
 const SEARCH_URL = 'https://datos.juntadeandalucia.es/api/v0/openrta/search';
@@ -478,6 +478,12 @@ export async function runOpenRtaSync(
             total: records.length,
             entireHomes: entire.length,
             roomsOnly: records.length - entire.length,
+            // Rooms-only rentals displace room tenants: ≈1 inhabitant per
+            // room (rooms ≈ places ÷ 2, minimum 1 per dwelling).
+            roomsInhabitants: records.reduce(
+              (sum, record) => sum + (record.entire ? 0 : roomsInhabitantsForPlaces(record.places)),
+              0,
+            ),
             places: records.reduce((sum, record) => sum + record.places, 0),
             withLocation: records.filter((record) => record.latitude !== null).length,
             source: 'openrta',
@@ -519,6 +525,7 @@ export async function runOpenRtaSync(
         lng: cell.lng,
         count: cell.count,
         entireCount: cell.entireCount,
+        roomsInhabitants: cell.roomsInhabitants,
       };
       return { id: cell.id, data, hash: contentHash(data) };
     });

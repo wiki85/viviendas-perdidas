@@ -65,6 +65,7 @@ function officialFromDoc(data: FirebaseFirestore.DocumentData): OfficialCityStat
     total: integer(data.total),
     entireHomes: integer(data.entireHomes),
     roomsOnly: integer(data.roomsOnly),
+    roomsInhabitants: integer(data.roomsInhabitants),
     places: integer(data.places),
     updatedAt: toDate(data.updatedAt),
   };

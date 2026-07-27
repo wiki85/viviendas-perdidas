@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { BadgeCheck, BedDouble, Landmark, MapPin, UsersRound, X } from 'lucide-react';
 import type { OfficialPin } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
+import { roomsInhabitantsForPlaces } from '../lib/official-cells';
 
 type Props = {
   pin: OfficialPin;
@@ -103,15 +104,22 @@ export function OfficialSheet({ pin, onClose }: Props) {
                     1 vivienda · <strong>≈{impact.lostInhabitants} habitantes</strong>
                   </>
                 ) : (
-                  'No cuenta como hogar desplazado'
+                  <>
+                    <strong>≈{roomsInhabitantsForPlaces(pin.places)}</strong>{' '}
+                    {roomsInhabitantsForPlaces(pin.places) === 1
+                      ? 'habitante desplazado'
+                      : 'habitantes desplazados'}
+                  </>
                 )}
               </dd>
             </div>
           </dl>
           {!pin.entire && (
             <p className="listing-note">
-              Alquiler por habitaciones: el titular puede seguir residiendo en la vivienda, por lo
-              que no la contamos como hogar desplazado.
+              Alquiler por habitaciones: no la contamos como hogar desplazado (el titular puede
+              seguir residiendo), pero cada habitación alquilada a turistas es una habitación que
+              deja de alquilarse a un residente de larga duración. Estimamos ≈1 habitante por
+              habitación (habitaciones ≈ plazas ÷ 2).
             </p>
           )}
           <p className="official-credit">

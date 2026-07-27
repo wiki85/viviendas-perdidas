@@ -81,6 +81,8 @@ export type OfficialCell = {
   location: LatLng;
   count: number;
   entireCount: number;
+  /** Displaced inhabitants from rooms-only rentals (≈1 per room). */
+  roomsInhabitants: number;
 };
 
 /** Street-level cell carrying its individual pins. */
@@ -95,6 +97,8 @@ export type OfficialViewportStats = {
   total: number;
   entireHomes: number;
   roomsOnly: number;
+  /** Displaced inhabitants from rooms-only rentals (≈1 per room). */
+  roomsInhabitants: number;
 };
 
 /** City-level figures backing the impact banner and the report link. */
@@ -110,6 +114,7 @@ export type CityImpactSources = {
     total: number;
     entireHomes: number;
     roomsOnly: number;
+    roomsInhabitants: number;
     places: number;
   } | null;
 };

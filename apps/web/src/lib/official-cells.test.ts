@@ -17,7 +17,14 @@ const SEVILLA_BOUNDS: MapBounds = {
 };
 
 function cell(id: string, lat: number, lng: number, count: number, entire: number): OfficialCell {
-  return { id, precision: 6, location: { lat, lng }, count, entireCount: entire };
+  return {
+    id,
+    precision: 6,
+    location: { lat, lng },
+    count,
+    entireCount: entire,
+    roomsInhabitants: count - entire,
+  };
 }
 
 describe('officialPrecisionForZoom', () => {
@@ -62,6 +69,7 @@ describe('sumCellsInBounds', () => {
       total: 150,
       entireHomes: 110,
       roomsOnly: 40,
+      roomsInhabitants: 40,
     });
   });
 });

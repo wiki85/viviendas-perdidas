@@ -181,7 +181,7 @@ El mapa combina dos fuentes que **nunca se suman en un mismo contador**: los reg
 - se filtran los registros a viviendas de uso turístico marcadas como publicadas en el RTA abierto (`ind_pub_open_rta = 'S'`);
 - las coordenadas se reproyectan de UTM (ETRS89 / UTM zona 30N, EPSG:25830) a WGS84 (latitud/longitud) mediante `proj4`;
 - se normalizan códigos de licencia, direcciones y nombres de calle para el cruce con los registros vecinales;
-- se calculan estadísticas agregadas por municipio (total, viviendas completas, solo por habitaciones, plazas) y un total sintético para «Andalucía»;
+- se calculan estadísticas agregadas por municipio (total, viviendas completas, solo por habitaciones, plazas) y un total sintético para «Andalucía»; en las «por habitaciones» se estima un habitante desplazado por habitación (habitaciones ≈ plazas ÷ 2, mínimo 1), sin contarlas como hogar desplazado;
 - se agrupan las viviendas geolocalizadas en celdas geohash de varias precisiones (colecciones `officialCells` y `officialCellPins`) para dibujar burbujas por nivel de zoom y contar lo visible en el mapa; el <1% de registros sin coordenadas no puede dibujarse ni contarse;
 - se descartan las coordenadas de origen manifiestamente erróneas (a más de unas decenas de km del municipio del propio registro; hay fichas del RTA tecleadas en Madrid o Cantabria) y se reparan geocodificando la dirección publicada (Google Geocoding, resultado cacheado en `officialGeoCache`); si la geocodificación no alcanza precisión de calle, el registro queda sin ubicación en el mapa;
 - solo se mantiene un subconjunto de municipios andaluces (ver `SYNCED_MUNICIPALITIES` en `functions/src/services/openrta-sync.ts`).

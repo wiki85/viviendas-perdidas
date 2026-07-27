@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { geohashForLocation } from 'geofire-common';
 import type { OfficialVutRecord } from './openrta.js';
-import { buildOfficialCells, CELL_PRECISIONS, PIN_CELL_PRECISION } from './openrta-cells.js';
+import {
+  buildOfficialCells,
+  CELL_PRECISIONS,
+  PIN_CELL_PRECISION,
+  roomsInhabitantsForPlaces,
+} from './openrta-cells.js';
 
 function record(overrides: Partial<OfficialVutRecord>): OfficialVutRecord {
   return {
@@ -50,9 +55,17 @@ describe('buildOfficialCells', () => {
     const sevillaCell = build.cells.find(
       (cell) => cell.precision === 4 && cell.id === sevillaPrefix,
     );
-    expect(sevillaCell).toMatchObject({ count: 2, entireCount: 1 });
+    // El registro por habitaciones (rtaId 2, 4 plazas) suma ≈2 habitantes.
+    expect(sevillaCell).toMatchObject({ count: 2, entireCount: 1, roomsInhabitants: 2 });
     expect(sevillaCell?.lat).toBeCloseTo((37.39 + 37.391) / 2, 6);
     expect(sevillaCell?.lng).toBeCloseTo((-5.99 + -5.991) / 2, 6);
+  });
+
+  it('estimates one displaced inhabitant per rented room (places ÷ 2, min 1)', () => {
+    expect(roomsInhabitantsForPlaces(4)).toBe(2);
+    expect(roomsInhabitantsForPlaces(1)).toBe(1);
+    expect(roomsInhabitantsForPlaces(0)).toBe(1);
+    expect(roomsInhabitantsForPlaces(5)).toBe(3);
   });
 
   it('embeds the full pin payload only at the finest precision', () => {

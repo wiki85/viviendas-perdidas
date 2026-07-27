@@ -1879,6 +1879,10 @@ textarea:focus-visible,
   margin-top: 8px;
 }
 
+.admin-official-count--reported {
+  background: var(--coral);
+}
+
 /* Official-registry warning inside the wizard: unmistakably distinct. */
 .wizard-result--official .eyebrow {
   color: #315d4c;

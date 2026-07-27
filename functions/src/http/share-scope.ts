@@ -52,6 +52,7 @@ export const shareScope = onRequest(
           ? {
               total: integer(officialSnapshot.data()?.total),
               entireHomes: integer(officialSnapshot.data()?.entireHomes),
+              roomsInhabitants: integer(officialSnapshot.data()?.roomsInhabitants),
               municipality:
                 typeof officialSnapshot.data()?.municipality === 'string'
                   ? (officialSnapshot.data()?.municipality as string)
@@ -76,7 +77,8 @@ export const shareScope = onRequest(
       const formatter = new Intl.NumberFormat('es-ES');
       let sourceNote = 'Datos colaborativos y no oficiales.';
       if (fuente !== null && official !== null) {
-        const officialInhabitants = inhabitantsForDwellings(official.entireHomes, cityId);
+        const officialInhabitants =
+          inhabitantsForDwellings(official.entireHomes, cityId) + official.roomsInhabitants;
         // Attribution and source breakdown live on the landing page itself;
         // the social snippet stays short and impactful.
         if (fuente === 'oficial') {

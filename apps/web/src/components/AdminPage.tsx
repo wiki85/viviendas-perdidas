@@ -73,6 +73,7 @@ export function AdminPage({ service, onClose }: Props) {
   const [filter, setFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [onlyOfficialMatches, setOnlyOfficialMatches] = useState(false);
+  const [onlyReported, setOnlyReported] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
   const [drafts, setDrafts] = useState<
@@ -333,19 +334,24 @@ export function AdminPage({ service, onClose }: Props) {
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], 'es'));
 
-  const filteredListings = (listings ?? []).filter((listing) => {
-    if (cityFilter && (listing.cityId || listing.address.locality) !== cityFilter) return false;
-    if (onlyOfficialMatches && listing.officialMatch?.reviewStatus !== 'pending') return false;
-    const needle = filter.trim().toLocaleLowerCase('es');
-    if (!needle) return true;
-    return (
-      listing.address.formatted.toLocaleLowerCase('es').includes(needle) ||
-      listing.address.postalCode.startsWith(needle)
-    );
-  });
+  const filteredListings = (listings ?? [])
+    .filter((listing) => {
+      if (cityFilter && (listing.cityId || listing.address.locality) !== cityFilter) return false;
+      if (onlyOfficialMatches && listing.officialMatch?.reviewStatus !== 'pending') return false;
+      if (onlyReported && listing.reports === 0) return false;
+      const needle = filter.trim().toLocaleLowerCase('es');
+      if (!needle) return true;
+      return (
+        listing.address.formatted.toLocaleLowerCase('es').includes(needle) ||
+        listing.address.postalCode.startsWith(needle)
+      );
+    })
+    // Con el filtro de reportadas activo, las más señaladas van primero.
+    .sort((a, b) => (onlyReported ? b.reports - a.reports : 0));
   const pendingOfficialCount = (listings ?? []).filter(
     (listing) => listing.officialMatch?.reviewStatus === 'pending',
   ).length;
+  const reportedCount = (listings ?? []).filter((listing) => listing.reports > 0).length;
 
   return (
     <main className="admin-page">
@@ -548,6 +554,19 @@ export function AdminPage({ service, onClose }: Props) {
                   Solo posibles duplicados oficiales
                   {pendingOfficialCount > 0 && (
                     <span className="admin-official-count">{pendingOfficialCount}</span>
+                  )}
+                </label>
+                <label className="admin-official-toggle">
+                  <input
+                    type="checkbox"
+                    checked={onlyReported}
+                    onChange={(event) => setOnlyReported(event.target.checked)}
+                  />
+                  Solo reportadas como erróneas
+                  {reportedCount > 0 && (
+                    <span className="admin-official-count admin-official-count--reported">
+                      {reportedCount}
+                    </span>
                   )}
                 </label>
                 <button

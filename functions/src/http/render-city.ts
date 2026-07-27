@@ -22,6 +22,8 @@ export interface OfficialCityStats {
   total: number;
   entireHomes: number;
   roomsOnly: number;
+  /** Displaced inhabitants from rooms-only rentals (≈1 per room). */
+  roomsInhabitants: number;
   places: number;
   updatedAt: Date | null;
 }
@@ -202,7 +204,9 @@ export function renderCityPage(
   const households = city.lostFamilies + officialEntire;
   const inhabitants =
     city.lostInhabitants +
-    (officialEntire > 0 ? inhabitantsForDwellings(officialEntire, city.id) : 0);
+    (officialEntire > 0 ? inhabitantsForDwellings(officialEntire, city.id) : 0) +
+    // Rooms-only rentals add inhabitants (≈1 per rented room), not households.
+    (official?.roomsInhabitants ?? 0);
   const totalDwellings = city.lostDwellings + (official?.total ?? 0);
   const impact = computeCityImpact({
     cityId: city.id,

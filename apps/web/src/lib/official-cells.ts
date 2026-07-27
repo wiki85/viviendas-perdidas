@@ -51,6 +51,13 @@ export function enumeratePinCellIds(bounds: MapBounds, cap = 700): string[] {
   return ids;
 }
 
+/** Rooms-only rentals displace long-term room tenants: ≈1 inhabitant per
+ * room, with rooms ≈ places ÷ 2 (double rooms), minimum 1. KEEP IN SYNC
+ * with functions/src/domain/openrta-cells.ts. */
+export function roomsInhabitantsForPlaces(places: number): number {
+  return Math.max(1, Math.round(places / 2));
+}
+
 /** Sums the cells whose centroid falls inside the visible bounds. */
 export function sumCellsInBounds(
   cells: readonly OfficialCell[],
@@ -58,12 +65,14 @@ export function sumCellsInBounds(
 ): OfficialViewportStats {
   let total = 0;
   let entireHomes = 0;
+  let roomsInhabitants = 0;
   for (const cell of cells) {
     if (!boundsContain(bounds, cell.location)) continue;
     total += cell.count;
     entireHomes += cell.entireCount;
+    roomsInhabitants += cell.roomsInhabitants;
   }
-  return { total, entireHomes, roomsOnly: total - entireHomes };
+  return { total, entireHomes, roomsOnly: total - entireHomes, roomsInhabitants };
 }
 
 /** Compact bubble label: 847 → '847', 8.876 → '8,9 k', 28.421 → '28 k'. */

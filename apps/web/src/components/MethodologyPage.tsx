@@ -132,8 +132,11 @@ export function MethodologyPage({ onClose }: Props) {
             indica cuánto aporta el registro oficial. Los contadores reflejan siempre{' '}
             <strong>la zona visible del mapa</strong>: al buscar una ciudad, un barrio o un código
             postal se cuentan los registros de esa zona, y al desplazarte se actualizan con lo que
-            tengas a la vista. Las viviendas oficiales «por habitaciones» nunca se cuentan como
-            hogar desplazado.
+            tengas a la vista. Las viviendas oficiales «por habitaciones» no cuentan como hogar
+            desplazado (el titular puede seguir residiendo), pero sí suman habitantes: cada
+            habitación alquilada a turistas deja de alquilarse a un residente de larga duración, así
+            que estimamos <strong>un habitante desplazado por habitación</strong>, con habitaciones
+            ≈ plazas ÷ 2 (mínimo 1 por vivienda).
           </p>
           <p>
             Los datos oficiales proceden de{' '}

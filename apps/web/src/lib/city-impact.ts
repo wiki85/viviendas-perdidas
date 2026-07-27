@@ -49,7 +49,9 @@ export function summarizeCityImpact(
   const officialEntire = official?.entireHomes ?? 0;
   const households = (community?.lostFamilies ?? 0) + officialEntire;
   const inhabitants =
-    (community?.lostInhabitants ?? 0) + calculateImpact(officialEntire).lostInhabitants;
+    (community?.lostInhabitants ?? 0) +
+    calculateImpact(officialEntire).lostInhabitants +
+    (official?.roomsInhabitants ?? 0);
   const dwellingsTotal = (community?.lostDwellings ?? 0) + (official?.total ?? 0);
   if (households < 1) return null;
   const under15 = Math.round(inhabitants * UNDER_15_SHARE);

@@ -19,6 +19,16 @@ export interface OfficialCellAggregate {
   lng: number;
   count: number;
   entireCount: number;
+  /** Displaced inhabitants from rooms-only rentals: ≈1 per room, rooms
+   * estimated as places ÷ 2 (double rooms), minimum 1 per dwelling. */
+  roomsInhabitants: number;
+}
+
+/** Rooms-only rentals displace long-term room tenants: ≈1 inhabitant per
+ * room, with rooms ≈ places ÷ 2 (double rooms), minimum 1. KEEP IN SYNC
+ * with apps/web/src/lib/official-cells.ts. */
+export function roomsInhabitantsForPlaces(places: number): number {
+  return Math.max(1, Math.round(places / 2));
 }
 
 export interface OfficialEmbeddedPin {
@@ -50,6 +60,7 @@ interface CellAccumulator {
   sumLng: number;
   count: number;
   entireCount: number;
+  roomsInhabitants: number;
   pins: OfficialEmbeddedPin[];
 }
 
@@ -86,13 +97,14 @@ export function buildOfficialCells(
       const prefix = hash.slice(0, precision);
       let cell = bucket.get(prefix);
       if (cell === undefined) {
-        cell = { sumLat: 0, sumLng: 0, count: 0, entireCount: 0, pins: [] };
+        cell = { sumLat: 0, sumLng: 0, count: 0, entireCount: 0, roomsInhabitants: 0, pins: [] };
         bucket.set(prefix, cell);
       }
       cell.sumLat += lat;
       cell.sumLng += lng;
       cell.count += 1;
       if (record.entire) cell.entireCount += 1;
+      else cell.roomsInhabitants += roomsInhabitantsForPlaces(record.places);
       if (precision === PIN_CELL_PRECISION) {
         cell.pins.push({
           id: `rta-${record.rtaId}`,
@@ -117,6 +129,7 @@ export function buildOfficialCells(
         lng: centroid.lng,
         count: cell.count,
         entireCount: cell.entireCount,
+        roomsInhabitants: cell.roomsInhabitants,
       });
       if (precision === PIN_CELL_PRECISION) {
         pinCells.push({

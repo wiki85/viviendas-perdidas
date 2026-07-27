@@ -11,12 +11,20 @@ describe('summarizeCityImpact', () => {
         listingsCount: 12,
         lostCommercial: 3,
       },
-      official: { total: 9578, entireHomes: 8876, roomsOnly: 702, places: 40000 },
+      official: {
+        total: 9578,
+        entireHomes: 8876,
+        roomsOnly: 702,
+        roomsInhabitants: 1050,
+        places: 40000,
+      },
     });
     expect(summary).not.toBeNull();
     expect(summary?.dwellingsTotal).toBe(9612);
     expect(summary?.households).toBe(8910);
     expect(summary?.annualSpendEur).toBe(8910 * 34_044);
+    // Habitantes = vecinales (85) + completas (8876×2,5=22190) + habitaciones (1050).
+    expect(summary?.inhabitants).toBe(85 + 22_190 + 1_050);
     expect(summary?.classrooms).toBeGreaterThan(100);
     expect(summary?.officialStockSharePct).toBeCloseTo(3.6, 5);
     expect(summary?.hasOfficial).toBe(true);

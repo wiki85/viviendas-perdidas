@@ -394,6 +394,7 @@ export class FirebaseListingsService implements ListingsService {
         location: { lat: data.lat, lng: data.lng },
         count: typeof data.count === 'number' ? data.count : 0,
         entireCount: typeof data.entireCount === 'number' ? data.entireCount : 0,
+        roomsInhabitants: typeof data.roomsInhabitants === 'number' ? data.roomsInhabitants : 0,
       });
     }
     // A band cut off by the query limit is incomplete: serve it, don't cache it.
@@ -478,6 +479,8 @@ export class FirebaseListingsService implements ListingsService {
               total: official.total,
               entireHomes: typeof official.entireHomes === 'number' ? official.entireHomes : 0,
               roomsOnly: typeof official.roomsOnly === 'number' ? official.roomsOnly : 0,
+              roomsInhabitants:
+                typeof official.roomsInhabitants === 'number' ? official.roomsInhabitants : 0,
               places: typeof official.places === 'number' ? official.places : 0,
             }
           : null,

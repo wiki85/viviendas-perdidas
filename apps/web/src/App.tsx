@@ -65,6 +65,7 @@ import {
   enumeratePinCellIds,
   OFFICIAL_PIN_MIN_ZOOM,
   officialPrecisionForZoom,
+  roomsInhabitantsForPlaces,
   sumCellsInBounds,
 } from './lib/official-cells';
 import { SPAIN_CENTER, SPAIN_ZOOM } from './lib/constants';
@@ -404,12 +405,14 @@ export default function App() {
     if (officialData.kind === 'pins') {
       let total = 0;
       let entireHomes = 0;
+      let roomsInhabitants = 0;
       for (const pin of officialData.pins) {
         if (!listingIsInBounds(pin.location, bounds)) continue;
         total += 1;
         if (pin.entire) entireHomes += 1;
+        else roomsInhabitants += roomsInhabitantsForPlaces(pin.places);
       }
-      return { total, entireHomes, roomsOnly: total - entireHomes };
+      return { total, entireHomes, roomsOnly: total - entireHomes, roomsInhabitants };
     }
     return sumCellsInBounds(officialData.cells, bounds);
   }, [bounds, officialData, sourceMode]);
@@ -464,13 +467,16 @@ export default function App() {
       return displayedAggregate;
     }
     const officialImpact = calculateImpact(officialViewport.entireHomes);
+    // Rooms-only rentals don't displace a household, but each rented room
+    // is one long-term room tenant fewer: they add inhabitants only.
+    const officialInhabitants = officialImpact.lostInhabitants + officialViewport.roomsInhabitants;
     if (sourceMode === 'official') {
       return {
         ...displayedAggregate,
         listingsCount: officialViewport.total,
         lostDwellings: officialImpact.lostDwellings,
         lostFamilies: officialImpact.lostFamilies,
-        lostInhabitants: officialImpact.lostInhabitants,
+        lostInhabitants: officialInhabitants,
         lostCommercial: 0,
       };
     }
@@ -478,7 +484,7 @@ export default function App() {
       ...displayedAggregate,
       lostDwellings: displayedAggregate.lostDwellings + officialImpact.lostDwellings,
       lostFamilies: displayedAggregate.lostFamilies + officialImpact.lostFamilies,
-      lostInhabitants: displayedAggregate.lostInhabitants + officialImpact.lostInhabitants,
+      lostInhabitants: displayedAggregate.lostInhabitants + officialInhabitants,
     };
   }, [displayedAggregate, officialViewport, sourceMode]);
 
