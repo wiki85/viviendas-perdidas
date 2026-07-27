@@ -22,6 +22,17 @@ export function useAggregate(service: ListingsService, scope: VisibleScope) {
 
   useEffect(() => {
     attemptsRef.current = 0;
+    // Adopt the new scope's identity (name, level, ids) immediately: only
+    // the figures wait for the snapshot, keeping their previous values
+    // instead of dropping to zero.
+    setAggregate((previous) => ({
+      ...previous,
+      scopeId: scope.scopeId,
+      scope: scope.scope,
+      cityId: scope.cityId,
+      neighborhoodId: scope.neighborhoodId,
+      name: scope.name,
+    }));
   }, [scope]);
 
   useEffect(() => {

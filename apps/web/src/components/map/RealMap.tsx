@@ -327,7 +327,10 @@ export default function RealMap(props: RealMapProps) {
   return (
     <APIProvider
       apiKey={props.apiKey}
-      libraries={['places', 'marker']}
+      // 'geocoding' explícito: el canal weekly de Maps dejó de exponer
+      // google.maps.Geocoder sin importLibrary (jul 2026) y rompió en
+      // silencio la detección de municipio y la dirección del GPS.
+      libraries={['places', 'marker', 'geocoding']}
       onLoad={() => window.dispatchEvent(new Event('viviendas-perdidas:maps-ready'))}
     >
       <MapContent {...props} />

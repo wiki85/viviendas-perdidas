@@ -267,9 +267,17 @@ export default function App() {
         if (zoom >= OFFICIAL_PIN_MIN_ZOOM) {
           const ids = enumeratePinCellIds(bounds);
           const cache = pinCellCache.current;
-          // Prune BEFORE computing what's missing: clearing afterwards would
-          // leave the still-visible cached cells empty until the next pan.
-          if (cache.size > 1500) cache.clear();
+          // Prune BEFORE computing what's missing, and only the oldest half
+          // (Map preserves insertion order): a full clear would also evict
+          // the cells around the current view and force refetching them.
+          if (cache.size > 1500) {
+            let toDrop = Math.floor(cache.size / 2);
+            for (const key of cache.keys()) {
+              if (toDrop <= 0) break;
+              cache.delete(key);
+              toDrop -= 1;
+            }
+          }
           const missing = ids.filter((id) => !cache.has(id));
           if (missing.length > 0) {
             const fetched = await service.listOfficialPinCells(missing);
