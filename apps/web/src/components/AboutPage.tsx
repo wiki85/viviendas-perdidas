@@ -88,10 +88,10 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
           </button>
         </section>
         <section className="about-page__section">
-          <h2>Fuente oficial</h2>
+          <h2>Fuentes oficiales</h2>
           <p>
-            La capa «oficial» del mapa usa el registro público de viviendas de uso turístico de la{' '}
-            <strong>Junta de Andalucía</strong> (Registro de Turismo de Andalucía), bajo licencia{' '}
+            La capa «oficial» del mapa usa los registros públicos de viviendas de uso turístico de
+            la <strong>Junta de Andalucía</strong> (Registro de Turismo de Andalucía, licencia{' '}
             <a
               className="text-link"
               href="https://creativecommons.org/licenses/by/4.0/"
@@ -100,8 +100,11 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             >
               CC BY 4.0 <ExternalLink size={15} />
             </a>
-            . Adaptamos los datos originales y la Junta no respalda este proyecto; el detalle
-            completo está en la metodología.
+            ) y de la <strong>Generalitat de Catalunya</strong> (Registre de Turisme de Catalunya,
+            llicència oberta d&rsquo;ús d&rsquo;informació), con coordenadas del{' '}
+            <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0). Adaptamos los datos
+            originales y ninguna administración respalda este proyecto; el detalle completo está en
+            la metodología.
           </p>
         </section>
         <section className="about-page__section">

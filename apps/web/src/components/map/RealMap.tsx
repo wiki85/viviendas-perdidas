@@ -134,7 +134,7 @@ function OfficialPinsLayer({
       const content = document.createElement('button');
       content.type = 'button';
       content.className = 'map-marker--official';
-      content.title = `${pin.registrationCode} · Registro oficial (RTA)`;
+      content.title = `${pin.registrationCode} · Registro oficial de turismo`;
       content.setAttribute('aria-label', `Vivienda turística oficial ${pin.registrationCode}`);
       // No `map` here: the clusterer decides what gets attached, so we skip
       // mounting hundreds of elements that would be unmapped right after.

@@ -581,7 +581,7 @@ export default function App() {
     const scoped = metricsAggregate.scope !== 'country';
     const sourceNote =
       sourceMode === 'official'
-        ? 'Registro oficial de turismo (RTA).'
+        ? 'Registro oficial de turismo.'
         : sourceMode === 'both'
           ? 'Datos colaborativos + registro oficial.'
           : 'Datos colaborativos.';

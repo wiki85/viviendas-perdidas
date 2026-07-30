@@ -10,6 +10,7 @@ import {
 
 function record(overrides: Partial<OfficialVutRecord>): OfficialVutRecord {
   return {
+    id: `rta-${overrides.rtaId ?? 1}`,
     rtaId: 1,
     registrationCode: 'VUT/SE/00001',
     licenseKey: 'VUT/SE/1',

@@ -6,7 +6,11 @@ import { distanceMeters } from './geo.js';
 const EPSG_25830 = '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
 
 export interface OfficialVutRecord {
-  rtaId: number;
+  /** Mirror document id, prefixed by source ('rta-1234', 'cat-HUTB-000001'). */
+  id: string;
+  /** Numeric id in the RTA API; absent for other registries. Kept as a stored
+   * field so pre-multi-source Andalusian docs keep their contentHash. */
+  rtaId?: number;
   registrationCode: string;
   licenseKey: string;
   name: string;
@@ -54,9 +58,13 @@ export function extractStreetNumber(addressText: string): string {
  * are kept because they help locate the building.
  */
 export function cleanAddressForGeocoding(addressText: string): string {
-  return addressText
-    .replace(/\s+(?:Plta(?:\/Piso)?|Piso|Pta(?:\/Letra)?|Letra|Esc(?:alera)?\.?)\b.*$/iu, '')
-    .trim();
+  return (
+    addressText
+      .replace(/\s+(?:Plta(?:\/Piso)?|Piso|Pta(?:\/Letra)?|Letra|Esc(?:alera)?\.?)\b.*$/iu, '')
+      // Floor/door detail appended in parentheses (Catalan registry rows).
+      .replace(/\s*\([^)]*\)\s*$/u, '')
+      .trim()
+  );
 }
 
 /**
@@ -79,6 +87,7 @@ export const MUNICIPALITY_CENTERS: Record<
   ALMERÍA: { latitude: 36.834, longitude: -2.4637, radiusKm: 35 },
   'JEREZ DE LA FRONTERA': { latitude: 36.6866, longitude: -6.1372, radiusKm: 45 },
   MARBELLA: { latitude: 36.5101, longitude: -4.8825, radiusKm: 30 },
+  BARCELONA: { latitude: 41.3874, longitude: 2.1686, radiusKm: 20 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the
@@ -145,6 +154,7 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
       ? projected
       : null;
   return {
+    id: `rta-${rtaId}`,
     rtaId,
     registrationCode,
     licenseKey: normalizeLicenseKey(registrationCode),
@@ -162,7 +172,9 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
   };
 }
 
-/** Street-type words and connectors that don't identify the road itself. */
+/** Street-type words and connectors that don't identify the road itself.
+ * Includes the Catalan road types so a community submission typed as
+ * «Calle Marina» matches the registry's «Carrer Marina». */
 const STREET_STOPWORDS = new Set([
   'calle',
   'avenida',
@@ -177,6 +189,16 @@ const STREET_STOPWORDS = new Set([
   'barriada',
   'pasaje',
   'glorieta',
+  'carrer',
+  'avinguda',
+  'passeig',
+  'placa',
+  'rambla',
+  'travessera',
+  'passatge',
+  'cami',
+  'dels',
+  'les',
   'de',
   'del',
   'la',

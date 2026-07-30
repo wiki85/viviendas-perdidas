@@ -44,8 +44,8 @@ describe('computeCityImpact', () => {
     expect(impact.placesPer100).toBeNull();
   });
 
-  it('covers the ten mirrored municipalities in the census table', () => {
-    expect(Object.keys(CITY_CENSUS)).toHaveLength(10);
+  it('covers the eleven mirrored municipalities in the census table', () => {
+    expect(Object.keys(CITY_CENSUS)).toHaveLength(11);
     for (const census of Object.values(CITY_CENSUS)) {
       expect(census.mainDwellings).toBeGreaterThan(10_000);
       expect(census.population).toBeGreaterThan(100_000);

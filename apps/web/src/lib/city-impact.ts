@@ -5,7 +5,7 @@ import { calculateImpact } from './impact';
  * Client-side mirror of the city-page impact math. KEEP IN SYNC with
  * `functions/src/domain/city-impact.ts`, where every constant is documented
  * with its primary source (INE EPF 2024, INE population structure,
- * Ministerio de Educación 2023-24, IECA/SIMA Censo 2021).
+ * Ministerio de Educación 2023-24, IECA/SIMA e Idescat/EMEX Censo 2021).
  */
 export const HOUSEHOLD_ANNUAL_SPEND_EUR = 34_044;
 export const HOUSEHOLD_FOOD_SPEND_EUR = 5_379;
@@ -23,6 +23,7 @@ const CITY_MAIN_DWELLINGS: Record<string, number> = {
   almeria: 75_980,
   'jerez-de-la-frontera': 79_708,
   marbella: 56_491,
+  barcelona: 671_177,
 };
 
 export type CityImpactSummary = {

@@ -64,10 +64,12 @@ describe('renderCityPage', () => {
       roomsOnly: 702,
       roomsInhabitants: 1050,
       places: 40000,
+      source: 'openrta',
       updatedAt: new Date('2026-07-20T04:30:00Z'),
     };
     const html = renderCityPage(city({ id: 'sevilla', name: 'Sevilla' }), [], official);
-    expect(html).toContain('Registro oficial de turismo (RTA)');
+    expect(html).toContain('Registro oficial de turismo');
+    expect(html).toContain('Junta de Andalucía');
     // es-ES omits the thousands separator on 4-digit numbers.
     expect(html).toContain('<strong>9578</strong>');
     // Combined: 34 vecinales + 9578 oficiales.
@@ -86,6 +88,7 @@ describe('renderCityPage', () => {
       roomsOnly: 754,
       roomsInhabitants: 1130,
       places: 60000,
+      source: 'openrta',
       updatedAt: new Date('2026-07-20T04:30:00Z'),
     };
     const html = renderCityPage(
@@ -105,6 +108,37 @@ describe('renderCityPage', () => {
     expect(html).toContain('Viviendas perdidas en Marbella');
     expect(html).toContain('15.754');
     expect(html).toContain('plazas turísticas oficiales');
+  });
+
+  it('credits the Catalan registry (and the city-hall coordinates) for rtc cities', () => {
+    const official: OfficialCityStats = {
+      total: 10650,
+      entireHomes: 10649,
+      roomsOnly: 1,
+      roomsInhabitants: 1,
+      places: 60000,
+      source: 'rtc',
+      updatedAt: new Date('2026-07-28T04:30:00Z'),
+    };
+    const html = renderCityPage(
+      city({
+        id: 'barcelona',
+        name: 'Barcelona',
+        listingsCount: 0,
+        lostDwellings: 0,
+        lostFamilies: 0,
+        lostInhabitants: 0,
+        lostCommercial: 0,
+        updatedAt: null,
+      }),
+      [],
+      official,
+    );
+    expect(html).toContain('Registre de Turisme de Catalunya');
+    expect(html).toContain('Ajuntament de Barcelona');
+    expect(html).not.toContain('Junta de Andalucía');
+    // 10.650 VUT sobre 671.177 hogares principales (Idescat, Censo 2021) ≈ 1,6%.
+    expect(html).toContain('1,6% de todos los hogares principales');
   });
 });
 

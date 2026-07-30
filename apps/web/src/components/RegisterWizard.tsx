@@ -424,12 +424,12 @@ export function RegisterWizard({
             <div className="duplicate-card duplicate-card--official">
               <strong>Licencia {official.registrationCode}</strong>
               <span>{official.addressText}</span>
-              {official.places > 0 && <span>{official.places} plazas · Junta de Andalucía</span>}
+              {official.places > 0 && <span>{official.places} plazas · registro oficial</span>}
             </div>
             <p>
-              La Junta de Andalucía ya tiene una vivienda de uso turístico registrada en esta
-              dirección, y el mapa ya la cuenta en la fuente «Oficial». Registrarla también como
-              aporte vecinal puede duplicar la información.
+              El registro oficial de turismo ya tiene una vivienda de uso turístico dada de alta en
+              esta dirección, y el mapa ya la cuenta en la fuente «Oficial». Registrarla también
+              como aporte vecinal puede duplicar la información.
             </p>
             <label className="official-ack">
               <input

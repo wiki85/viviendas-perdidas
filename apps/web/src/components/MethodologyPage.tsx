@@ -126,8 +126,8 @@ export function MethodologyPage({ onClose }: Props) {
           </h2>
           <p>
             El mapa maneja dos fuentes <strong>siempre identificables</strong>: los registros{' '}
-            <strong>vecinales</strong> que aporta la ciudadanía y el registro público de viviendas
-            de uso turístico de Andalucía (<strong>oficial</strong>). Puedes ver cada fuente por
+            <strong>vecinales</strong> que aporta la ciudadanía y los registros públicos de
+            viviendas de uso turístico (<strong>oficial</strong>). Puedes ver cada fuente por
             separado o ambas a la vez; en el modo «Ambas» los contadores suman las dos y una franja
             indica cuánto aporta el registro oficial. Los contadores reflejan siempre{' '}
             <strong>la zona visible del mapa</strong>: al buscar una ciudad, un barrio o un código
@@ -139,7 +139,7 @@ export function MethodologyPage({ onClose }: Props) {
             ≈ plazas ÷ 2 (mínimo 1 por vivienda).
           </p>
           <p>
-            Los datos oficiales proceden de{' '}
+            Los datos oficiales de <strong>Andalucía</strong> proceden de{' '}
             <strong>«OpenRTA — Registro de Turismo de Andalucía»</strong> de la{' '}
             <strong>Junta de Andalucía</strong> (Registro de Turismo de Andalucía, RTA), publicados
             en su portal de datos abiertos y catalogados en datos.gob.es. Se distribuyen bajo la
@@ -156,21 +156,43 @@ export function MethodologyPage({ onClose }: Props) {
             .
           </p>
           <p>
-            <strong>Modificaciones que aplicamos</strong> (la licencia obliga a indicarlas): se
-            filtran a viviendas de uso turístico publicadas en el RTA abierto, se reproyectan las
-            coordenadas de UTM (ETRS89 / UTM 30N, EPSG:25830) a latitud/longitud (WGS84), se
-            calculan estadísticas agregadas por municipio y se agrupan las viviendas en celdas
-            geográficas (geohash) para dibujarlas y contarlas según el nivel de zoom. Las
-            coordenadas de origen manifiestamente erróneas (algunas fichas del RTA vienen tecleadas
-            a cientos de km de su municipio) se descartan y se recolocan geocodificando la dirección
-            publicada. Solo se refleja un subconjunto de municipios andaluces; el pequeño porcentaje
-            de registros que no puede ubicarse con precisión de calle no se dibuja ni se cuenta en
-            el mapa.
+            Los datos oficiales de <strong>Barcelona</strong> proceden del{' '}
+            <strong>«Registre de Turisme de Catalunya»</strong> de la{' '}
+            <strong>Generalitat de Catalunya</strong> (Departament d&rsquo;Empresa i Treball),
+            publicado en el portal de datos abiertos de la Generalitat bajo la{' '}
+            <a
+              className="text-link"
+              href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Llicència oberta d&rsquo;ús d&rsquo;informació – Catalunya <ExternalLink size={15} />
+            </a>
+            , completado con las coordenadas del conjunto «Viviendas de uso turístico de la ciudad
+            de Barcelona» del <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0),
+            cruzando ambos por número de registro.
           </p>
           <p>
-            <strong>La Junta de Andalucía no respalda ni avala este proyecto</strong>: la cita es un
-            crédito neutral de la fuente y no implica relación ni aprobación alguna. Los datos
-            oficiales se ofrecen «tal cual», sin garantías.
+            <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
+            filtran a viviendas de uso turístico y llars compartides publicadas en cada registro
+            abierto, se reproyectan las coordenadas andaluzas de UTM (ETRS89 / UTM 30N, EPSG:25830)
+            a latitud/longitud (WGS84), se asignan coordenadas a los registros barceloneses
+            cruzándolos con el dataset municipal, se calculan estadísticas agregadas por municipio y
+            se agrupan las viviendas en celdas geográficas (geohash) para dibujarlas y contarlas
+            según el nivel de zoom. Las coordenadas de origen manifiestamente erróneas (algunas
+            fichas vienen tecleadas a cientos de km de su municipio) se descartan y se recolocan
+            geocodificando la dirección publicada. Solo se refleja un subconjunto de municipios
+            (diez andaluces y Barcelona); el pequeño porcentaje de registros que no puede ubicarse
+            con precisión de calle no se dibuja ni se cuenta en el mapa.
+          </p>
+          <p>
+            <strong>
+              Ni la Junta de Andalucía, ni la Generalitat de Catalunya, ni el Ajuntament de
+              Barcelona respaldan o avalan este proyecto
+            </strong>
+            : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
+            alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan
+            semanalmente con cada registro.
           </p>
           <a
             className="text-link"
@@ -179,6 +201,14 @@ export function MethodologyPage({ onClose }: Props) {
             rel="noopener noreferrer"
           >
             Ver el conjunto de datos OpenRTA en datos.gob.es <ExternalLink size={15} />
+          </a>{' '}
+          <a
+            className="text-link"
+            href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver el Registre de Turisme de Catalunya <ExternalLink size={15} />
           </a>
         </section>
 

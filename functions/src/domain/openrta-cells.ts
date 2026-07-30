@@ -32,7 +32,7 @@ export function roomsInhabitantsForPlaces(places: number): number {
 }
 
 export interface OfficialEmbeddedPin {
-  /** Matches the officialVut document id (`rta-<id>`). */
+  /** Matches the officialVut document id (source-prefixed: 'rta-…', 'cat-…'). */
   id: string;
   lat: number;
   lng: number;
@@ -107,7 +107,7 @@ export function buildOfficialCells(
       else cell.roomsInhabitants += roomsInhabitantsForPlaces(record.places);
       if (precision === PIN_CELL_PRECISION) {
         cell.pins.push({
-          id: `rta-${record.rtaId}`,
+          id: record.id,
           lat,
           lng,
           registrationCode: record.registrationCode,

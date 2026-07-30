@@ -176,7 +176,7 @@ export function TopBar({
               </span>
             ) : official && official.total > 0 ? (
               <span>
-                Registro oficial (RTA): <strong>{formatInteger(official.entireHomes)}</strong>{' '}
+                Registro oficial: <strong>{formatInteger(official.entireHomes)}</strong>{' '}
                 {official.entireHomes === 1
                   ? 'vivienda turística completa'
                   : 'viviendas turísticas completas'}{' '}
@@ -186,11 +186,13 @@ export function TopBar({
                   : ''}
               </span>
             ) : (
-              <span>Sin viviendas del registro oficial en esta zona (cobertura: Andalucía).</span>
+              <span>
+                Sin viviendas del registro oficial en esta zona (cobertura: Andalucía y Barcelona).
+              </span>
             )}
           </p>
           <p className="official-credit">
-            Fuente:{' '}
+            Fuentes:{' '}
             <a
               href="https://datos.gob.es/es/catalogo/a01002820-openrta"
               target="_blank"
@@ -198,7 +200,7 @@ export function TopBar({
             >
               Registro de Turismo de Andalucía
             </a>{' '}
-            (Junta de Andalucía), datos adaptados ·{' '}
+            (Junta de Andalucía,{' '}
             <a
               href="https://creativecommons.org/licenses/by/4.0/"
               target="_blank"
@@ -206,7 +208,31 @@ export function TopBar({
             >
               CC BY 4.0
             </a>
-            . Sin respaldo oficial.
+            ) y{' '}
+            <a
+              href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Registre de Turisme de Catalunya
+            </a>{' '}
+            (Generalitat de Catalunya,{' '}
+            <a
+              href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              llicència oberta
+            </a>
+            ) con coordenadas del{' '}
+            <a
+              href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ajuntament de Barcelona
+            </a>{' '}
+            (CC BY 4.0). Datos adaptados, sin respaldo oficial.
           </p>
         </>
       )}

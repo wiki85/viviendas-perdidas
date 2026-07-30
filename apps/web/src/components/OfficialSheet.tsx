@@ -3,6 +3,7 @@ import { BadgeCheck, BedDouble, Landmark, MapPin, UsersRound, X } from 'lucide-r
 import type { OfficialPin } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
 import { roomsInhabitantsForPlaces } from '../lib/official-cells';
+import { officialSourceForPinId } from '../lib/official-sources';
 
 type Props = {
   pin: OfficialPin;
@@ -24,10 +25,11 @@ function displayMunicipality(value: string): string {
     .join(' ');
 }
 
-/** Detail card for a dwelling from the official registry (OpenRTA). */
+/** Detail card for a dwelling from a mirrored official registry. */
 export function OfficialSheet({ pin, onClose }: Props) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const impact = calculateImpact(pin.entire ? 1 : 0);
+  const source = officialSourceForPinId(pin.id);
   const locality = [pin.postalCode, pin.municipality ? displayMunicipality(pin.municipality) : '']
     .filter((part) => part.length > 0)
     .join(' · ');
@@ -124,21 +126,31 @@ export function OfficialSheet({ pin, onClose }: Props) {
           )}
           <p className="official-credit">
             Fuente:{' '}
-            <a
-              href="https://datos.gob.es/es/catalogo/a01002820-openrta"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Registro de Turismo de Andalucía
+            <a href={source.registerUrl} target="_blank" rel="noopener noreferrer">
+              {source.registerName}
             </a>{' '}
-            (Junta de Andalucía), datos adaptados ·{' '}
-            <a
-              href="https://creativecommons.org/licenses/by/4.0/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              CC BY 4.0
+            ({source.publisher}), datos adaptados ·{' '}
+            <a href={source.licenseUrl} target="_blank" rel="noopener noreferrer">
+              {source.licenseName}
             </a>
+            {source.coordinatesCredit && (
+              <>
+                {' '}
+                · Coordenadas:{' '}
+                <a href={source.coordinatesCredit.url} target="_blank" rel="noopener noreferrer">
+                  {source.coordinatesCredit.name}
+                </a>{' '}
+                (
+                <a
+                  href={source.coordinatesCredit.licenseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {source.coordinatesCredit.licenseName}
+                </a>
+                )
+              </>
+            )}
             . Sin respaldo oficial.
           </p>
         </div>

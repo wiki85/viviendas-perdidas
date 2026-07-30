@@ -67,6 +67,7 @@ function officialFromDoc(data: FirebaseFirestore.DocumentData): OfficialCityStat
     roomsOnly: integer(data.roomsOnly),
     roomsInhabitants: integer(data.roomsInhabitants),
     places: integer(data.places),
+    source: typeof data.source === 'string' ? data.source : 'openrta',
     updatedAt: toDate(data.updatedAt),
   };
 }

@@ -9,9 +9,34 @@ import {
 } from '../domain/openrta.js';
 import { buildOfficialCells, roomsInhabitantsForPlaces } from '../domain/openrta-cells.js';
 import { contentHash, isSuspiciousDrop } from '../domain/sync-integrity.js';
+import { createCatalunyaFetcher } from './catalunya-source.js';
 
-const SEARCH_URL = 'https://datos.juntadeandalucia.es/api/v0/openrta/search';
-const PAGE_SIZE = 10_000;
+/* ------------------------------- Sources ---------------------------------- */
+
+export type OfficialSourceId = 'rta' | 'cat';
+
+/**
+ * One mirrored registry. The runner is source-agnostic: every source turns
+ * its upstream into `OfficialVutRecord`s and the diff/purge/cells machinery
+ * is shared. Doc ids are prefixed per source so the ghost purge of one
+ * registry can never touch another's mirror.
+ */
+interface OfficialSource {
+  id: OfficialSourceId;
+  /** officialVut / officialGeoCache doc-id prefix, scoping the purge. */
+  idPrefix: string;
+  /** Persisted in officialStats.source; the city pages pick the credit line. */
+  statsSource: string;
+  municipalities: readonly string[];
+  prepare?: (fetchImplementation: typeof fetch) => Promise<void>;
+  fetchMunicipality: (
+    municipality: string,
+    fetchImplementation: typeof fetch,
+  ) => Promise<OfficialVutRecord[]>;
+}
+
+const RTA_SEARCH_URL = 'https://datos.juntadeandalucia.es/api/v0/openrta/search';
+const RTA_PAGE_SIZE = 10_000;
 
 /**
  * Andalusian municipalities we mirror (OpenRTA enum spelling). The API cannot
@@ -31,14 +56,16 @@ export const SYNCED_MUNICIPALITIES: readonly string[] = [
   'MARBELLA',
 ];
 
-type GeohashFn = (location: [number, number], precision?: number) => string;
+/** Catalan municipalities mirrored from the Registre de Turisme (Socrata
+ * spelling). Coordinates come from the city-hall open-data join. */
+export const SYNCED_CAT_MUNICIPALITIES: readonly string[] = ['Barcelona'];
 
-async function fetchPage(
+async function fetchRtaPage(
   municipality: string,
   mode: 'ASC' | 'DESC',
   fetchImplementation: typeof fetch,
 ): Promise<{ totalHits: number; results: Record<string, unknown>[] }> {
-  const url = new URL(SEARCH_URL);
+  const url = new URL(RTA_SEARCH_URL);
   const params: Record<string, string> = {
     id: '-',
     object_type: 'Vivienda de uso turístico',
@@ -49,7 +76,7 @@ async function fetchPage(
     municipality,
     order_by: 'id',
     mode,
-    size: String(PAGE_SIZE),
+    size: String(RTA_PAGE_SIZE),
   };
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   const response = await fetchImplementation(url, { signal: AbortSignal.timeout(120_000) });
@@ -63,17 +90,17 @@ async function fetchPage(
   return { totalHits: payload.total_hits ?? 0, results: payload.results ?? [] };
 }
 
-async function fetchMunicipality(
+async function fetchRtaMunicipality(
   municipality: string,
   fetchImplementation: typeof fetch,
 ): Promise<OfficialVutRecord[]> {
-  const ascending = await fetchPage(municipality, 'ASC', fetchImplementation);
+  const ascending = await fetchRtaPage(municipality, 'ASC', fetchImplementation);
   const rows = new Map<unknown, Record<string, unknown>>();
   for (const row of ascending.results) rows.set(row.id, row);
-  if (ascending.totalHits > PAGE_SIZE) {
-    const descending = await fetchPage(municipality, 'DESC', fetchImplementation);
+  if (ascending.totalHits > RTA_PAGE_SIZE) {
+    const descending = await fetchRtaPage(municipality, 'DESC', fetchImplementation);
     for (const row of descending.results) rows.set(row.id, row);
-    if (ascending.totalHits > PAGE_SIZE * 2) {
+    if (ascending.totalHits > RTA_PAGE_SIZE * 2) {
       logger.warn('OpenRTA municipality exceeds double-pass coverage', {
         municipality,
         totalHits: ascending.totalHits,
@@ -86,6 +113,27 @@ async function fetchMunicipality(
     if (record !== null) records.push(record);
   }
   return records;
+}
+
+function buildSource(id: OfficialSourceId): OfficialSource {
+  if (id === 'rta') {
+    return {
+      id,
+      idPrefix: 'rta-',
+      statsSource: 'openrta',
+      municipalities: SYNCED_MUNICIPALITIES,
+      fetchMunicipality: fetchRtaMunicipality,
+    };
+  }
+  const fetcher = createCatalunyaFetcher();
+  return {
+    id,
+    idPrefix: 'cat-',
+    statsSource: 'rtc',
+    municipalities: SYNCED_CAT_MUNICIPALITIES,
+    prepare: fetcher.prepare,
+    fetchMunicipality: fetcher.fetchMunicipality,
+  };
 }
 
 /* ------------------------- Differential mirror I/O ------------------------ */
@@ -165,8 +213,9 @@ async function deleteDocs(name: string, ids: string[], counters: DiffCounters): 
 const LOCK_LEASE_MS = 45 * 60 * 1000;
 
 /**
- * Lease-based mutual exclusion between the weekly job and the admin-panel
- * trigger: two concurrent runs would interleave their diffs and deletions.
+ * Lease-based mutual exclusion between the weekly jobs (one per registry) and
+ * the admin-panel trigger: two concurrent runs would interleave their diffs,
+ * deletions and the shared cell rebuild.
  */
 async function acquireSyncLock(): Promise<() => Promise<void>> {
   const reference = db.doc('syncLocks/openrta');
@@ -174,7 +223,7 @@ async function acquireSyncLock(): Promise<() => Promise<void>> {
     const snapshot = await transaction.get(reference);
     const lockedAt: unknown = snapshot.exists ? snapshot.get('lockedAt') : undefined;
     if (lockedAt instanceof Timestamp && Date.now() - lockedAt.toMillis() < LOCK_LEASE_MS) {
-      throw new Error('Ya hay una sincronización de OpenRTA en curso.');
+      throw new Error('Ya hay una sincronización de datos oficiales en curso.');
     }
     transaction.set(reference, { lockedAt: Timestamp.now() });
   });
@@ -242,6 +291,16 @@ interface GeocodeState {
   /** Consecutive transient failures; trips the circuit breaker. */
   transientStreak: number;
   startedAt: number;
+}
+
+function createGeocodeState(apiKey: string): GeocodeState {
+  return {
+    apiKey,
+    remaining: MAX_GEOCODES_PER_RUN,
+    failures: {},
+    transientStreak: 0,
+    startedAt: Date.now(),
+  };
 }
 
 interface GeoCacheEntry {
@@ -325,12 +384,11 @@ async function repairMissingCoordinates(
 ): Promise<number> {
   const missing = records.filter((record) => record.latitude === null || record.longitude === null);
   if (missing.length === 0) return 0;
-  const cache = await readGeoCache(missing.map((record) => `rta-${record.rtaId}`));
+  const cache = await readGeoCache(missing.map((record) => record.id));
   const cacheWrites: Array<{ id: string; data: Record<string, unknown> }> = [];
   let repaired = 0;
   for (const record of missing) {
-    const id = `rta-${record.rtaId}`;
-    const cached = cache.get(id);
+    const cached = cache.get(record.id);
     if (cached !== undefined) {
       if (cached.latitude !== null && cached.longitude !== null) {
         record.latitude = cached.latitude;
@@ -374,7 +432,7 @@ async function repairMissingCoordinates(
       state.transientStreak = 0;
     }
     cacheWrites.push({
-      id,
+      id: record.id,
       data: {
         latitude: located?.latitude ?? null,
         longitude: located?.longitude ?? null,
@@ -399,32 +457,119 @@ async function repairMissingCoordinates(
   return repaired;
 }
 
+/* ------------------------- Global cells rebuild ---------------------------- */
+
+/**
+ * The cell layers aggregate EVERY mirrored registry, so they rebuild from the
+ * whole `officialVut` collection instead of the just-synced source's records:
+ * a Catalonia run must not purge Andalusian cells and vice versa. The field
+ * mask keeps the read light — only what the cells and embedded pins need.
+ */
+async function loadAllRecordsForCells(): Promise<OfficialVutRecord[]> {
+  const snapshot = await db
+    .collection('officialVut')
+    .select(
+      'registrationCode',
+      'name',
+      'addressText',
+      'postalCode',
+      'municipality',
+      'entire',
+      'places',
+      'latitude',
+      'longitude',
+    )
+    .get();
+  return snapshot.docs.map((document) => {
+    const data = document.data();
+    return {
+      id: document.id,
+      registrationCode: typeof data.registrationCode === 'string' ? data.registrationCode : '',
+      licenseKey: '',
+      name: typeof data.name === 'string' ? data.name : '',
+      addressText: typeof data.addressText === 'string' ? data.addressText : '',
+      street: '',
+      number: '',
+      postalCode: typeof data.postalCode === 'string' ? data.postalCode : '',
+      municipality: typeof data.municipality === 'string' ? data.municipality : '',
+      cityId: '',
+      entire: data.entire === true,
+      places: typeof data.places === 'number' ? data.places : 0,
+      latitude: typeof data.latitude === 'number' ? data.latitude : null,
+      longitude: typeof data.longitude === 'number' ? data.longitude : null,
+    };
+  });
+}
+
+async function rebuildCells(geohashFor: GeohashFn): Promise<void> {
+  const allRecords = await loadAllRecordsForCells();
+  const { cells, pinCells } = buildOfficialCells(allRecords, geohashFor);
+  const cellCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
+  const [existingCells, existingPinCells] = await Promise.all([
+    loadExistingHashes('officialCells'),
+    loadExistingHashes('officialCellPins'),
+  ]);
+  const cellDocs: DiffDoc[] = cells.map((cell) => {
+    const data = {
+      precision: cell.precision,
+      lat: cell.lat,
+      lng: cell.lng,
+      count: cell.count,
+      entireCount: cell.entireCount,
+      roomsInhabitants: cell.roomsInhabitants,
+    };
+    return { id: cell.id, data, hash: contentHash(data) };
+  });
+  const pinCellDocs: DiffDoc[] = pinCells.map((cell) => {
+    const data = { lat: cell.lat, lng: cell.lng, count: cell.count, pins: cell.pins };
+    return { id: cell.id, data, hash: contentHash(data) };
+  });
+  await writeDocsDiff('officialCells', cellDocs, existingCells, cellCounters);
+  await writeDocsDiff('officialCellPins', pinCellDocs, existingPinCells, cellCounters);
+  const cellIds = new Set(cellDocs.map((docItem) => docItem.id));
+  const pinCellIds = new Set(pinCellDocs.map((docItem) => docItem.id));
+  await deleteDocs(
+    'officialCells',
+    [...existingCells.keys()].filter((id) => !cellIds.has(id)),
+    cellCounters,
+  );
+  await deleteDocs(
+    'officialCellPins',
+    [...existingPinCells.keys()].filter((id) => !pinCellIds.has(id)),
+    cellCounters,
+  );
+  logger.info('Official cells rebuilt', {
+    records: allRecords.length,
+    cells: cells.length,
+    pinCells: pinCells.length,
+    ...cellCounters,
+  });
+}
+
 /* --------------------------------- Run ------------------------------------ */
 
-export interface OpenRtaSyncSummary {
+type GeohashFn = (location: [number, number], precision?: number) => string;
+
+export interface OfficialSyncSummary {
+  source: OfficialSourceId;
   municipalities: number;
   records: number;
 }
 
-export async function runOpenRtaSync(
+async function runSource(
+  source: OfficialSource,
   fetchImplementation: typeof fetch,
   geohashFor: GeohashFn,
-  geocodeApiKey = '',
-): Promise<OpenRtaSyncSummary> {
+  geocodeState: GeocodeState,
+): Promise<OfficialSyncSummary> {
   const releaseLock = await acquireSyncLock();
   try {
     let total = 0;
     let repairedTotal = 0;
-    const geocodeState: GeocodeState = {
-      apiKey: geocodeApiKey,
-      remaining: MAX_GEOCODES_PER_RUN,
-      failures: {},
-      transientStreak: 0,
-      startedAt: Date.now(),
-    };
+    await source.prepare?.(fetchImplementation);
 
     // Previous totals guard partial upstream responses; existing hashes
-    // drive the differential writes and the ghost purge.
+    // drive the differential writes and the source-scoped ghost purge.
     const [existingVut, statsSnapshot] = await Promise.all([
       loadExistingHashes('officialVut'),
       db.collection('officialStats').get(),
@@ -439,20 +584,20 @@ export async function runOpenRtaSync(
     }
 
     const vutCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
-    const allRecords: OfficialVutRecord[] = [];
-    for (const municipality of SYNCED_MUNICIPALITIES) {
-      const records = await fetchMunicipality(municipality, fetchImplementation);
+    const freshIds = new Set<string>();
+    for (const municipality of source.municipalities) {
+      const records = await source.fetchMunicipality(municipality, fetchImplementation);
       const previous = previousTotals.get(municipality) ?? 0;
       if (isSuspiciousDrop(previous, records.length)) {
         // Abort the whole run: writing (and later purging/rebuilding cells)
         // from a partial response would blank this city for a week.
         throw new Error(
-          `OpenRTA devolvió ${records.length} registros para ${municipality} (antes ${previous}); sincronización abortada.`,
+          `El registro oficial devolvió ${records.length} registros para ${municipality} (antes ${previous}); sincronización abortada.`,
         );
       }
       const repaired = await repairMissingCoordinates(records, geocodeState, fetchImplementation);
       repairedTotal += repaired;
-      allRecords.push(...records);
+      for (const record of records) freshIds.add(record.id);
       await writeDocsDiff(
         'officialVut',
         records.map((record) => {
@@ -460,8 +605,11 @@ export async function runOpenRtaSync(
             record.latitude !== null && record.longitude !== null
               ? geohashFor([record.latitude, record.longitude])
               : null;
-          const data = { ...record, geohash };
-          return { id: `rta-${record.rtaId}`, data, hash: contentHash(data) };
+          const data: Record<string, unknown> = { ...record, geohash };
+          // The doc id already carries the record id; keeping it out of the
+          // stored data leaves pre-multi-source Andalusian hashes untouched.
+          delete data.id;
+          return { id: record.id, data, hash: contentHash(data) };
         }),
         existingVut,
         vutCounters,
@@ -486,74 +634,71 @@ export async function runOpenRtaSync(
             ),
             places: records.reduce((sum, record) => sum + record.places, 0),
             withLocation: records.filter((record) => record.latitude !== null).length,
-            source: 'openrta',
+            source: source.statsSource,
             updatedAt: Timestamp.now(),
           });
       }
       total += records.length;
-      logger.info('OpenRTA municipality synced', {
+      logger.info('Official municipality synced', {
+        source: source.id,
         municipality,
         records: records.length,
         repairedCoordinates: repaired,
       });
     }
-    logger.info('OpenRTA coordinate repair', {
+    logger.info('Official coordinate repair', {
+      source: source.id,
       repaired: repairedTotal,
       geocodesLeft: geocodeState.remaining,
       failures: geocodeState.failures,
     });
 
-    // Ghost purge: registrations withdrawn from the RTA must stop verifying
-    // licences and blocking community submissions.
-    const freshIds = new Set(allRecords.map((record) => `rta-${record.rtaId}`));
-    const staleVut = [...existingVut.keys()].filter((id) => !freshIds.has(id));
+    // Ghost purge, scoped to this source's prefix: registrations withdrawn
+    // upstream must stop verifying licences and blocking submissions, but
+    // another registry's mirror is never this run's to delete.
+    const staleVut = [...existingVut.keys()].filter(
+      (id) => id.startsWith(source.idPrefix) && !freshIds.has(id),
+    );
     await deleteDocs('officialVut', staleVut, vutCounters);
-    logger.info('OpenRTA mirror diff', vutCounters);
+    logger.info('Official mirror diff', { source: source.id, ...vutCounters });
 
     // Geohash cell mirror: the map reads these aggregated bubbles (and the
-    // embedded pins at street zoom) instead of querying 50k individual docs.
-    const { cells, pinCells } = buildOfficialCells(allRecords, geohashFor);
-    const cellCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
-    const [existingCells, existingPinCells] = await Promise.all([
-      loadExistingHashes('officialCells'),
-      loadExistingHashes('officialCellPins'),
-    ]);
-    const cellDocs: DiffDoc[] = cells.map((cell) => {
-      const data = {
-        precision: cell.precision,
-        lat: cell.lat,
-        lng: cell.lng,
-        count: cell.count,
-        entireCount: cell.entireCount,
-        roomsInhabitants: cell.roomsInhabitants,
-      };
-      return { id: cell.id, data, hash: contentHash(data) };
-    });
-    const pinCellDocs: DiffDoc[] = pinCells.map((cell) => {
-      const data = { lat: cell.lat, lng: cell.lng, count: cell.count, pins: cell.pins };
-      return { id: cell.id, data, hash: contentHash(data) };
-    });
-    await writeDocsDiff('officialCells', cellDocs, existingCells, cellCounters);
-    await writeDocsDiff('officialCellPins', pinCellDocs, existingPinCells, cellCounters);
-    const cellIds = new Set(cellDocs.map((docItem) => docItem.id));
-    const pinCellIds = new Set(pinCellDocs.map((docItem) => docItem.id));
-    await deleteDocs(
-      'officialCells',
-      [...existingCells.keys()].filter((id) => !cellIds.has(id)),
-      cellCounters,
-    );
-    await deleteDocs(
-      'officialCellPins',
-      [...existingPinCells.keys()].filter((id) => !pinCellIds.has(id)),
-      cellCounters,
-    );
-    logger.info('OpenRTA cells rebuilt', {
-      cells: cells.length,
-      pinCells: pinCells.length,
-      ...cellCounters,
-    });
-    return { municipalities: SYNCED_MUNICIPALITIES.length, records: total };
+    // embedded pins at street zoom) instead of querying 60k individual docs.
+    await rebuildCells(geohashFor);
+    return { source: source.id, municipalities: source.municipalities.length, records: total };
   } finally {
     await releaseLock();
   }
+}
+
+/** Sync a single registry (the weekly per-source jobs). */
+export async function runOfficialSync(
+  sourceId: OfficialSourceId,
+  fetchImplementation: typeof fetch,
+  geohashFor: GeohashFn,
+  geocodeApiKey = '',
+): Promise<OfficialSyncSummary> {
+  return runSource(
+    buildSource(sourceId),
+    fetchImplementation,
+    geohashFor,
+    createGeocodeState(geocodeApiKey),
+  );
+}
+
+/** Sync every registry sequentially (admin panel), sharing one geocoding
+ * budget so the manual run stays within the function timeout. */
+export async function runAllOfficialSyncs(
+  fetchImplementation: typeof fetch,
+  geohashFor: GeohashFn,
+  geocodeApiKey = '',
+): Promise<OfficialSyncSummary[]> {
+  const geocodeState = createGeocodeState(geocodeApiKey);
+  const summaries: OfficialSyncSummary[] = [];
+  for (const sourceId of ['rta', 'cat'] as const) {
+    summaries.push(
+      await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
+    );
+  }
+  return summaries;
 }

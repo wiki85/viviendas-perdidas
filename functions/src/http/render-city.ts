@@ -17,7 +17,7 @@ export interface CityStats {
   updatedAt: Date | null;
 }
 
-/** Official registry (OpenRTA) figures for the city, when mirrored. */
+/** Official registry figures for the city, when mirrored. */
 export interface OfficialCityStats {
   total: number;
   entireHomes: number;
@@ -25,7 +25,28 @@ export interface OfficialCityStats {
   /** Displaced inhabitants from rooms-only rentals (≈1 per room). */
   roomsInhabitants: number;
   places: number;
+  /** Mirrored registry ('openrta' | 'rtc'): picks the credit line. */
+  source: string;
   updatedAt: Date | null;
+}
+
+/** Per-registry credit demanded by each open-data license. */
+function officialCredit(source: string): string {
+  if (source === 'rtc') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys" rel="noopener noreferrer">Registre de Turisme de Catalunya</a>
+      (Generalitat de Catalunya, <a href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies" rel="noopener noreferrer">llicència oberta d'ús d'informació</a>),
+      coordenadas del <a href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic" rel="noopener noreferrer">Ajuntament de Barcelona</a>
+      (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>), datos adaptados. Sin respaldo oficial.
+    </p>`;
+  }
+  return `
+    <p class="credit">
+      Fuente: <a href="https://datos.gob.es/es/catalogo/a01002820-openrta" rel="noopener noreferrer">Registro de Turismo de Andalucía</a>
+      (Junta de Andalucía), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
+    </p>`;
 }
 
 export type CityIndexEntry = CityStats & { officialTotal?: number };
@@ -223,7 +244,7 @@ export function renderCityPage(
       : `Datos colaborativos de viviendas convertidas en alojamiento turístico en ${name}.`;
   const updatedAt = city.updatedAt ?? official?.updatedAt ?? null;
   const updatedLine = updatedAt
-    ? `<p class="updated">Actualizado el ${escapeHtml(dateFormatter.format(updatedAt))} · ${n(city.listingsCount)} ${city.listingsCount === 1 ? 'registro vecinal' : 'registros vecinales'}${official ? ` · registro oficial RTA` : ''}</p>`
+    ? `<p class="updated">Actualizado el ${escapeHtml(dateFormatter.format(updatedAt))} · ${n(city.listingsCount)} ${city.listingsCount === 1 ? 'registro vecinal' : 'registros vecinales'}${official ? ` · registro oficial de turismo` : ''}</p>`
     : '';
 
   const communitySection = `
@@ -237,18 +258,14 @@ export function renderCityPage(
 
   const officialSection = official
     ? `
-    <h2>Registro oficial de turismo (RTA)</h2>
+    <h2>Registro oficial de turismo</h2>
     <div class="stats stats--official">
       <div class="stat"><strong>${n(official.total)}</strong><span>viviendas turísticas registradas</span></div>
       <div class="stat"><strong>${n(official.entireHomes)}</strong><span>viviendas completas</span></div>
       <div class="stat"><strong>${n(official.roomsOnly)}</strong><span>solo por habitaciones</span></div>
       <div class="stat"><strong>${n(official.places)}</strong><span>plazas turísticas</span></div>
     </div>
-    <p class="credit">
-      Fuente: <a href="https://datos.gob.es/es/catalogo/a01002820-openrta" rel="noopener noreferrer">Registro de Turismo de Andalucía</a>
-      (Junta de Andalucía), datos adaptados ·
-      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
-    </p>
+    ${officialCredit(official.source)}
     <div class="combined">
       Sumando ambas fuentes, ${escapeHtml(name)} dedica <strong>${n(totalDwellings)} viviendas</strong>
       al alquiler turístico: unos <strong>${n(households)} hogares</strong> y
@@ -378,8 +395,8 @@ export function renderCityPage(
     <h2>¿Qué significan estas cifras?</h2>
     <p>
       Cada registro vecinal documenta una vivienda, un edificio o un local de
-      ${escapeHtml(name)} que hoy funciona como alojamiento turístico; el registro oficial (RTA)
-      aporta las viviendas turísticas dadas de alta por la Junta de Andalucía. Las familias y
+      ${escapeHtml(name)} que hoy funciona como alojamiento turístico; el registro oficial de
+      turismo aporta las viviendas dadas de alta ante la administración autonómica. Las familias y
       habitantes se estiman con el tamaño medio del hogar del INE (unas 2,5 personas por
       vivienda), tal y como se explica en la <a href="/metodologia">metodología</a>.
     </p>
@@ -406,7 +423,7 @@ export function renderCityPage(
 export function renderCitiesIndex(cities: CityIndexEntry[]): string {
   const title = 'Viviendas perdidas por ciudad';
   const description =
-    'Cifras de viviendas, familias y comercios desplazados por apartamentos turísticos en cada ciudad española con registros en el mapa colaborativo, incluyendo el registro oficial de turismo de Andalucía.';
+    'Cifras de viviendas, familias y comercios desplazados por apartamentos turísticos en cada ciudad española con registros en el mapa colaborativo, incluyendo los registros oficiales de turismo de Andalucía y Cataluña.';
   const items = cities
     .map((city) => {
       const officialTotal = city.officialTotal ?? 0;

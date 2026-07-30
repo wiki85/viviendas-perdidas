@@ -5,18 +5,18 @@ import { onCall } from 'firebase-functions/v2/https';
 import { REGION } from '../config.js';
 import { requireModerator } from '../callables/common.js';
 import { googleMapsServerApiKey } from '../secrets.js';
-import { runOpenRtaSync } from '../services/openrta-sync.js';
+import { runAllOfficialSyncs, runOfficialSync } from '../services/official-sync.js';
 
 // Cloud Scheduler is unavailable in europe-southwest1 (Madrid); the weekly
-// job runs from europe-west1 and reaches Firestore cross-region (a once-a-week
-// batch, so the extra latency is irrelevant). Callables stay in REGION.
+// jobs run from europe-west1 and reach Firestore cross-region (once-a-week
+// batches, so the extra latency is irrelevant). Callables stay in REGION.
 const SCHEDULER_REGION = 'europe-west1';
 
 /** Weekly mirror of the Junta de Andalucía tourism registry (OpenRTA). */
 export const syncOpenRta = onSchedule(
   {
     region: SCHEDULER_REGION,
-    // Room for the paced Geocoding repair on top of the OpenRTA download.
+    // Room for the paced Geocoding repair on top of the registry download.
     timeoutSeconds: 1500,
     memory: '512MiB',
     schedule: 'every monday 04:30',
@@ -24,12 +24,39 @@ export const syncOpenRta = onSchedule(
     secrets: [googleMapsServerApiKey],
   },
   async () => {
-    const summary = await runOpenRtaSync(fetch, geohashForLocation, googleMapsServerApiKey.value());
+    const summary = await runOfficialSync(
+      'rta',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
     logger.info('OpenRTA sync finished', summary);
   },
 );
 
-/** Manual trigger from the admin panel. */
+/** Weekly mirror of the Registre de Turisme de Catalunya (staggered a day
+ * after the Andalusian job so both never contend for the sync lock). */
+export const syncCatalunya = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every tuesday 04:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'cat',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Catalunya sync finished', summary);
+  },
+);
+
+/** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {
     region: REGION,
@@ -41,8 +68,16 @@ export const adminSyncOfficialData = onCall(
   },
   async (request) => {
     const moderator = requireModerator(request);
-    const summary = await runOpenRtaSync(fetch, geohashForLocation, googleMapsServerApiKey.value());
-    logger.info('OpenRTA sync (manual) finished', { ...summary, moderator });
-    return summary;
+    const summaries = await runAllOfficialSyncs(
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Official sync (manual) finished', { summaries, moderator });
+    return {
+      municipalities: summaries.reduce((sum, summary) => sum + summary.municipalities, 0),
+      records: summaries.reduce((sum, summary) => sum + summary.records, 0),
+      sources: summaries,
+    };
   },
 );
