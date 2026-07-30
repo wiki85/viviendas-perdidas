@@ -2,7 +2,7 @@ import {
   CircleHelp,
   Coffee,
   House,
-  Landmark,
+  Mail,
   MapPinned,
   Share2,
   Store,
@@ -28,6 +28,7 @@ type Props = {
   sourceToggleAvailable: boolean;
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
+  onOpenContact: () => void;
   onOpenDonate: () => void;
   onShare: () => void;
 };
@@ -63,6 +64,7 @@ export function TopBar({
   sourceToggleAvailable,
   onSelectPlace,
   onOpenAbout,
+  onOpenContact,
   onOpenDonate,
   onShare,
 }: Props) {
@@ -88,6 +90,15 @@ export function TopBar({
             aria-label="Invítame a un café: apoya los costes del proyecto"
           >
             <Coffee size={19} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={onOpenContact}
+            title="Contacto"
+            aria-label="Contacto"
+          >
+            <Mail size={19} />
           </button>
           <button
             className="icon-button"
@@ -162,80 +173,6 @@ export function TopBar({
           </>
         )}
       </p>
-      {sourceMode !== 'citizens' && (
-        <>
-          <p
-            className={`official-strip ${sourceMode === 'official' ? 'official-strip--solo' : ''}`}
-          >
-            <Landmark size={15} aria-hidden="true" />
-            {officialStatus === 'loading' ? (
-              <span>Cargando el registro oficial de turismo…</span>
-            ) : officialStatus === 'error' ? (
-              <span>
-                No se ha podido cargar el registro oficial. Mueve el mapa para reintentarlo.
-              </span>
-            ) : official && official.total > 0 ? (
-              <span>
-                Registro oficial: <strong>{formatInteger(official.entireHomes)}</strong>{' '}
-                {official.entireHomes === 1
-                  ? 'vivienda turística completa'
-                  : 'viviendas turísticas completas'}{' '}
-                en la zona visible
-                {official.roomsOnly > 0
-                  ? ` (+${formatInteger(official.roomsOnly)} por habitaciones)`
-                  : ''}
-              </span>
-            ) : (
-              <span>
-                Sin viviendas del registro oficial en esta zona (cobertura: Andalucía y Barcelona).
-              </span>
-            )}
-          </p>
-          <p className="official-credit">
-            Fuentes:{' '}
-            <a
-              href="https://datos.gob.es/es/catalogo/a01002820-openrta"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Registro de Turismo de Andalucía
-            </a>{' '}
-            (Junta de Andalucía,{' '}
-            <a
-              href="https://creativecommons.org/licenses/by/4.0/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              CC BY 4.0
-            </a>
-            ) y{' '}
-            <a
-              href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Registre de Turisme de Catalunya
-            </a>{' '}
-            (Generalitat de Catalunya,{' '}
-            <a
-              href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              llicència oberta
-            </a>
-            ) con coordenadas del{' '}
-            <a
-              href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Ajuntament de Barcelona
-            </a>{' '}
-            (CC BY 4.0). Datos adaptados, sin respaldo oficial.
-          </p>
-        </>
-      )}
     </header>
   );
 }

@@ -6,6 +6,7 @@ import type {
   PhotoDecision,
   VisibleScope,
   VoteKind,
+  ContactMessageInput,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { DemoListingsService } from './demo-service';
@@ -87,6 +88,18 @@ class LazyFirebaseListingsService implements ListingsService {
 
   adminSyncOfficialData() {
     return this.load().then((service) => service.adminSyncOfficialData());
+  }
+
+  submitContactMessage(input: ContactMessageInput) {
+    return this.load().then((service) => service.submitContactMessage(input));
+  }
+
+  adminListContactMessages() {
+    return this.load().then((service) => service.adminListContactMessages());
+  }
+
+  adminDeleteContactMessage(id: string) {
+    return this.load().then((service) => service.adminDeleteContactMessage(id));
   }
 
   listPendingPhotos() {

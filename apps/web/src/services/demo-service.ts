@@ -14,6 +14,7 @@ import type {
   VisibleScope,
   VoteKind,
   VoteResult,
+  ContactMessage,
 } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
 import { distanceMeters, listingIsInBounds } from '../lib/geo';
@@ -274,6 +275,18 @@ export class DemoListingsService implements ListingsService {
 
   async adminSyncOfficialData(): Promise<{ municipalities: number; records: number }> {
     return { municipalities: 0, records: 0 };
+  }
+
+  async submitContactMessage(): Promise<void> {
+    // Demo mode: accepted and discarded.
+  }
+
+  async adminListContactMessages(): Promise<ContactMessage[]> {
+    return [];
+  }
+
+  async adminDeleteContactMessage(): Promise<void> {
+    // Demo mode: nothing stored.
   }
 
   async adminSignIn(): Promise<{ email: string; moderator: boolean }> {

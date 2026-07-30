@@ -60,6 +60,23 @@ export type Listing = {
   updatedAt: string;
 };
 
+/** Contact-form submission (the hidden `website` field is the honeypot). */
+export type ContactMessageInput = {
+  fullName: string;
+  email: string;
+  message: string;
+  website: string;
+  elapsedMs: number;
+};
+
+export type ContactMessage = {
+  id: string;
+  fullName: string;
+  email: string;
+  message: string;
+  createdAt: string | null;
+};
+
 export type OfficialPin = {
   id: string;
   location: LatLng;
@@ -288,6 +305,9 @@ export interface ListingsService {
   adminSignIn(): Promise<{ email: string; moderator: boolean }>;
   adminResolveOfficialMatch(listingId: string): Promise<void>;
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;
+  submitContactMessage(input: ContactMessageInput): Promise<void>;
+  adminListContactMessages(): Promise<ContactMessage[]>;
+  adminDeleteContactMessage(id: string): Promise<void>;
   listPendingPhotos(): Promise<PendingPhoto[]>;
   getPendingPhotoImage(photoId: string): Promise<string>;
   reviewListingPhoto(photoId: string, decision: PhotoDecision): Promise<void>;

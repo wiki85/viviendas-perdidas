@@ -48,6 +48,8 @@ import type {
   VisibleScope,
   VoteKind,
   VoteResult,
+  ContactMessage,
+  ContactMessageInput,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { boundsWithin, distanceMeters, expandBounds, listingIsInBounds } from '../lib/geo';
@@ -499,6 +501,25 @@ export class FirebaseListingsService implements ListingsService {
     >(this.functions, 'adminSyncOfficialData');
     const response = await callable({});
     return response.data;
+  }
+
+  async submitContactMessage(input: ContactMessageInput): Promise<void> {
+    const callable = httpsCallable(this.functions, 'submitContactMessage');
+    await callable(input);
+  }
+
+  async adminListContactMessages(): Promise<ContactMessage[]> {
+    const callable = httpsCallable<Record<string, never>, { messages: ContactMessage[] }>(
+      this.functions,
+      'adminListContactMessages',
+    );
+    const response = await callable({});
+    return response.data.messages;
+  }
+
+  async adminDeleteContactMessage(id: string): Promise<void> {
+    const callable = httpsCallable(this.functions, 'adminDeleteContactMessage');
+    await callable({ id });
   }
 
   async adminSignIn(): Promise<{ email: string; moderator: boolean }> {

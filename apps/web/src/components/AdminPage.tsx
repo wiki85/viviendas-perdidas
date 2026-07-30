@@ -20,6 +20,7 @@ import type {
   ListingType,
   PendingPhoto,
   PhotoDecision,
+  ContactMessage,
 } from '../domain/types';
 import { BrandMark } from './BrandMark';
 import { encodeJpegBase64 } from '../lib/photo';
@@ -29,7 +30,7 @@ type Props = {
   onClose: () => void;
 };
 
-type Tab = 'photos' | 'listings' | 'errors';
+type Tab = 'photos' | 'listings' | 'errors' | 'messages';
 
 function prettyDetails(details: string): string {
   try {
@@ -76,6 +77,7 @@ export function AdminPage({ service, onClose }: Props) {
   const [onlyReported, setOnlyReported] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
+  const [messages, setMessages] = useState<ContactMessage[] | null>(null);
   const [drafts, setDrafts] = useState<
     Record<string, { type: ListingType; dwellings: number; locales: number }>
   >({});
@@ -122,12 +124,38 @@ export function AdminPage({ service, onClose }: Props) {
     }
   }, [service]);
 
+  const refreshMessages = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setMessages(await service.adminListContactMessages());
+    } catch (cause) {
+      setError(describeError(cause));
+      setMessages(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [service]);
+
+  const deleteMessage = async (id: string) => {
+    setBusyId(id);
+    try {
+      await service.adminDeleteContactMessage(id);
+      setMessages((current) => current?.filter((entry) => entry.id !== id) ?? null);
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   useEffect(() => {
     if (email === null) return;
     if (tab === 'photos') void refreshPhotos();
     else if (tab === 'listings') void refreshListings();
+    else if (tab === 'messages') void refreshMessages();
     else void refreshErrors();
-  }, [email, refreshErrors, refreshListings, refreshPhotos, tab]);
+  }, [email, refreshErrors, refreshListings, refreshMessages, refreshPhotos, tab]);
 
   useEffect(() => {
     if (!photos) return;
@@ -436,6 +464,15 @@ export function AdminPage({ service, onClose }: Props) {
               onClick={() => setTab('errors')}
             >
               Errores {errors ? `(${errors.length})` : ''}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'messages'}
+              className={tab === 'messages' ? 'is-active' : ''}
+              onClick={() => setTab('messages')}
+            >
+              Mensajes {messages ? `(${messages.length})` : ''}
             </button>
             <div className="admin-tabs__side">
               <span className="admin-page__email">{email}</span>
@@ -761,6 +798,48 @@ export function AdminPage({ service, onClose }: Props) {
                     </li>
                   );
                 })}
+              </ul>
+            </>
+          )}
+
+          {tab === 'messages' && (
+            <>
+              <p className="admin-page__hint">
+                Mensajes del formulario de contacto. El correo solo es visible aquí.
+              </p>
+              {messages && messages.length === 0 && !loading && (
+                <p className="admin-page__empty">Sin mensajes pendientes ✔</p>
+              )}
+              <ul className="admin-page__list">
+                {(messages ?? []).map((entry) => (
+                  <li key={entry.id} className="admin-card">
+                    <div className="admin-card__body">
+                      <div className="admin-error__meta">
+                        <strong>{entry.fullName}</strong>
+                        <a href={`mailto:${entry.email}`}>{entry.email}</a>
+                        {entry.createdAt && (
+                          <small>
+                            {new Date(entry.createdAt).toLocaleString('es-ES', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}
+                          </small>
+                        )}
+                      </div>
+                      <p className="admin-message__text">{entry.message}</p>
+                      <div className="admin-card__actions">
+                        <button
+                          className="button button--ghost"
+                          type="button"
+                          disabled={busyId === entry.id}
+                          onClick={() => void deleteMessage(entry.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </>
           )}

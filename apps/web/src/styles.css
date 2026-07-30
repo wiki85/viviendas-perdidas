@@ -2822,3 +2822,48 @@ textarea:focus-visible,
   color: var(--muted);
   font-size: 0.66rem;
 }
+
+/* ------------------------------ Contact page ------------------------------ */
+
+.contact-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.contact-form .button {
+  justify-self: start;
+}
+
+/* Honeypot: fuera del flujo visual pero presente en el DOM para los bots. */
+.contact-form__extra {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #e8f3ec;
+  color: #1d5c40;
+  font-weight: 600;
+}
+
+.contact-privacy {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: #5c6b66;
+}
+
+.admin-message__text {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

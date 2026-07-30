@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createListingSchema } from './schemas.js';
+import { createListingSchema, submitContactSchema } from './schemas.js';
 
 const basePayload = {
   type: 'unit' as const,
@@ -91,5 +91,33 @@ describe('createListingSchema', () => {
         commercialUnitsCount: 2,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('submitContactSchema', () => {
+  const valid = {
+    fullName: 'Vecina Ejemplo',
+    email: 'Vecina@Ejemplo.COM',
+    message: 'Quería avisar de un error en un registro del barrio.',
+    website: '',
+    elapsedMs: 12_000,
+  };
+
+  it('accepts a valid submission and lowercases the email', () => {
+    const parsed = submitContactSchema.safeParse(valid);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.email).toBe('vecina@ejemplo.com');
+  });
+
+  it('rejects invalid emails', () => {
+    expect(submitContactSchema.safeParse({ ...valid, email: 'no-es-un-correo' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects messages under 20 characters', () => {
+    expect(submitContactSchema.safeParse({ ...valid, message: 'demasiado corto' }).success).toBe(
+      false,
+    );
   });
 });

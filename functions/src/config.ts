@@ -9,6 +9,7 @@ export const DUPLICATE_RADIUS_METERS = 25;
 export const CREATE_LISTING_LIMIT_PER_HOUR = 5;
 export const VOTE_LIMIT_PER_HOUR = 60;
 export const PHOTO_SUBMIT_LIMIT_PER_HOUR = 5;
+export const CONTACT_LIMIT_PER_HOUR = 3;
 export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 export const MAX_PENDING_PHOTOS_PER_LISTING = 3;
 export const PENDING_PHOTOS_PAGE_SIZE = 50;

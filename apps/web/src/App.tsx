@@ -28,6 +28,9 @@ import { TopBar } from './components/TopBar';
 const AboutPage = lazy(() =>
   import('./components/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
+const ContactPage = lazy(() =>
+  import('./components/ContactPage').then((module) => ({ default: module.ContactPage })),
+);
 const AdminPage = lazy(() =>
   import('./components/AdminPage').then((module) => ({ default: module.AdminPage })),
 );
@@ -206,6 +209,8 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(currentPathIsAdmin);
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
   const [donateOpen, setDonateOpen] = useState(false);
+  // Sin ruta propia a propósito: la página de contacto no debe ser rastreable.
+  const [contactOpen, setContactOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingImpact, setPendingImpact] = useState<PendingImpact | null>(null);
   const [sourceMode, setSourceMode] = useState<SourceMode>(
@@ -860,6 +865,17 @@ export default function App() {
     );
   }
 
+  if (contactOpen) {
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <ContactPage
+          onClose={() => setContactOpen(false)}
+          onSubmit={(input) => service.submitContactMessage(input)}
+        />
+      </Suspense>
+    );
+  }
+
   if (aboutOpen) {
     return (
       <Suspense fallback={<PageLoading />}>
@@ -895,6 +911,7 @@ export default function App() {
         sourceToggleAvailable={service.mode === 'firebase'}
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
+        onOpenContact={() => setContactOpen(true)}
         onOpenDonate={() => setDonateOpen(true)}
         onShare={() => void shareVisibleScope()}
       />

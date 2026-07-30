@@ -137,6 +137,20 @@ export const voteListingSchema = z
 
 export type VoteListingInput = z.infer<typeof voteListingSchema>;
 
+export const submitContactSchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().email().max(200),
+    message: z.string().trim().min(20).max(2000),
+    /** Honeypot: humans never see the field, bots love to fill it. */
+    website: z.string().max(500),
+    /** Milliseconds between opening the form and submitting it. */
+    elapsedMs: z.number().int().min(0).max(86_400_000),
+  })
+  .strict();
+
+export type SubmitContactInput = z.infer<typeof submitContactSchema>;
+
 // 4 MiB binary ≈ 5.6M base64 characters; the byte limit is re-checked after decoding.
 export const submitListingPhotoSchema = z
   .object({
