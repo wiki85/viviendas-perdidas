@@ -9,9 +9,10 @@
  *   is under 15.
  * - PUPILS_PER_CLASSROOM: Ministerio de Educación, 2023-24 — ≈21 pupils per
  *   class blending public (20) and subsidised (22,9) primary schools.
- * - CITY_CENSUS: IECA (SIMA municipal sheets) for the Andalusian cities and
- *   Idescat (EMEX municipal sheet) for Barcelona — main family dwellings from
- *   the 2021 Census and the latest total population, per mirrored city.
+ * - CITY_CENSUS: IECA (SIMA municipal sheets) for the Andalusian cities,
+ *   Idescat (EMEX) for Barcelona and INE (municipal census/padrón tables)
+ *   for the Valencian cities — main family dwellings from the 2021 Census
+ *   and the latest total population, per mirrored city.
  */
 export const HOUSEHOLD_ANNUAL_SPEND_EUR = 34_044;
 export const HOUSEHOLD_FOOD_SPEND_EUR = 5_379;
@@ -37,6 +38,9 @@ export const CITY_CENSUS: Record<string, CityCensus> = {
   'jerez-de-la-frontera': { mainDwellings: 79_708, population: 215_025 },
   marbella: { mainDwellings: 56_491, population: 160_478 },
   barcelona: { mainDwellings: 671_177, population: 1_686_208 },
+  valencia: { mainDwellings: 328_979, population: 840_792 },
+  alicante: { mainDwellings: 132_637, population: 366_221 },
+  benidorm: { mainDwellings: 27_912, population: 77_327 },
 };
 
 export interface CityImpactInput {

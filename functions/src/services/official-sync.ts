@@ -9,11 +9,13 @@ import {
 } from '../domain/openrta.js';
 import { buildOfficialCells, roomsInhabitantsForPlaces } from '../domain/openrta-cells.js';
 import { contentHash, isSuspiciousDrop } from '../domain/sync-integrity.js';
+import { parseCatastroCoordinates, GVA_MUNICIPALITIES } from '../domain/gva.js';
 import { createCatalunyaFetcher } from './catalunya-source.js';
+import { createValenciaFetcher } from './valencia-source.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -59,6 +61,12 @@ export const SYNCED_MUNICIPALITIES: readonly string[] = [
 /** Catalan municipalities mirrored from the Registre de Turisme (Socrata
  * spelling). Coordinates come from the city-hall open-data join. */
 export const SYNCED_CAT_MUNICIPALITIES: readonly string[] = ['Barcelona'];
+
+/** Valencian municipalities mirrored from the GVA register (canonical
+ * spelling of domain/gva.ts). Coordinates resolve via the Catastro. */
+export const SYNCED_GVA_MUNICIPALITIES: readonly string[] = GVA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
 
 async function fetchRtaPage(
   municipality: string,
@@ -125,12 +133,23 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       fetchMunicipality: fetchRtaMunicipality,
     };
   }
-  const fetcher = createCatalunyaFetcher();
+  if (id === 'cat') {
+    const fetcher = createCatalunyaFetcher();
+    return {
+      id,
+      idPrefix: 'cat-',
+      statsSource: 'rtc',
+      municipalities: SYNCED_CAT_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  const fetcher = createValenciaFetcher();
   return {
     id,
-    idPrefix: 'cat-',
-    statsSource: 'rtc',
-    municipalities: SYNCED_CAT_MUNICIPALITIES,
+    idPrefix: 'gva-',
+    statsSource: 'gva',
+    municipalities: SYNCED_GVA_MUNICIPALITIES,
     prepare: fetcher.prepare,
     fetchMunicipality: fetcher.fetchMunicipality,
   };
@@ -457,6 +476,136 @@ async function repairMissingCoordinates(
   return repaired;
 }
 
+/* --------------------- Coordinate repair (Catastro) ----------------------- */
+
+/**
+ * Free coordinate resolution for records that carry a cadastral reference
+ * (the GVA register): the Sede del Catastro returns the parcel centroid,
+ * street-level precision without touching the Geocoding quota. Results and
+ * definitive failures persist in `officialGeoCache` under `catastro-<id>`,
+ * a namespace separate from the Google entries so both repairs can retry
+ * independently.
+ */
+const CATASTRO_URL =
+  'https://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCoordenadas.asmx/Consulta_CPMRC';
+const CATASTRO_MAX_PER_RUN = 4_000;
+const CATASTRO_PACE_MS = 150;
+const CATASTRO_TIME_BUDGET_MS = 10 * 60 * 1000;
+const CATASTRO_QUERY_VERSION = 1;
+
+interface CatastroState {
+  remaining: number;
+  transientStreak: number;
+  failures: Record<string, number>;
+  startedAt: number;
+}
+
+function createCatastroState(): CatastroState {
+  return {
+    remaining: CATASTRO_MAX_PER_RUN,
+    transientStreak: 0,
+    failures: {},
+    startedAt: Date.now(),
+  };
+}
+
+async function repairViaCatastro(
+  records: OfficialVutRecord[],
+  state: CatastroState,
+  fetchImplementation: typeof fetch,
+): Promise<number> {
+  const missing = records.filter(
+    (record) =>
+      (record.latitude === null || record.longitude === null) &&
+      typeof record.cadastralRef === 'string',
+  );
+  if (missing.length === 0) return 0;
+  const cache = await readGeoCache(missing.map((record) => `catastro-${record.id}`));
+  const cacheWrites: Array<{ id: string; data: Record<string, unknown> }> = [];
+  let repaired = 0;
+  for (const record of missing) {
+    const cacheId = `catastro-${record.id}`;
+    const cached = cache.get(cacheId);
+    if (cached !== undefined) {
+      if (cached.latitude !== null && cached.longitude !== null) {
+        record.latitude = cached.latitude;
+        record.longitude = cached.longitude;
+        repaired += 1;
+        continue;
+      }
+      if (cached.version >= CATASTRO_QUERY_VERSION) continue;
+    }
+    if (state.remaining <= 0) continue;
+    if (Date.now() - state.startedAt > CATASTRO_TIME_BUDGET_MS) {
+      state.remaining = 0;
+      continue;
+    }
+    state.remaining -= 1;
+    let located: { latitude: number; longitude: number } | null = null;
+    let permanentFailure = false;
+    try {
+      const url = new URL(CATASTRO_URL);
+      url.searchParams.set('Provincia', '');
+      url.searchParams.set('Municipio', '');
+      url.searchParams.set('SRS', 'EPSG:4326');
+      // RC14 = parcel reference; the service ignores the property extras.
+      url.searchParams.set('RC', (record.cadastralRef ?? '').slice(0, 14));
+      const response = await fetchImplementation(url, { signal: AbortSignal.timeout(10_000) });
+      if (response.ok) {
+        located = parseCatastroCoordinates(await response.text());
+        // A well-formed answer without coordinates is a bad reference:
+        // definitive, cache it so it is never paid again.
+        permanentFailure = located === null;
+      }
+    } catch {
+      located = null;
+    }
+    await delay(CATASTRO_PACE_MS);
+    if (
+      located !== null &&
+      !coordinatesPlausibleForMunicipality(record.municipality, located.latitude, located.longitude)
+    ) {
+      located = null;
+      permanentFailure = true;
+      state.failures.implausible = (state.failures.implausible ?? 0) + 1;
+    }
+    if (located === null && !permanentFailure) {
+      // Network/service hiccup: retry on a future run, trip the breaker if
+      // the upstream looks down.
+      state.failures.transient = (state.failures.transient ?? 0) + 1;
+      state.transientStreak += 1;
+      if (state.transientStreak >= 8) state.remaining = 0;
+      continue;
+    }
+    state.transientStreak = 0;
+    cacheWrites.push({
+      id: cacheId,
+      data: {
+        latitude: located?.latitude ?? null,
+        longitude: located?.longitude ?? null,
+        cadastralRef: record.cadastralRef,
+        municipality: record.municipality,
+        source: 'catastro',
+        version: CATASTRO_QUERY_VERSION,
+        updatedAt: Timestamp.now(),
+      },
+    });
+    if (located !== null) {
+      record.latitude = located.latitude;
+      record.longitude = located.longitude;
+      repaired += 1;
+    } else {
+      state.failures.bad_reference = (state.failures.bad_reference ?? 0) + 1;
+    }
+  }
+  await commitChunks(
+    cacheWrites.map(({ id, data }) => (batch: FirebaseFirestore.WriteBatch) => {
+      batch.set(db.collection(GEO_CACHE_COLLECTION).doc(id), data);
+    }),
+  );
+  return repaired;
+}
+
 /* ------------------------- Global cells rebuild ---------------------------- */
 
 /**
@@ -585,6 +734,7 @@ async function runSource(
 
     const vutCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
     const freshIds = new Set<string>();
+    const catastroState = createCatastroState();
     for (const municipality of source.municipalities) {
       const records = await source.fetchMunicipality(municipality, fetchImplementation);
       const previous = previousTotals.get(municipality) ?? 0;
@@ -595,7 +745,12 @@ async function runSource(
           `El registro oficial devolvió ${records.length} registros para ${municipality} (antes ${previous}); sincronización abortada.`,
         );
       }
-      const repaired = await repairMissingCoordinates(records, geocodeState, fetchImplementation);
+      // Cadastral references first (free, precise); the paid Geocoding API
+      // only sees what the Catastro could not resolve.
+      const catastroRepaired = await repairViaCatastro(records, catastroState, fetchImplementation);
+      const repaired =
+        catastroRepaired +
+        (await repairMissingCoordinates(records, geocodeState, fetchImplementation));
       repairedTotal += repaired;
       for (const record of records) freshIds.add(record.id);
       await writeDocsDiff(
@@ -651,6 +806,8 @@ async function runSource(
       repaired: repairedTotal,
       geocodesLeft: geocodeState.remaining,
       failures: geocodeState.failures,
+      catastroLeft: catastroState.remaining,
+      catastroFailures: catastroState.failures,
     });
 
     // Ghost purge, scoped to this source's prefix: registrations withdrawn
@@ -695,7 +852,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

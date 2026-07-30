@@ -56,6 +56,29 @@ export const syncCatalunya = onSchedule(
   },
 );
 
+/** Weekly mirror of the Registre de Turisme de la Comunitat Valenciana
+ * (staggered after the other two; the Catastro repair digests the initial
+ * backlog across a few runs and then settles into deltas). */
+export const syncValencia = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every wednesday 04:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'gva',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Valencia sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {

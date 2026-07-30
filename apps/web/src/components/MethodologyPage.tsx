@@ -168,27 +168,54 @@ export function MethodologyPage({ onClose }: Props) {
             >
               Llicència oberta d&rsquo;ús d&rsquo;informació – Catalunya <ExternalLink size={15} />
             </a>
-            , completado con las coordenadas del conjunto «Viviendas de uso turístico de la ciudad
-            de Barcelona» del <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0),
-            cruzando ambos por número de registro.
+            , completado con las coordenadas y plazas del conjunto «Viviendas de uso turístico de la
+            ciudad de Barcelona» del <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY
+            4.0), cruzando ambos por número de registro.
+          </p>
+          <p>
+            Los datos oficiales de la <strong>Comunitat Valenciana</strong> proceden del{' '}
+            <strong>«Registre de Turisme de la Comunitat Valenciana»</strong> (lista diaria de
+            viviendas de uso turístico) de la <strong>Generalitat Valenciana</strong>, publicado en
+            su portal de datos abiertos bajo licencia{' '}
+            <a
+              className="text-link"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0 <ExternalLink size={15} />
+            </a>
+            . Ese registro no publica coordenadas pero sí la referencia catastral de cada vivienda:
+            las ubicamos consultando la{' '}
+            <a
+              className="text-link"
+              href="https://www.sedecatastro.gob.es/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Sede Electrónica del Catastro <ExternalLink size={15} />
+            </a>{' '}
+            (Dirección General del Catastro), que devuelve el centro de la parcela.
           </p>
           <p>
             <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
             filtran a viviendas de uso turístico y llars compartides publicadas en cada registro
             abierto, se reproyectan las coordenadas andaluzas de UTM (ETRS89 / UTM 30N, EPSG:25830)
             a latitud/longitud (WGS84), se asignan coordenadas a los registros barceloneses
-            cruzándolos con el dataset municipal, se calculan estadísticas agregadas por municipio y
-            se agrupan las viviendas en celdas geográficas (geohash) para dibujarlas y contarlas
-            según el nivel de zoom. Las coordenadas de origen manifiestamente erróneas (algunas
-            fichas vienen tecleadas a cientos de km de su municipio) se descartan y se recolocan
-            geocodificando la dirección publicada. Solo se refleja un subconjunto de municipios
-            (diez andaluces y Barcelona); el pequeño porcentaje de registros que no puede ubicarse
-            con precisión de calle no se dibuja ni se cuenta en el mapa.
+            cruzándolos con el dataset municipal y a los valencianos resolviendo su referencia
+            catastral en el Catastro, se calculan estadísticas agregadas por municipio y se agrupan
+            las viviendas en celdas geográficas (geohash) para dibujarlas y contarlas según el nivel
+            de zoom. Las coordenadas de origen manifiestamente erróneas (algunas fichas vienen
+            tecleadas a cientos de km de su municipio) se descartan y se recolocan geocodificando la
+            dirección publicada. Solo se refleja un subconjunto de municipios (diez andaluces,
+            Barcelona, València, Alicante y Benidorm); el pequeño porcentaje de registros que no
+            puede ubicarse con precisión de calle no se dibuja ni se cuenta en el mapa.
           </p>
           <p>
             <strong>
-              Ni la Junta de Andalucía, ni la Generalitat de Catalunya, ni el Ajuntament de
-              Barcelona respaldan o avalan este proyecto
+              Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
+              Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro)
+              respalda o avala este proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan

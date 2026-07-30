@@ -22,6 +22,9 @@ export interface OfficialVutRecord {
   cityId: string;
   entire: boolean;
   places: number;
+  /** Cadastral reference (GVA rows): lets the sync resolve coordinates
+   * against the Catastro instead of paying the Geocoding API. */
+  cadastralRef?: string;
   latitude: number | null;
   longitude: number | null;
 }
@@ -88,6 +91,9 @@ export const MUNICIPALITY_CENTERS: Record<
   'JEREZ DE LA FRONTERA': { latitude: 36.6866, longitude: -6.1372, radiusKm: 45 },
   MARBELLA: { latitude: 36.5101, longitude: -4.8825, radiusKm: 30 },
   BARCELONA: { latitude: 41.3874, longitude: 2.1686, radiusKm: 20 },
+  VALÈNCIA: { latitude: 39.4699, longitude: -0.3763, radiusKm: 22 },
+  ALICANTE: { latitude: 38.3452, longitude: -0.481, radiusKm: 22 },
+  BENIDORM: { latitude: 38.5382, longitude: -0.131, radiusKm: 12 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

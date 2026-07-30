@@ -100,9 +100,11 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             >
               CC BY 4.0 <ExternalLink size={15} />
             </a>
-            ) y de la <strong>Generalitat de Catalunya</strong> (Registre de Turisme de Catalunya,
+            ), de la <strong>Generalitat de Catalunya</strong> (Registre de Turisme de Catalunya,
             llicència oberta d&rsquo;ús d&rsquo;informació), con coordenadas del{' '}
-            <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0). Adaptamos los datos
+            <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0), y de la{' '}
+            <strong>Generalitat Valenciana</strong> (Registre de Turisme de la Comunitat Valenciana,
+            CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro. Adaptamos los datos
             originales y ninguna administración respalda este proyecto; el detalle completo está en
             la metodología.
           </p>

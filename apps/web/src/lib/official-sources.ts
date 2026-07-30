@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc';
+  id: 'openrta' | 'rtc' | 'gva';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -40,12 +40,30 @@ export const OFFICIAL_SOURCE_RTC: OfficialSourceInfo = {
   },
 };
 
+export const OFFICIAL_SOURCE_GVA: OfficialSourceInfo = {
+  id: 'gva',
+  registerName: 'Registre de Turisme de la Comunitat Valenciana',
+  registerUrl: 'https://dadesobertes.gva.es/es/dataset/758f8f8e-c5af-4622-b268-a6c591710a51',
+  publisher: 'Generalitat Valenciana',
+  licenseName: 'CC BY 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  coordinatesCredit: {
+    name: 'Sede Electrónica del Catastro',
+    url: 'https://www.sedecatastro.gob.es/',
+    licenseName: 'Dirección General del Catastro',
+    licenseUrl: 'https://www.catastro.hacienda.gob.es/esp/condiciones_acceso.asp',
+  },
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
+  OFFICIAL_SOURCE_GVA,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
 export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
-  return pinId.startsWith('cat-') ? OFFICIAL_SOURCE_RTC : OFFICIAL_SOURCE_RTA;
+  if (pinId.startsWith('cat-')) return OFFICIAL_SOURCE_RTC;
+  if (pinId.startsWith('gva-')) return OFFICIAL_SOURCE_GVA;
+  return OFFICIAL_SOURCE_RTA;
 }

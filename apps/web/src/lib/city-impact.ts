@@ -24,6 +24,9 @@ const CITY_MAIN_DWELLINGS: Record<string, number> = {
   'jerez-de-la-frontera': 79_708,
   marbella: 56_491,
   barcelona: 671_177,
+  valencia: 328_979,
+  alicante: 132_637,
+  benidorm: 27_912,
 };
 
 export type CityImpactSummary = {

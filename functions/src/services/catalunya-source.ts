@@ -1,10 +1,10 @@
 import * as logger from 'firebase-functions/logger';
 import {
-  buildBarcelonaCoordinates,
+  buildBarcelonaCityIndex,
   parseCatRecord,
   CAT_ENTIRE_TYPE,
   CAT_SHARED_TYPE,
-  type CatCoordinates,
+  type CatCityEntry,
 } from '../domain/catalunya.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
 
@@ -36,7 +36,7 @@ export interface CatalunyaFetcher {
 
 /** Registre de Turisme de Catalunya (Socrata) + city-hall coordinates. */
 export function createCatalunyaFetcher(): CatalunyaFetcher {
-  let coordinates: Map<string, CatCoordinates> | null = null;
+  let coordinates: Map<string, CatCityEntry> | null = null;
 
   return {
     async prepare(fetchImplementation) {
@@ -48,7 +48,7 @@ export function createCatalunyaFetcher(): CatalunyaFetcher {
           `El dataset de coordenadas del Ajuntament devolvió HTTP ${response.status}`,
         );
       }
-      const parsed = buildBarcelonaCoordinates(await response.text());
+      const parsed = buildBarcelonaCityIndex(await response.text());
       if (parsed.size < MIN_EXPECTED_BARCELONA_COORDS) {
         throw new Error(
           `El dataset de coordenadas del Ajuntament trajo solo ${parsed.size} filas; sincronización abortada.`,

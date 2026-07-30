@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildBarcelonaCoordinates,
+  buildBarcelonaCityIndex,
   parseCatRecord,
-  parseCsv,
   CAT_ENTIRE_TYPE,
   CAT_SHARED_TYPE,
 } from './catalunya.js';
+import { parseCsv } from './csv.js';
 import { cleanAddressForGeocoding, streetsLooselyMatch } from './openrta.js';
 
 const CITY_CSV = [
@@ -42,13 +42,14 @@ describe('parseCsv', () => {
   });
 });
 
-describe('buildBarcelonaCoordinates', () => {
-  const coordinates = buildBarcelonaCoordinates(CITY_CSV);
+describe('buildBarcelonaCityIndex', () => {
+  const coordinates = buildBarcelonaCityIndex(CITY_CSV);
 
-  it('indexes WGS84 coordinates by registry code', () => {
+  it('indexes WGS84 coordinates and licensed places by registry code', () => {
     expect(coordinates.get('HUTB-002222')).toEqual({
       latitude: 41.3784454355655,
       longitude: 2.17017206787341,
+      places: 3,
     });
   });
 
@@ -59,7 +60,7 @@ describe('buildBarcelonaCoordinates', () => {
 });
 
 describe('parseCatRecord', () => {
-  const coordinates = buildBarcelonaCoordinates(CITY_CSV);
+  const coordinates = buildBarcelonaCityIndex(CITY_CSV);
 
   it('maps an entire-home HUT with joined coordinates', () => {
     const record = parseCatRecord(hutRow(), coordinates);
@@ -84,6 +85,17 @@ describe('parseCatRecord', () => {
     const record = parseCatRecord(hutRow({ n_mero_inscripci: 'HUTB-777777' }), coordinates);
     expect(record?.latitude).toBeNull();
     expect(record?.longitude).toBeNull();
+  });
+
+  it('falls back to the city-hall capacity when the registry omits total_places', () => {
+    const record = parseCatRecord(hutRow({ total_places: undefined }), coordinates);
+    expect(record?.places).toBe(3);
+    // Without a city-hall match either, capacity stays honestly at 0.
+    const orphan = parseCatRecord(
+      hutRow({ total_places: undefined, n_mero_inscripci: 'HUTB-777777' }),
+      coordinates,
+    );
+    expect(orphan?.places).toBe(0);
   });
 
   it('treats llars compartides as rooms-only rentals', () => {

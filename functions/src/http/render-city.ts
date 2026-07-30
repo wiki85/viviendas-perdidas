@@ -41,6 +41,15 @@ function officialCredit(source: string): string {
       (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>), datos adaptados. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'gva') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://dadesobertes.gva.es/es/dataset/758f8f8e-c5af-4622-b268-a6c591710a51" rel="noopener noreferrer">Registre de Turisme de la Comunitat Valenciana</a>
+      (Generalitat Valenciana), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a> ·
+      coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.
+    </p>`;
+  }
   return `
     <p class="credit">
       Fuente: <a href="https://datos.gob.es/es/catalogo/a01002820-openrta" rel="noopener noreferrer">Registro de Turismo de Andalucía</a>

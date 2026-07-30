@@ -140,6 +140,37 @@ describe('renderCityPage', () => {
     // 10.650 VUT sobre 671.177 hogares principales (Idescat, Censo 2021) ≈ 1,6%.
     expect(html).toContain('1,6% de todos los hogares principales');
   });
+
+  it('credits the Valencian registry and the Catastro for gva cities', () => {
+    const official: OfficialCityStats = {
+      total: 5765,
+      entireHomes: 5765,
+      roomsOnly: 0,
+      roomsInhabitants: 0,
+      places: 30000,
+      source: 'gva',
+      updatedAt: new Date('2026-07-30T04:30:00Z'),
+    };
+    const html = renderCityPage(
+      city({
+        id: 'valencia',
+        name: 'València',
+        listingsCount: 0,
+        lostDwellings: 0,
+        lostFamilies: 0,
+        lostInhabitants: 0,
+        lostCommercial: 0,
+        updatedAt: null,
+      }),
+      [],
+      official,
+    );
+    expect(html).toContain('Registre de Turisme de la Comunitat Valenciana');
+    expect(html).toContain('Catastro');
+    expect(html).not.toContain('Junta de Andalucía');
+    // 5.765 VUT sobre 328.979 hogares principales (INE, Censo 2021) ≈ 1,8%.
+    expect(html).toContain('1,8% de todos los hogares principales');
+  });
 });
 
 describe('renderCitiesIndex', () => {

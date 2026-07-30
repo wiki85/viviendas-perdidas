@@ -1,4 +1,5 @@
 import { normalizeStreet, normalizeStreetNumber, slugifyCity } from './address.js';
+import { parseCsv } from './csv.js';
 import {
   coordinatesPlausibleForMunicipality,
   normalizeLicenseKey,
@@ -9,69 +10,29 @@ import {
 export const CAT_ENTIRE_TYPE = "Habitatges d'ús turístic";
 export const CAT_SHARED_TYPE = 'Llars compartides';
 
-export interface CatCoordinates {
+export interface CatCityEntry {
   latitude: number;
   longitude: number;
+  /** Licensed capacity from the city-hall dataset. The Generalitat register
+   * only publishes `total_places` for ~24% of HUTs; the city covers 99,9%. */
+  places: number;
 }
 
 /**
- * Minimal RFC-4180 CSV parser (quoted fields, embedded commas/quotes/newlines).
- * Enough for the Ajuntament de Barcelona export; no external dependency.
+ * Coordinates and licensed capacity per registry code from the Ajuntament de
+ * Barcelona weekly dataset («Viviendas de uso turístico de la ciudad de
+ * Barcelona», CC BY 4.0). Column names despite appearances: LONGITUD_X is the
+ * longitude and LATITUD_Y the latitude, already in WGS84.
  */
-export function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let inQuotes = false;
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    if (inQuotes) {
-      if (char === '"') {
-        if (text[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        field += char;
-      }
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = true;
-    } else if (char === ',') {
-      row.push(field);
-      field = '';
-    } else if (char === '\n' || char === '\r') {
-      if (char === '\r' && text[index + 1] === '\n') index += 1;
-      row.push(field);
-      field = '';
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-    } else {
-      field += char;
-    }
-  }
-  row.push(field);
-  if (row.length > 1 || row[0] !== '') rows.push(row);
-  return rows;
-}
-
-/**
- * Coordinates per registry code from the Ajuntament de Barcelona weekly
- * dataset («Viviendas de uso turístico de la ciudad de Barcelona», CC BY 4.0).
- * Column names despite appearances: LONGITUD_X is the longitude and
- * LATITUD_Y the latitude, already in WGS84.
- */
-export function buildBarcelonaCoordinates(csvText: string): Map<string, CatCoordinates> {
+export function buildBarcelonaCityIndex(csvText: string): Map<string, CatCityEntry> {
   const rows = parseCsv(csvText.replace(/^\uFEFF/u, ''));
   const header = rows[0] ?? [];
   const codeIndex = header.indexOf('NUMERO_REGISTRE_GENERALITAT');
   const longitudeIndex = header.indexOf('LONGITUD_X');
   const latitudeIndex = header.indexOf('LATITUD_Y');
-  const coordinates = new Map<string, CatCoordinates>();
-  if (codeIndex === -1 || longitudeIndex === -1 || latitudeIndex === -1) return coordinates;
+  const placesIndex = header.indexOf('NUMERO_PLACES');
+  const entries = new Map<string, CatCityEntry>();
+  if (codeIndex === -1 || longitudeIndex === -1 || latitudeIndex === -1) return entries;
   for (const row of rows.slice(1)) {
     const code = normalizeLicenseKey(row[codeIndex] ?? '');
     const longitude = Number(row[longitudeIndex]);
@@ -79,9 +40,14 @@ export function buildBarcelonaCoordinates(csvText: string): Map<string, CatCoord
     if (code.length === 0 || !Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
     // Sanity: inside the Spanish bounding box, like the UTM conversions.
     if (latitude < 27.4 || latitude > 44.2 || longitude < -18.5 || longitude > 4.5) continue;
-    coordinates.set(code, { latitude, longitude });
+    const places = placesIndex === -1 ? NaN : Number(row[placesIndex]);
+    entries.set(code, {
+      latitude,
+      longitude,
+      places: Number.isFinite(places) && places > 0 ? places : 0,
+    });
   }
-  return coordinates;
+  return entries;
 }
 
 function asText(value: unknown): string {
@@ -95,7 +61,7 @@ function asText(value: unknown): string {
  */
 export function parseCatRecord(
   raw: Record<string, unknown>,
-  coordinatesByCode: ReadonlyMap<string, CatCoordinates>,
+  cityIndexByCode: ReadonlyMap<string, CatCityEntry>,
 ): OfficialVutRecord | null {
   const registrationCode = asText(raw.n_mero_inscripci);
   const municipality = asText(raw.municipi).toLocaleUpperCase('es');
@@ -115,14 +81,20 @@ export function parseCatRecord(
   const addressText =
     `${road}${number.length > 0 ? `, ${number}` : ''}${detail.length > 0 ? ` (${detail})` : ''}`.trim();
   const licenseKey = normalizeLicenseKey(registrationCode);
-  const located = coordinatesByCode.get(licenseKey) ?? null;
+  const cityEntry = cityIndexByCode.get(licenseKey) ?? null;
   const coordinates =
-    located !== null &&
-    coordinatesPlausibleForMunicipality(municipality, located.latitude, located.longitude)
-      ? located
+    cityEntry !== null &&
+    coordinatesPlausibleForMunicipality(municipality, cityEntry.latitude, cityEntry.longitude)
+      ? cityEntry
       : null;
   const name = asText(raw.r_tol);
-  const places = Number(raw.total_places);
+  // The Generalitat only publishes total_places for ~24% of HUTs even though
+  // the licensed capacity is mandatory; the city-hall dataset fills the rest.
+  const registryPlaces = Number(raw.total_places);
+  const places =
+    Number.isFinite(registryPlaces) && registryPlaces > 0
+      ? registryPlaces
+      : (cityEntry?.places ?? 0);
   return {
     id: `cat-${licenseKey}`,
     registrationCode,
@@ -135,7 +107,7 @@ export function parseCatRecord(
     municipality,
     cityId: slugifyCity(municipality),
     entire: type === CAT_ENTIRE_TYPE,
-    places: Number.isFinite(places) && places > 0 ? places : 0,
+    places,
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null,
   };
