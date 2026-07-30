@@ -159,9 +159,26 @@ export const cityPage = onRequest(
         return;
       }
 
-      const cityId = segments[1] ?? '';
+      let rawCityId = segments[1] ?? '';
+      try {
+        rawCityId = decodeURIComponent(rawCityId);
+      } catch {
+        // Malformed percent-encoding: leave as-is, the pattern check 404s it.
+      }
+      // Spanish keyboards autocomplete accents ('málaga'): normalize to the
+      // canonical slug and redirect instead of answering 404.
+      const cityId = rawCityId
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLocaleLowerCase('es');
       if (segments[0] !== 'ciudad' || !CITY_ID_PATTERN.test(cityId) || cityId.length > 120) {
         sendNotFound(response);
+        return;
+      }
+      if (cityId !== rawCityId) {
+        response
+          .set('Cache-Control', 'public, s-maxage=3600')
+          .redirect(301, `/ciudad/${encodeURIComponent(cityId)}`);
         return;
       }
       const [snapshot, officialSnapshot] = await Promise.all([
