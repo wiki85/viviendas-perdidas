@@ -13,10 +13,12 @@ import { parseCatastroCoordinates, GVA_MUNICIPALITIES } from '../domain/gva.js';
 import { createCatalunyaFetcher } from './catalunya-source.js';
 import { createValenciaFetcher } from './valencia-source.js';
 import { createMallorcaFetcher } from './mallorca-source.js';
+import { createNavarraFetcher } from './navarra-source.js';
+import { NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -73,6 +75,12 @@ export const SYNCED_GVA_MUNICIPALITIES: readonly string[] = GVA_MUNICIPALITIES.m
  * spelling, uppercase). Half the features carry WGS84 geometry; the rest
  * geocode by address. */
 export const SYNCED_CAIB_MUNICIPALITIES: readonly string[] = ['PALMA'];
+
+/** Navarrese municipalities mirrored from the Registro de Turismo (canonical
+ * spelling of domain/navarra.ts). No coordinates upstream: all geocoded. */
+export const SYNCED_NAV_MUNICIPALITIES: readonly string[] = NAVARRA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
 
 async function fetchRtaPage(
   municipality: string,
@@ -161,12 +169,23 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       fetchMunicipality: fetcher.fetchMunicipality,
     };
   }
-  const fetcher = createMallorcaFetcher();
+  if (id === 'caib') {
+    const fetcher = createMallorcaFetcher();
+    return {
+      id,
+      idPrefix: 'caib-',
+      statsSource: 'caib',
+      municipalities: SYNCED_CAIB_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  const fetcher = createNavarraFetcher();
   return {
     id,
-    idPrefix: 'caib-',
-    statsSource: 'caib',
-    municipalities: SYNCED_CAIB_MUNICIPALITIES,
+    idPrefix: 'nav-',
+    statsSource: 'nav',
+    municipalities: SYNCED_NAV_MUNICIPALITIES,
     prepare: fetcher.prepare,
     fetchMunicipality: fetcher.fetchMunicipality,
   };
@@ -908,7 +927,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva', 'caib'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

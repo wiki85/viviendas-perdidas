@@ -42,6 +42,7 @@ export const CITY_CENSUS: Record<string, CityCensus> = {
   alicante: { mainDwellings: 132_637, population: 366_221 },
   benidorm: { mainDwellings: 27_912, population: 77_327 },
   palma: { mainDwellings: 159_316, population: 434_786 },
+  pamplona: { mainDwellings: 78_924, population: 209_094 },
 };
 
 export interface CityImpactInput {

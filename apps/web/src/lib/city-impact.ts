@@ -28,6 +28,7 @@ const CITY_MAIN_DWELLINGS: Record<string, number> = {
   alicante: 132_637,
   benidorm: 27_912,
   palma: 159_316,
+  pamplona: 78_924,
 };
 
 export type CityImpactSummary = {

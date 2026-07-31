@@ -49,6 +49,14 @@ function officialCredit(source: string): string {
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'nav') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://datosabiertos.navarra.es/es/dataset/alojamientos-inscritos-en-el-registro-de-turismo-de-navarra" rel="noopener noreferrer">Registro de Turismo de Navarra</a>
+      (Gobierno de Navarra), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
+    </p>`;
+  }
   if (source === 'gva') {
     return `
     <p class="credit">

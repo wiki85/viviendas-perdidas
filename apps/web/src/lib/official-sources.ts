@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc' | 'gva' | 'caib';
+  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -64,11 +64,22 @@ export const OFFICIAL_SOURCE_CAIB: OfficialSourceInfo = {
   licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
+export const OFFICIAL_SOURCE_NAV: OfficialSourceInfo = {
+  id: 'nav',
+  registerName: 'Registro de Turismo de Navarra',
+  registerUrl:
+    'https://datosabiertos.navarra.es/es/dataset/alojamientos-inscritos-en-el-registro-de-turismo-de-navarra',
+  publisher: 'Gobierno de Navarra',
+  licenseName: 'CC BY 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
   OFFICIAL_SOURCE_GVA,
   OFFICIAL_SOURCE_CAIB,
+  OFFICIAL_SOURCE_NAV,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
@@ -76,5 +87,6 @@ export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('cat-')) return OFFICIAL_SOURCE_RTC;
   if (pinId.startsWith('gva-')) return OFFICIAL_SOURCE_GVA;
   if (pinId.startsWith('caib-')) return OFFICIAL_SOURCE_CAIB;
+  if (pinId.startsWith('nav-')) return OFFICIAL_SOURCE_NAV;
   return OFFICIAL_SOURCE_RTA;
 }

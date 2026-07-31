@@ -100,6 +100,27 @@ export const syncMallorca = onSchedule(
   },
 );
 
+/** Weekly mirror of the Registro de Turismo de Navarra. */
+export const syncNavarra = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every friday 04:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'nav',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Navarra sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {
