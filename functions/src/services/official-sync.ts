@@ -488,9 +488,12 @@ async function repairMissingCoordinates(
  */
 const CATASTRO_URL =
   'https://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCoordenadas.asmx/Consulta_CPMRC';
-const CATASTRO_MAX_PER_RUN = 4_000;
+const CATASTRO_MAX_PER_RUN = 8_000;
 const CATASTRO_PACE_MS = 150;
-const CATASTRO_TIME_BUDGET_MS = 10 * 60 * 1000;
+const CATASTRO_TIME_BUDGET_MS = 15 * 60 * 1000;
+/** Polite parallelism against the public service: latency dominates the
+ * sequential loop, three lanes triple the throughput at ~7 req/s. */
+const CATASTRO_CONCURRENCY = 3;
 const CATASTRO_QUERY_VERSION = 1;
 
 interface CatastroState {
@@ -509,23 +512,33 @@ function createCatastroState(): CatastroState {
   };
 }
 
+interface CatastroRepairResult {
+  repaired: number;
+  /** Records with a cadastral reference this run could not attempt (budget,
+   * time or transient failures): the paid Geocoding API must NOT touch them —
+   * a future run resolves them for free. */
+  deferredIds: Set<string>;
+}
+
 async function repairViaCatastro(
   records: OfficialVutRecord[],
   state: CatastroState,
   fetchImplementation: typeof fetch,
-): Promise<number> {
+): Promise<CatastroRepairResult> {
   const missing = records.filter(
     (record) =>
       (record.latitude === null || record.longitude === null) &&
       typeof record.cadastralRef === 'string',
   );
-  if (missing.length === 0) return 0;
+  const deferredIds = new Set<string>();
+  if (missing.length === 0) return { repaired: 0, deferredIds };
   const cache = await readGeoCache(missing.map((record) => `catastro-${record.id}`));
   const cacheWrites: Array<{ id: string; data: Record<string, unknown> }> = [];
   let repaired = 0;
+
+  const queue: OfficialVutRecord[] = [];
   for (const record of missing) {
-    const cacheId = `catastro-${record.id}`;
-    const cached = cache.get(cacheId);
+    const cached = cache.get(`catastro-${record.id}`);
     if (cached !== undefined) {
       if (cached.latitude !== null && cached.longitude !== null) {
         record.latitude = cached.latitude;
@@ -533,14 +546,14 @@ async function repairViaCatastro(
         repaired += 1;
         continue;
       }
+      // Definitive failure with the current query shape: Google may try it.
       if (cached.version >= CATASTRO_QUERY_VERSION) continue;
     }
-    if (state.remaining <= 0) continue;
-    if (Date.now() - state.startedAt > CATASTRO_TIME_BUDGET_MS) {
-      state.remaining = 0;
-      continue;
-    }
-    state.remaining -= 1;
+    queue.push(record);
+  }
+
+  let queueIndex = 0;
+  const attemptOne = async (record: OfficialVutRecord): Promise<void> => {
     let located: { latitude: number; longitude: number } | null = null;
     let permanentFailure = false;
     try {
@@ -560,7 +573,6 @@ async function repairViaCatastro(
     } catch {
       located = null;
     }
-    await delay(CATASTRO_PACE_MS);
     if (
       located !== null &&
       !coordinatesPlausibleForMunicipality(record.municipality, located.latitude, located.longitude)
@@ -575,11 +587,12 @@ async function repairViaCatastro(
       state.failures.transient = (state.failures.transient ?? 0) + 1;
       state.transientStreak += 1;
       if (state.transientStreak >= 8) state.remaining = 0;
-      continue;
+      deferredIds.add(record.id);
+      return;
     }
     state.transientStreak = 0;
     cacheWrites.push({
-      id: cacheId,
+      id: `catastro-${record.id}`,
       data: {
         latitude: located?.latitude ?? null,
         longitude: located?.longitude ?? null,
@@ -597,13 +610,34 @@ async function repairViaCatastro(
     } else {
       state.failures.bad_reference = (state.failures.bad_reference ?? 0) + 1;
     }
-  }
+  };
+
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      if (state.remaining <= 0) return;
+      if (Date.now() - state.startedAt > CATASTRO_TIME_BUDGET_MS) {
+        state.remaining = 0;
+        return;
+      }
+      const record = queue[queueIndex];
+      if (record === undefined) return;
+      queueIndex += 1;
+      state.remaining -= 1;
+      await attemptOne(record);
+      await delay(CATASTRO_PACE_MS);
+    }
+  };
+  await Promise.all(Array.from({ length: CATASTRO_CONCURRENCY }, () => worker()));
+
+  // Whatever the budget/time cut off keeps its free chance for next run.
+  for (const record of queue.slice(queueIndex)) deferredIds.add(record.id);
+
   await commitChunks(
     cacheWrites.map(({ id, data }) => (batch: FirebaseFirestore.WriteBatch) => {
       batch.set(db.collection(GEO_CACHE_COLLECTION).doc(id), data);
     }),
   );
-  return repaired;
+  return { repaired, deferredIds };
 }
 
 /* ------------------------- Global cells rebuild ---------------------------- */
@@ -746,11 +780,16 @@ async function runSource(
         );
       }
       // Cadastral references first (free, precise); the paid Geocoding API
-      // only sees what the Catastro could not resolve.
-      const catastroRepaired = await repairViaCatastro(records, catastroState, fetchImplementation);
+      // only sees records without a reference or whose reference failed for
+      // good — never the ones a future Catastro pass resolves for free.
+      const catastro = await repairViaCatastro(records, catastroState, fetchImplementation);
       const repaired =
-        catastroRepaired +
-        (await repairMissingCoordinates(records, geocodeState, fetchImplementation));
+        catastro.repaired +
+        (await repairMissingCoordinates(
+          records.filter((record) => !catastro.deferredIds.has(record.id)),
+          geocodeState,
+          fetchImplementation,
+        ));
       repairedTotal += repaired;
       for (const record of records) freshIds.add(record.id);
       await writeDocsDiff(
