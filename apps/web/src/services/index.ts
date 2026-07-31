@@ -90,6 +90,10 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.adminSyncOfficialData());
   }
 
+  listOfficialHistory() {
+    return this.load().then((service) => service.listOfficialHistory());
+  }
+
   submitContactMessage(input: ContactMessageInput) {
     return this.load().then((service) => service.submitContactMessage(input));
   }

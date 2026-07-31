@@ -82,6 +82,12 @@ function officialCredit(source: string): string {
     </p>`;
 }
 
+/** One historic snapshot of the official register for the city. */
+export interface OfficialHistoryPoint {
+  date: string;
+  total: number;
+}
+
 export type CityIndexEntry = CityStats & { officialTotal?: number };
 
 export interface NeighborhoodStats {
@@ -110,6 +116,84 @@ function euros(value: number): string {
     })} millones de €`;
   }
   return `${numberFormatter.format(Math.round(value / 1_000) * 1_000)} €`;
+}
+
+function formatHistoryDay(iso: string): string {
+  const [year, month, day] = iso.split('-');
+  return `${day}/${month}/${year?.slice(2) ?? ''}`;
+}
+
+/**
+ * Server-rendered evolution figure: sparkline of the official total per sync
+ * plus the deltas the license-growth story needs. Inline SVG (the pages' CSP
+ * allows no external assets); with a single snapshot it renders the delta
+ * chips and an explanatory note instead of a one-point line.
+ */
+function officialEvolutionSection(history: OfficialHistoryPoint[]): string {
+  if (history.length === 0) return '';
+  const last = history[history.length - 1];
+  const previous = history.length > 1 ? (history[history.length - 2] ?? null) : null;
+  const first = history[0];
+  if (last === undefined || first === undefined) return '';
+  const deltaLast = previous === null ? null : last.total - previous.total;
+  const deltaFirst = last.total - first.total;
+  const signed = (value: number) =>
+    value > 0 ? `+${n(value)}` : value < 0 ? `−${n(Math.abs(value))}` : '0';
+  const chip = (value: number | null, label: string) => {
+    if (value === null) return '';
+    const kind = value > 0 ? 'up' : value < 0 ? 'down' : 'flat';
+    const symbol = value > 0 ? '▲' : value < 0 ? '▼' : '=';
+    return `<span class="evo-chip evo-chip--${kind}">${symbol} ${signed(value)} ${escapeHtml(label)}</span>`;
+  };
+
+  let figure = '';
+  if (history.length > 1) {
+    const width = 640;
+    const height = 150;
+    const pad = { top: 14, right: 64, bottom: 24, left: 14 };
+    const innerW = width - pad.left - pad.right;
+    const innerH = height - pad.top - pad.bottom;
+    const maxTotal = Math.max(...history.map((point) => point.total));
+    const minTotal = Math.min(...history.map((point) => point.total));
+    const span = Math.max(1, maxTotal - minTotal);
+    const x = (index: number) => pad.left + (index / (history.length - 1)) * innerW;
+    const y = (value: number) => pad.top + innerH - ((value - minTotal) / span) * innerH;
+    const path = history
+      .map(
+        (point, index) =>
+          `${index === 0 ? 'M' : 'L'}${x(index).toFixed(1)},${y(point.total).toFixed(1)}`,
+      )
+      .join(' ');
+    const area = `${path} L${x(history.length - 1).toFixed(1)},${(pad.top + innerH).toFixed(1)} L${x(0).toFixed(1)},${(pad.top + innerH).toFixed(1)} Z`;
+    const labelEvery = Math.max(1, Math.ceil(history.length / 6));
+    const dateLabels = history
+      .map((point, index) =>
+        index % labelEvery === 0 || index === history.length - 1
+          ? `<text x="${x(index).toFixed(1)}" y="${height - 6}" class="evo-tick" text-anchor="middle">${escapeHtml(formatHistoryDay(point.date))}</text>`
+          : '',
+      )
+      .join('');
+    figure = `
+      <svg viewBox="0 0 ${width} ${height}" class="evo-chart" role="img" aria-label="Evolución del número de viviendas turísticas oficiales">
+        <path d="${area}" class="evo-area"></path>
+        <path d="${path}" class="evo-line"></path>
+        <circle cx="${x(history.length - 1).toFixed(1)}" cy="${y(last.total).toFixed(1)}" r="5" class="evo-dot"></circle>
+        <text x="${(x(history.length - 1) + 10).toFixed(1)}" y="${(y(last.total) + 4).toFixed(1)}" class="evo-endlabel">${n(last.total)}</text>
+        ${dateLabels}
+      </svg>`;
+  }
+
+  return `
+    <h2>Evolución del registro oficial</h2>
+    <div class="evo">
+      <div class="evo-chips">
+        ${chip(deltaLast, 'desde la sincronización anterior')}
+        ${history.length > 1 ? chip(deltaFirst, `desde el ${formatHistoryDay(first.date)}`) : ''}
+        ${history.length === 1 ? `<span class="evo-chip evo-chip--flat">Primer registro del histórico: ${n(first.total)} viviendas (${formatHistoryDay(first.date)})</span>` : ''}
+      </div>
+      ${figure}
+      <p class="evo-note">Instantáneas semanales del registro oficial de turismo. <a href="/estadisticas">Ver estadísticas de todas las ciudades</a>.</p>
+    </div>`;
 }
 
 const SHARED_CSS = `
@@ -160,6 +244,20 @@ const SHARED_CSS = `
   ul.cities li{background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px}
   ul.cities a{display:flex;justify-content:space-between;gap:12px;padding:14px 16px;text-decoration:none;color:inherit;font-weight:650}
   ul.cities small{color:#65716c;font-weight:500}
+  .evo{background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px;padding:14px 16px;margin:6px 0 22px}
+  .evo-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .evo-chip{display:inline-flex;align-items:center;gap:5px;font-size:.82rem;font-weight:700;border-radius:999px;padding:4px 11px;font-variant-numeric:tabular-nums}
+  .evo-chip--up{background:rgba(155,59,48,.1);color:#9b3b30}
+  .evo-chip--down{background:rgba(31,107,70,.1);color:#1f6b46}
+  .evo-chip--flat{background:rgba(30,43,39,.06);color:#3c4a44;font-weight:600}
+  .evo-chart{width:100%;height:auto;display:block}
+  .evo-line{fill:none;stroke:#d9604c;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .evo-area{fill:rgba(217,96,76,.1)}
+  .evo-dot{fill:#d9604c;stroke:#fff;stroke-width:2}
+  .evo-endlabel{font-size:12px;font-weight:700;fill:#1e2b27}
+  .evo-tick{font-size:10px;fill:#65716c}
+  .evo-note{font-size:.78rem;color:#65716c;margin:8px 0 0}
+  .evo-note a{color:#315d4c}
 `;
 
 const SHARE_SCRIPT = `
@@ -252,6 +350,7 @@ export function renderCityPage(
   city: CityStats,
   neighborhoods: NeighborhoodStats[],
   official: OfficialCityStats | null = null,
+  history: OfficialHistoryPoint[] = [],
 ): string {
   const name = city.name;
   const officialEntire = official?.entireHomes ?? 0;
@@ -421,6 +520,7 @@ export function renderCityPage(
     ${updatedLine}
     ${communitySection}
     ${officialSection}
+    ${official ? officialEvolutionSection(history) : ''}
     <a class="cta" href="/?${escapeHtml(mapQuery)}">Ver ${escapeHtml(name)} en el mapa</a>
     ${impactSection}
     ${shareSection(name, city.id, shareText)}

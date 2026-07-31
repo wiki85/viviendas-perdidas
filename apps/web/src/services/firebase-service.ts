@@ -50,6 +50,7 @@ import type {
   VoteResult,
   ContactMessage,
   ContactMessageInput,
+  OfficialHistoryEntry,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { boundsWithin, distanceMeters, expandBounds, listingIsInBounds } from '../lib/geo';
@@ -501,6 +502,29 @@ export class FirebaseListingsService implements ListingsService {
     >(this.functions, 'adminSyncOfficialData');
     const response = await callable({});
     return response.data;
+  }
+
+  async listOfficialHistory(): Promise<OfficialHistoryEntry[]> {
+    const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
+    const snapshot = await getDocs(
+      query(collection(this.db, 'officialHistory'), orderBy('date', 'asc'), limit(5000)),
+    );
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const integer = (value: unknown) =>
+        typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : 0;
+      return {
+        cityId: typeof data.cityId === 'string' ? data.cityId : '',
+        date: typeof data.date === 'string' ? data.date : '',
+        source: typeof data.source === 'string' ? data.source : '',
+        total: integer(data.total),
+        entireHomes: integer(data.entireHomes),
+        roomsOnly: integer(data.roomsOnly),
+        roomsInhabitants: integer(data.roomsInhabitants),
+        places: integer(data.places),
+        withLocation: integer(data.withLocation),
+      };
+    });
   }
 
   async submitContactMessage(input: ContactMessageInput): Promise<void> {

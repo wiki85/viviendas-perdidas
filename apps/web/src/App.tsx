@@ -31,6 +31,9 @@ const AboutPage = lazy(() =>
 const ContactPage = lazy(() =>
   import('./components/ContactPage').then((module) => ({ default: module.ContactPage })),
 );
+const StatsPage = lazy(() =>
+  import('./components/StatsPage').then((module) => ({ default: module.StatsPage })),
+);
 const AdminPage = lazy(() =>
   import('./components/AdminPage').then((module) => ({ default: module.AdminPage })),
 );
@@ -98,6 +101,10 @@ function currentPathIsAdmin() {
 
 function currentPathIsMethodology() {
   return window.location.pathname.replace(/\/$/, '') === '/metodologia';
+}
+
+function currentPathIsStats() {
+  return window.location.pathname.replace(/\/$/, '') === '/estadisticas';
 }
 
 function sharedScopeFromUrl(): string | null {
@@ -208,6 +215,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(currentPathIsAbout);
   const [adminOpen, setAdminOpen] = useState(currentPathIsAdmin);
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
+  const [statsOpen, setStatsOpen] = useState(currentPathIsStats);
   const [donateOpen, setDonateOpen] = useState(false);
   // Sin ruta propia a propósito: la página de contacto no debe ser rastreable.
   const [contactOpen, setContactOpen] = useState(false);
@@ -865,6 +873,20 @@ export default function App() {
     );
   }
 
+  if (statsOpen) {
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <StatsPage
+          onClose={() => {
+            window.history.pushState({}, '', '/');
+            setStatsOpen(false);
+          }}
+          loadHistory={() => service.listOfficialHistory()}
+        />
+      </Suspense>
+    );
+  }
+
   if (contactOpen) {
     return (
       <Suspense fallback={<PageLoading />}>
@@ -912,6 +934,10 @@ export default function App() {
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
         onOpenContact={() => setContactOpen(true)}
+        onOpenStats={() => {
+          window.history.pushState({}, '', '/estadisticas');
+          setStatsOpen(true);
+        }}
         onOpenDonate={() => setDonateOpen(true)}
         onShare={() => void shareVisibleScope()}
       />

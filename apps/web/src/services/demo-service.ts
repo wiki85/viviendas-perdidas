@@ -15,6 +15,7 @@ import type {
   VoteKind,
   VoteResult,
   ContactMessage,
+  OfficialHistoryEntry,
 } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
 import { distanceMeters, listingIsInBounds } from '../lib/geo';
@@ -275,6 +276,36 @@ export class DemoListingsService implements ListingsService {
 
   async adminSyncOfficialData(): Promise<{ municipalities: number; records: number }> {
     return { municipalities: 0, records: 0 };
+  }
+
+  async listOfficialHistory(): Promise<OfficialHistoryEntry[]> {
+    // Synthetic weekly growth so the charts can be developed offline.
+    const base: Array<[string, number, number]> = [
+      ['sevilla', 9400, 45],
+      ['malaga', 12350, 80],
+      ['barcelona', 10620, 8],
+      ['valencia', 5600, 40],
+      ['benidorm', 5580, 12],
+    ];
+    const entries: OfficialHistoryEntry[] = [];
+    for (let week = 0; week < 8; week += 1) {
+      const date = new Date(Date.now() - (7 - week) * 7 * 86_400_000).toISOString().slice(0, 10);
+      for (const [cityId, start, growth] of base) {
+        const total = start + growth * week;
+        entries.push({
+          cityId,
+          date,
+          source: 'demo',
+          total,
+          entireHomes: Math.round(total * 0.93),
+          roomsOnly: Math.round(total * 0.07),
+          roomsInhabitants: Math.round(total * 0.1),
+          places: total * 5,
+          withLocation: total,
+        });
+      }
+    }
+    return entries;
   }
 
   async submitContactMessage(): Promise<void> {

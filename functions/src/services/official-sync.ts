@@ -1019,26 +1019,32 @@ async function runSource(
       const cityId = records[0]?.cityId;
       if (cityId !== undefined) {
         const entire = records.filter((record) => record.entire);
+        const statsData = {
+          cityId,
+          municipality,
+          total: records.length,
+          entireHomes: entire.length,
+          roomsOnly: records.length - entire.length,
+          // Rooms-only rentals displace room tenants: ≈1 inhabitant per
+          // room (rooms ≈ places ÷ 2, minimum 1 per dwelling).
+          roomsInhabitants: records.reduce(
+            (sum, record) => sum + (record.entire ? 0 : roomsInhabitantsForPlaces(record.places)),
+            0,
+          ),
+          places: records.reduce((sum, record) => sum + record.places, 0),
+          withLocation: records.filter((record) => record.latitude !== null).length,
+          source: source.statsSource,
+          updatedAt: Timestamp.now(),
+        };
+        await db.collection('officialStats').doc(cityId).set(statsData);
+        // Histórico: una instantánea por ciudad y día (id idempotente), la
+        // materia prima de las gráficas de evolución y de la página de
+        // estadísticas. Los reruns del mismo día sobreescriben su foto.
+        const day = new Date().toISOString().slice(0, 10);
         await db
-          .collection('officialStats')
-          .doc(cityId)
-          .set({
-            cityId,
-            municipality,
-            total: records.length,
-            entireHomes: entire.length,
-            roomsOnly: records.length - entire.length,
-            // Rooms-only rentals displace room tenants: ≈1 inhabitant per
-            // room (rooms ≈ places ÷ 2, minimum 1 per dwelling).
-            roomsInhabitants: records.reduce(
-              (sum, record) => sum + (record.entire ? 0 : roomsInhabitantsForPlaces(record.places)),
-              0,
-            ),
-            places: records.reduce((sum, record) => sum + record.places, 0),
-            withLocation: records.filter((record) => record.latitude !== null).length,
-            source: source.statsSource,
-            updatedAt: Timestamp.now(),
-          });
+          .collection('officialHistory')
+          .doc(`${cityId}_${day}`)
+          .set({ ...statsData, date: day });
       }
       total += records.length;
       logger.info('Official municipality synced', {

@@ -141,6 +141,48 @@ describe('renderCityPage', () => {
     expect(html).toContain('1,6% de todos los hogares principales');
   });
 
+  it('renders the evolution figure with deltas when history exists', () => {
+    const official: OfficialCityStats = {
+      total: 9700,
+      entireHomes: 9000,
+      roomsOnly: 700,
+      roomsInhabitants: 1050,
+      places: 40000,
+      source: 'openrta',
+      updatedAt: new Date('2026-07-31T04:30:00Z'),
+    };
+    const html = renderCityPage(city({ id: 'sevilla', name: 'Sevilla' }), [], official, [
+      { date: '2026-07-17', total: 9500 },
+      { date: '2026-07-24', total: 9578 },
+      { date: '2026-07-31', total: 9700 },
+    ]);
+    expect(html).toContain('Evolución del registro oficial');
+    expect(html).toContain('▲ +122 desde la sincronización anterior');
+    expect(html).toContain('▲ +200 desde el 17/07/26');
+    expect(html).toContain('class="evo-chart"');
+    expect(html).toContain('/estadisticas');
+  });
+
+  it('renders a first-snapshot note instead of a one-point chart', () => {
+    const official: OfficialCityStats = {
+      total: 628,
+      entireHomes: 628,
+      roomsOnly: 0,
+      roomsInhabitants: 0,
+      places: 4406,
+      source: 'caib',
+      updatedAt: new Date('2026-07-31T04:30:00Z'),
+    };
+    const html = renderCityPage(
+      city({ id: 'palma', name: 'Palma', listingsCount: 0, lostDwellings: 0 }),
+      [],
+      official,
+      [{ date: '2026-07-31', total: 628 }],
+    );
+    expect(html).toContain('Primer registro del histórico: 628 viviendas (31/07/26)');
+    expect(html).not.toContain('class="evo-chart"');
+  });
+
   it('credits the Valencian registry and the Catastro for gva cities', () => {
     const official: OfficialCityStats = {
       total: 5765,

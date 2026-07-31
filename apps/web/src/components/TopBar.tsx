@@ -1,4 +1,5 @@
 import {
+  ChartLine,
   CircleHelp,
   Coffee,
   House,
@@ -29,6 +30,7 @@ type Props = {
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
   onOpenContact: () => void;
+  onOpenStats: () => void;
   onOpenDonate: () => void;
   onShare: () => void;
 };
@@ -65,6 +67,7 @@ export function TopBar({
   onSelectPlace,
   onOpenAbout,
   onOpenContact,
+  onOpenStats,
   onOpenDonate,
   onShare,
 }: Props) {
@@ -90,6 +93,15 @@ export function TopBar({
             aria-label="Invítame a un café: apoya los costes del proyecto"
           >
             <Coffee size={19} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={onOpenStats}
+            title="Estadísticas y evolución"
+            aria-label="Estadísticas y evolución"
+          >
+            <ChartLine size={19} />
           </button>
           <button
             className="icon-button"

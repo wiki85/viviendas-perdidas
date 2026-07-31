@@ -30,6 +30,13 @@ service cloud.firestore {
 
     // Precomputed geohash-cell aggregates of the official registry: bubble
     // counts per zoom band, plus embedded pins at street-level precision.
+    match /officialHistory/{snapshotId} {
+      // Instantáneas históricas por ciudad y día: públicas para la página
+      // de estadísticas; solo las escribe la sincronización (Admin SDK).
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /officialCells/{cellId} {
       allow read: if true;
       allow write: if false;

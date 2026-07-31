@@ -60,6 +60,20 @@ export type Listing = {
   updatedAt: string;
 };
 
+/** One official-registry snapshot per city and sync day. */
+export type OfficialHistoryEntry = {
+  cityId: string;
+  /** ISO day (YYYY-MM-DD) of the snapshot. */
+  date: string;
+  source: string;
+  total: number;
+  entireHomes: number;
+  roomsOnly: number;
+  roomsInhabitants: number;
+  places: number;
+  withLocation: number;
+};
+
 /** Contact-form submission (the hidden `website` field is the honeypot). */
 export type ContactMessageInput = {
   fullName: string;
@@ -306,6 +320,7 @@ export interface ListingsService {
   adminResolveOfficialMatch(listingId: string): Promise<void>;
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;
   submitContactMessage(input: ContactMessageInput): Promise<void>;
+  listOfficialHistory(): Promise<OfficialHistoryEntry[]>;
   adminListContactMessages(): Promise<ContactMessage[]>;
   adminDeleteContactMessage(id: string): Promise<void>;
   listPendingPhotos(): Promise<PendingPhoto[]>;

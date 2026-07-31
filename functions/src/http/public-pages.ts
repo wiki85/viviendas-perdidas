@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import * as logger from 'firebase-functions/logger';
 import { onRequest } from 'firebase-functions/v2/https';
-import { Timestamp } from 'firebase-admin/firestore';
+import { FieldPath, Timestamp } from 'firebase-admin/firestore';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
 import { integer, titleCaseSpanish } from './html.js';
@@ -13,6 +13,7 @@ import {
   type CityStats,
   type NeighborhoodStats,
   type OfficialCityStats,
+  type OfficialHistoryPoint,
 } from './render-city.js';
 
 const CITY_ID_PATTERN = /^[a-z0-9-]+$/u;
@@ -122,6 +123,28 @@ async function listCities(): Promise<CityIndexEntry[]> {
   );
 }
 
+/** Weekly snapshots for the evolution figure; doc-id range (`city_YYYY-MM-DD`)
+ * keeps the query index-free. */
+async function listCityHistory(cityId: string): Promise<OfficialHistoryPoint[]> {
+  const snapshot = await db
+    .collection('officialHistory')
+    .orderBy(FieldPath.documentId())
+    .startAt(`${cityId}_`)
+    .endAt(`${cityId}_\uf8ff`)
+    .limit(160)
+    .get();
+  return snapshot.docs
+    .map((document) => {
+      const data = document.data();
+      return {
+        date: typeof data.date === 'string' ? data.date : '',
+        total: integer(data.total),
+      };
+    })
+    .filter((point) => point.date.length > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 async function listNeighborhoods(cityId: string): Promise<NeighborhoodStats[]> {
   const snapshot = await db
     .collection('aggregates')
@@ -208,12 +231,15 @@ export const cityPage = onRequest(
               ? titleCaseSpanish(officialData.municipality)
               : cityId,
           );
-      const neighborhoods = await listNeighborhoods(city.id);
+      const [neighborhoods, history] = await Promise.all([
+        listNeighborhoods(city.id),
+        official !== null ? listCityHistory(city.id) : Promise.resolve([]),
+      ]);
       response
         .set(PAGE_HEADERS)
         .status(200)
         .type('html')
-        .send(renderCityPage(city, neighborhoods, official));
+        .send(renderCityPage(city, neighborhoods, official, history));
     } catch (error) {
       logger.error('cityPage failed', {
         errorType: error instanceof Error ? error.name : typeof error,
