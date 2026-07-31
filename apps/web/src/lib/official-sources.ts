@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc' | 'gva';
+  id: 'openrta' | 'rtc' | 'gva' | 'caib';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -55,15 +55,26 @@ export const OFFICIAL_SOURCE_GVA: OfficialSourceInfo = {
   },
 };
 
+export const OFFICIAL_SOURCE_CAIB: OfficialSourceInfo = {
+  id: 'caib',
+  registerName: "Registre d'Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca",
+  registerUrl: 'https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca',
+  publisher: 'Consell de Mallorca (Dades Obertes GOIB)',
+  licenseName: 'CC BY 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
   OFFICIAL_SOURCE_GVA,
+  OFFICIAL_SOURCE_CAIB,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
 export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('cat-')) return OFFICIAL_SOURCE_RTC;
   if (pinId.startsWith('gva-')) return OFFICIAL_SOURCE_GVA;
+  if (pinId.startsWith('caib-')) return OFFICIAL_SOURCE_CAIB;
   return OFFICIAL_SOURCE_RTA;
 }

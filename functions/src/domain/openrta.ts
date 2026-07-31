@@ -94,6 +94,7 @@ export const MUNICIPALITY_CENTERS: Record<
   VALÈNCIA: { latitude: 39.4699, longitude: -0.3763, radiusKm: 22 },
   ALICANTE: { latitude: 38.3452, longitude: -0.481, radiusKm: 22 },
   BENIDORM: { latitude: 38.5382, longitude: -0.131, radiusKm: 12 },
+  PALMA: { latitude: 39.5696, longitude: 2.6502, radiusKm: 22 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

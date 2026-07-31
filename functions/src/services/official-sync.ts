@@ -12,10 +12,11 @@ import { contentHash, isSuspiciousDrop } from '../domain/sync-integrity.js';
 import { parseCatastroCoordinates, GVA_MUNICIPALITIES } from '../domain/gva.js';
 import { createCatalunyaFetcher } from './catalunya-source.js';
 import { createValenciaFetcher } from './valencia-source.js';
+import { createMallorcaFetcher } from './mallorca-source.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -67,6 +68,11 @@ export const SYNCED_CAT_MUNICIPALITIES: readonly string[] = ['Barcelona'];
 export const SYNCED_GVA_MUNICIPALITIES: readonly string[] = GVA_MUNICIPALITIES.map(
   (entry) => entry.name,
 );
+
+/** Mallorcan municipalities mirrored from the insular register (Municipi
+ * spelling, uppercase). Half the features carry WGS84 geometry; the rest
+ * geocode by address. */
+export const SYNCED_CAIB_MUNICIPALITIES: readonly string[] = ['PALMA'];
 
 async function fetchRtaPage(
   municipality: string,
@@ -144,12 +150,23 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       fetchMunicipality: fetcher.fetchMunicipality,
     };
   }
-  const fetcher = createValenciaFetcher();
+  if (id === 'gva') {
+    const fetcher = createValenciaFetcher();
+    return {
+      id,
+      idPrefix: 'gva-',
+      statsSource: 'gva',
+      municipalities: SYNCED_GVA_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  const fetcher = createMallorcaFetcher();
   return {
     id,
-    idPrefix: 'gva-',
-    statsSource: 'gva',
-    municipalities: SYNCED_GVA_MUNICIPALITIES,
+    idPrefix: 'caib-',
+    statsSource: 'caib',
+    municipalities: SYNCED_CAIB_MUNICIPALITIES,
     prepare: fetcher.prepare,
     fetchMunicipality: fetcher.fetchMunicipality,
   };
@@ -891,7 +908,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva', 'caib'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

@@ -104,9 +104,10 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             llicència oberta d&rsquo;ús d&rsquo;informació), con coordenadas del{' '}
             <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0), y de la{' '}
             <strong>Generalitat Valenciana</strong> (Registre de Turisme de la Comunitat Valenciana,
-            CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro. Adaptamos los datos
-            originales y ninguna administración respalda este proyecto; el detalle completo está en
-            la metodología.
+            CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro, y del{' '}
+            <strong>Consell de Mallorca</strong> (Registre d&rsquo;Habitatges Turístics de Mallorca,
+            CC BY 4.0). Adaptamos los datos originales y ninguna administración respalda este
+            proyecto; el detalle completo está en la metodología.
           </p>
         </section>
         <section className="about-page__section">

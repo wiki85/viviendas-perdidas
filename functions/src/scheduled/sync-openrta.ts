@@ -79,6 +79,27 @@ export const syncValencia = onSchedule(
   },
 );
 
+/** Weekly mirror of the Mallorca insular register (Consell de Mallorca). */
+export const syncMallorca = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every thursday 04:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'caib',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Mallorca sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {

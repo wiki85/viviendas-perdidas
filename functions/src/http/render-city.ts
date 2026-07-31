@@ -41,6 +41,14 @@ function officialCredit(source: string): string {
       (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>), datos adaptados. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'caib') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca" rel="noopener noreferrer">Registre d'Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca</a>
+      (Consell de Mallorca, Dades Obertes GOIB), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
+    </p>`;
+  }
   if (source === 'gva') {
     return `
     <p class="credit">

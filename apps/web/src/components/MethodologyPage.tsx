@@ -198,6 +198,24 @@ export function MethodologyPage({ onClose }: Props) {
             (Dirección General del Catastro), que devuelve el centro de la parcela.
           </p>
           <p>
+            Los datos oficiales de <strong>Mallorca</strong> proceden del{' '}
+            <strong>
+              «Registre d&rsquo;Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca»
+            </strong>{' '}
+            del <strong>Consell de Mallorca</strong>, publicado en el portal de datos abiertos del
+            Govern de les Illes Balears bajo licencia{' '}
+            <a
+              className="text-link"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0 <ExternalLink size={15} />
+            </a>
+            . Se excluyen las figuras de comercializadores y empresarios (operadores, no viviendas);
+            la mitad de los registros trae coordenadas y el resto se geocodifica por dirección.
+          </p>
+          <p>
             <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
             filtran a viviendas de uso turístico y llars compartides publicadas en cada registro
             abierto, se reproyectan las coordenadas andaluzas de UTM (ETRS89 / UTM 30N, EPSG:25830)
@@ -208,14 +226,14 @@ export function MethodologyPage({ onClose }: Props) {
             de zoom. Las coordenadas de origen manifiestamente erróneas (algunas fichas vienen
             tecleadas a cientos de km de su municipio) se descartan y se recolocan geocodificando la
             dirección publicada. Solo se refleja un subconjunto de municipios (diez andaluces,
-            Barcelona, València, Alicante y Benidorm); el pequeño porcentaje de registros que no
-            puede ubicarse con precisión de calle no se dibuja ni se cuenta en el mapa.
+            Barcelona, València, Alicante, Benidorm y Palma); el pequeño porcentaje de registros que
+            no puede ubicarse con precisión de calle no se dibuja ni se cuenta en el mapa.
           </p>
           <p>
             <strong>
               Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
-              Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro)
-              respalda o avala este proyecto
+              Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro,
+              Consell de Mallorca) respalda o avala este proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan
