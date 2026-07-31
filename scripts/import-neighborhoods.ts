@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
+import proj4 from 'proj4';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,6 +58,11 @@ interface ImportOptions {
   inputPath: string;
   cityId: string;
   cityName: string;
+  /** EPSG del origen cuando no es WGS84 (25830/25831, husos UTM españoles). */
+  fromEpsg?: number | undefined;
+  /** Solo features cuya propiedad coincide (p. ej. TIPUS_UA=BARRI). */
+  filterField?: string | undefined;
+  filterValue?: string | undefined;
   outputDirectory: string;
   manifestPath: string;
   baseUrl: string;
@@ -102,6 +108,8 @@ Opciones:
   --manifest <ruta>          Por defecto apps/web/public/geo/manifest.json.
   --base-url <url>           Por defecto /geo/<city-id>.
   --source <texto>           Atribución o procedencia del conjunto de datos.
+  --from-epsg <código>       Reproyecta desde UTM (25830 zona 30N, 25831 zona 31N).
+  --filter <campo=valor>     Solo importa las features cuya propiedad coincide.
   --representative           Marca geometrías de demostración, no oficiales.
   --help                     Muestra esta ayuda.
 
@@ -157,6 +165,9 @@ function parseOptions(args: readonly string[]): ImportOptions {
   let idField: string | undefined;
   let nameField: string | undefined;
   let representative = false;
+  let fromEpsg: number | undefined;
+  let filterField: string | undefined;
+  let filterValue: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -208,6 +219,19 @@ function parseOptions(args: readonly string[]): ImportOptions {
       case '--name-field':
         nameField = value;
         break;
+      case '--from-epsg': {
+        const parsed = Number(value);
+        if (!Number.isInteger(parsed)) throw new Error(`--from-epsg inválido: ${value}`);
+        fromEpsg = parsed;
+        break;
+      }
+      case '--filter': {
+        const separator = value.indexOf('=');
+        if (separator <= 0) throw new Error('--filter espera campo=valor.');
+        filterField = value.slice(0, separator);
+        filterValue = value.slice(separator + 1);
+        break;
+      }
       default:
         throw new Error(`Opción desconocida: ${argument}`);
     }
@@ -225,6 +249,9 @@ function parseOptions(args: readonly string[]): ImportOptions {
 
   return {
     inputPath: resolve(inputPath),
+    fromEpsg,
+    filterField,
+    filterValue,
     cityId,
     cityName: cityName?.trim() || titleFromSlug(cityId),
     outputDirectory: resolvedOutput,
@@ -266,13 +293,35 @@ function findProperty(
   return undefined;
 }
 
+const UTM_DEFINITIONS: Record<number, string> = {
+  25830: '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  25831: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+};
+
+let activeProjector: ((position: [number, number]) => [number, number]) | null = null;
+
+function configureProjector(fromEpsg: number | undefined): void {
+  if (fromEpsg === undefined) {
+    activeProjector = null;
+    return;
+  }
+  const definition = UTM_DEFINITIONS[fromEpsg];
+  if (definition === undefined) {
+    throw new Error(`EPSG ${fromEpsg} no soportado (usa 25830 o 25831).`);
+  }
+  activeProjector = (position) => proj4(definition, proj4.WGS84, position);
+}
+
 function normalizePosition(value: unknown, context: string): Position {
   if (!Array.isArray(value) || value.length < 2) {
     throw new Error(`${context}: coordenada inválida.`);
   }
 
-  const longitude = value[0];
-  const latitude = value[1];
+  let longitude = value[0];
+  let latitude = value[1];
+  if (activeProjector !== null && typeof longitude === 'number' && typeof latitude === 'number') {
+    [longitude, latitude] = activeProjector([longitude, latitude]);
+  }
   if (
     typeof longitude !== 'number' ||
     !Number.isFinite(longitude) ||
@@ -400,7 +449,20 @@ function normalizeCollection(input: unknown, options: ImportOptions): Normalized
     throw new Error('El FeatureCollection no contiene barrios.');
   }
 
-  const features = input.features
+  const sourceFeatures =
+    options.filterField !== undefined
+      ? input.features.filter(
+          (feature) =>
+            isRecord(feature) &&
+            isRecord(feature.properties) &&
+            String(feature.properties[options.filterField ?? '']) === options.filterValue,
+        )
+      : input.features;
+  if (sourceFeatures.length === 0) {
+    throw new Error('El filtro no dejó ninguna feature que importar.');
+  }
+
+  const features = sourceFeatures
     .map((feature, index) => normalizeFeature(feature, index, options))
     .sort((first, second) => first.properties.id.localeCompare(second.properties.id, 'es'));
 
@@ -506,7 +568,8 @@ async function main(): Promise<void> {
   }
 
   const options = parseOptions(args);
-  const input: unknown = JSON.parse(await readFile(options.inputPath, 'utf8'));
+  configureProjector(options.fromEpsg);
+  const input: unknown = JSON.parse((await readFile(options.inputPath, 'utf8')).replace(/^﻿/u, ''));
   const collection = normalizeCollection(input, options);
   const serialized = `${JSON.stringify(collection, null, 2)}\n`;
   const digest = createHash('sha256').update(serialized).digest('hex');

@@ -1,54 +1,86 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "generatedAt": "2026-07-31T20:55:42.903Z",
   "cities": [
-    {
-      "id": "madrid",
-      "name": "Madrid",
-      "center": [-3.7038, 40.4168],
-      "bounds": {
-        "north": 40.5638,
-        "south": 40.3121,
-        "east": -3.5249,
-        "west": -3.8889
-      },
-      "geoJsonUrl": "/geo/madrid/neighborhoods.f9f96ae424b8.geojson",
-      "fallbackGeoJsonUrl": "/geo/madrid/neighborhoods.geojson",
-      "featureCount": 3,
-      "sha256": "f9f96ae424b883fc8ab0b43ea310a4fe90e8b3ab47c3ed511574ba0709f6cdfe",
-      "representative": true
-    },
     {
       "id": "barcelona",
       "name": "Barcelona",
-      "center": [2.1686, 41.3874],
+      "center": [2.140189, 41.3926685],
       "bounds": {
-        "north": 41.4696,
-        "south": 41.3201,
-        "east": 2.2284,
-        "west": 2.0525
+        "north": 41.468298,
+        "south": 41.317039,
+        "east": 2.228045,
+        "west": 2.052333
       },
-      "geoJsonUrl": "/geo/barcelona/neighborhoods.cbfdce27a5f4.geojson",
+      "geoJsonUrl": "/geo/barcelona/neighborhoods.bb27a0068515.geojson",
       "fallbackGeoJsonUrl": "/geo/barcelona/neighborhoods.geojson",
-      "featureCount": 3,
-      "sha256": "cbfdce27a5f4071121815bcdcacfa0e4a78937a4f94bac292cc9a59243ea58ae",
-      "representative": true
+      "featureCount": 73,
+      "sha256": "bb27a00685157357111574f908523c7c2b97b21a706acacb5d4a61033c297819",
+      "representative": false
+    },
+    {
+      "id": "madrid",
+      "name": "Madrid",
+      "center": [-3.7034979999999997, 40.477755],
+      "bounds": {
+        "north": 40.643365,
+        "south": 40.312145,
+        "east": -3.518153,
+        "west": -3.888843
+      },
+      "geoJsonUrl": "/geo/madrid/neighborhoods.e4a238c45317.geojson",
+      "fallbackGeoJsonUrl": "/geo/madrid/neighborhoods.geojson",
+      "featureCount": 131,
+      "sha256": "e4a238c45317e8b78866ba5d01f2c34dc4571db259dd567aa173fc48228a2f2f",
+      "representative": false
+    },
+    {
+      "id": "malaga",
+      "name": "Málaga",
+      "center": [-4.4238985, 36.76518],
+      "bounds": {
+        "north": 36.894211,
+        "south": 36.636149,
+        "east": -4.26012,
+        "west": -4.587677
+      },
+      "geoJsonUrl": "/geo/malaga/neighborhoods.18439136c092.geojson",
+      "fallbackGeoJsonUrl": "/geo/malaga/neighborhoods.geojson",
+      "featureCount": 419,
+      "sha256": "18439136c0920f050928dbfbc206fae3e78e317741c140bf92f71a15765f62dc",
+      "representative": false
+    },
+    {
+      "id": "sevilla",
+      "name": "Sevilla",
+      "center": [-5.9259125, 37.376697],
+      "bounds": {
+        "north": 37.452942,
+        "south": 37.300452,
+        "east": -5.818405,
+        "west": -6.03342
+      },
+      "geoJsonUrl": "/geo/sevilla/neighborhoods.b81547dbcb5c.geojson",
+      "fallbackGeoJsonUrl": "/geo/sevilla/neighborhoods.geojson",
+      "featureCount": 110,
+      "sha256": "b81547dbcb5c60d6be24f631709c36255b29f6f071fc5cdb7f683f19b6c04327",
+      "representative": false
     },
     {
       "id": "valencia",
       "name": "València",
-      "center": [-0.3763, 39.4699],
+      "center": [-0.3539515, 39.4227605],
       "bounds": {
-        "north": 39.5906,
-        "south": 39.275,
-        "east": -0.2724,
-        "west": -0.4316
+        "north": 39.566594,
+        "south": 39.278927,
+        "east": -0.275368,
+        "west": -0.432535
       },
-      "geoJsonUrl": "/geo/valencia/neighborhoods.93810e120b59.geojson",
+      "geoJsonUrl": "/geo/valencia/neighborhoods.ee9f22040ba5.geojson",
       "fallbackGeoJsonUrl": "/geo/valencia/neighborhoods.geojson",
-      "featureCount": 3,
-      "sha256": "93810e120b591ac76d3300527c6500a642359e05e5fc3f2c19d0170dac14d073",
-      "representative": true
+      "featureCount": 88,
+      "sha256": "ee9f22040ba5cc57db99c16df003bff426e42c3ae606e736989cc907e4410d35",
+      "representative": false
     }
   ]
 }
