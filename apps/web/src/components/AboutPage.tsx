@@ -106,9 +106,10 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             <strong>Generalitat Valenciana</strong> (Registre de Turisme de la Comunitat Valenciana,
             CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro, y del{' '}
             <strong>Consell de Mallorca</strong> (Registre d&rsquo;Habitatges Turístics de Mallorca,
-            CC BY 4.0) y del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra,
-            CC BY 4.0). Adaptamos los datos originales y ninguna administración respalda este
-            proyecto; el detalle completo está en la metodología.
+            CC BY 4.0), del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra, CC
+            BY 4.0) y del <strong>Gobierno Vasco</strong> (REATE, Open Data Euskadi, CC BY 4.0).
+            Adaptamos los datos originales y ninguna administración respalda este proyecto; el
+            detalle completo está en la metodología.
           </p>
         </section>
         <section className="about-page__section">

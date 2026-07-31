@@ -1,10 +1,23 @@
+/** KEEP IN SYNC with functions/src/domain/address.ts (slugifyCity aliases). */
+const CITY_SLUG_ALIASES: Readonly<Record<string, string>> = {
+  'valencia-valencia': 'valencia',
+  'san-sebastian': 'donostia',
+  'donostia-san-sebastian': 'donostia',
+  'palma-de-mallorca': 'palma',
+  'pamplona-iruna': 'pamplona',
+  iruna: 'pamplona',
+  'alacant-alicante': 'alicante',
+  alacant: 'alicante',
+};
+
 export function slugifyMunicipality(value: string) {
-  return value
+  const slug = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('es')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+  return CITY_SLUG_ALIASES[slug] ?? slug;
 }
 
 export function municipalityFromGeocoderResult(result: google.maps.GeocoderResult) {

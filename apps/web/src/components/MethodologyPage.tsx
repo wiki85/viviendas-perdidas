@@ -233,6 +233,25 @@ export function MethodologyPage({ onClose }: Props) {
             el registro no publica coordenadas.
           </p>
           <p>
+            Los datos oficiales de <strong>Euskadi</strong> proceden del conjunto{' '}
+            <strong>
+              «Viviendas y habitaciones de vivienda particular para uso turístico en Euskadi»
+            </strong>{' '}
+            (Registro de Empresas y Actividades Turísticas, REATE) del{' '}
+            <strong>Gobierno Vasco</strong>, publicado en Open Data Euskadi bajo licencia{' '}
+            <a
+              className="text-link"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0 <ExternalLink size={15} />
+            </a>
+            . Distingue viviendas completas de habitaciones en vivienda particular (estas últimas
+            suman habitantes, nunca hogares) y se geocodifica por dirección, con el geocodificador
+            público CartoCiudad (IGN) como primera vía.
+          </p>
+          <p>
             <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
             filtran a viviendas de uso turístico y llars compartides publicadas en cada registro
             abierto, se reproyectan las coordenadas andaluzas de UTM (ETRS89 / UTM 30N, EPSG:25830)
@@ -243,15 +262,16 @@ export function MethodologyPage({ onClose }: Props) {
             de zoom. Las coordenadas de origen manifiestamente erróneas (algunas fichas vienen
             tecleadas a cientos de km de su municipio) se descartan y se recolocan geocodificando la
             dirección publicada. Solo se refleja un subconjunto de municipios (diez andaluces,
-            Barcelona, València, Alicante, Benidorm, Palma y Pamplona); el pequeño porcentaje de
-            registros que no puede ubicarse con precisión de calle no se dibuja ni se cuenta en el
-            mapa.
+            Barcelona, València, Alicante, Benidorm, Palma, Pamplona, Donostia y Bilbao); el pequeño
+            porcentaje de registros que no puede ubicarse con precisión de calle no se dibuja ni se
+            cuenta en el mapa.
           </p>
           <p>
             <strong>
               Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
               Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro,
-              Consell de Mallorca, Gobierno de Navarra) respalda o avala este proyecto
+              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, IGN) respalda o avala este
+              proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan

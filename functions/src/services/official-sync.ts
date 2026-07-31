@@ -14,11 +14,14 @@ import { createCatalunyaFetcher } from './catalunya-source.js';
 import { createValenciaFetcher } from './valencia-source.js';
 import { createMallorcaFetcher } from './mallorca-source.js';
 import { createNavarraFetcher } from './navarra-source.js';
+import { createEuskadiFetcher } from './euskadi-source.js';
+import { EUSKADI_MUNICIPALITIES } from '../domain/euskadi.js';
+import { cartoCiudadMunicipality, parseCartoCiudadResponse } from '../domain/cartociudad.js';
 import { NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -79,6 +82,13 @@ export const SYNCED_CAIB_MUNICIPALITIES: readonly string[] = ['PALMA'];
 /** Navarrese municipalities mirrored from the Registro de Turismo (canonical
  * spelling of domain/navarra.ts). No coordinates upstream: all geocoded. */
 export const SYNCED_NAV_MUNICIPALITIES: readonly string[] = NAVARRA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Basque municipalities mirrored from the REATE files (canonical spelling
+ * of domain/euskadi.ts). No coordinates upstream: CartoCiudad first, then
+ * the Geocoding API for the remainder. */
+export const SYNCED_EUS_MUNICIPALITIES: readonly string[] = EUSKADI_MUNICIPALITIES.map(
   (entry) => entry.name,
 );
 
@@ -180,12 +190,23 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       fetchMunicipality: fetcher.fetchMunicipality,
     };
   }
-  const fetcher = createNavarraFetcher();
+  if (id === 'nav') {
+    const fetcher = createNavarraFetcher();
+    return {
+      id,
+      idPrefix: 'nav-',
+      statsSource: 'nav',
+      municipalities: SYNCED_NAV_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  const fetcher = createEuskadiFetcher();
   return {
     id,
-    idPrefix: 'nav-',
-    statsSource: 'nav',
-    municipalities: SYNCED_NAV_MUNICIPALITIES,
+    idPrefix: 'eus-',
+    statsSource: 'eus',
+    municipalities: SYNCED_EUS_MUNICIPALITIES,
     prepare: fetcher.prepare,
     fetchMunicipality: fetcher.fetchMunicipality,
   };
@@ -540,12 +561,9 @@ interface CatastroState {
 }
 
 function createCatastroState(): CatastroState {
-  return {
-    remaining: CATASTRO_MAX_PER_RUN,
-    transientStreak: 0,
-    failures: {},
-    startedAt: Date.now(),
-  };
+  // startedAt arranca en el primer intento real (0 = aún sin arrancar): el
+  // presupuesto de tiempo no debe pagar las descargas previas del registro.
+  return { remaining: CATASTRO_MAX_PER_RUN, transientStreak: 0, failures: {}, startedAt: 0 };
 }
 
 interface CatastroRepairResult {
@@ -651,6 +669,7 @@ async function repairViaCatastro(
   const worker = async (): Promise<void> => {
     for (;;) {
       if (state.remaining <= 0) return;
+      if (state.startedAt === 0) state.startedAt = Date.now();
       if (Date.now() - state.startedAt > CATASTRO_TIME_BUDGET_MS) {
         state.remaining = 0;
         return;
@@ -666,6 +685,154 @@ async function repairViaCatastro(
   await Promise.all(Array.from({ length: CATASTRO_CONCURRENCY }, () => worker()));
 
   // Whatever the budget/time cut off keeps its free chance for next run.
+  for (const record of queue.slice(queueIndex)) deferredIds.add(record.id);
+
+  await commitChunks(
+    cacheWrites.map(({ id, data }) => (batch: FirebaseFirestore.WriteBatch) => {
+      batch.set(db.collection(GEO_CACHE_COLLECTION).doc(id), data);
+    }),
+  );
+  return { repaired, deferredIds };
+}
+
+/* -------------------- Coordinate repair (CartoCiudad) ---------------------- */
+
+/**
+ * Free portal-level geocoding via the IGN's CartoCiudad for records without
+ * coordinates nor cadastral reference. Same contract as the Catastro lane:
+ * results and definitive failures cache under `carto-<id>`, and whatever the
+ * budget could not attempt is deferred so the paid Geocoding API never pays
+ * for an address a future free pass can resolve.
+ */
+const CARTOCIUDAD_URL = 'https://www.cartociudad.es/geocoder/api/geocoder/findJsonp';
+const CARTOCIUDAD_MAX_PER_RUN = 3_000;
+const CARTOCIUDAD_PACE_MS = 200;
+const CARTOCIUDAD_CONCURRENCY = 2;
+/** Per-call window: each municipality gets its own slice so the first one
+ * of a run can never starve the rest (Bilbao learned this the hard way). */
+const CARTOCIUDAD_TIME_BUDGET_MS = 6 * 60 * 1000;
+/** v2: la consulta ya no incluye el código postal (con él, el servicio
+ * devolvía vacío); los fallos cacheados con v1 se reintentan una vez. */
+const CARTOCIUDAD_QUERY_VERSION = 2;
+
+interface CartoCiudadState {
+  remaining: number;
+  transientStreak: number;
+  failures: Record<string, number>;
+  startedAt: number;
+}
+
+function createCartoCiudadState(): CartoCiudadState {
+  return { remaining: CARTOCIUDAD_MAX_PER_RUN, transientStreak: 0, failures: {}, startedAt: 0 };
+}
+
+async function repairViaCartoCiudad(
+  records: OfficialVutRecord[],
+  state: CartoCiudadState,
+  fetchImplementation: typeof fetch,
+): Promise<CatastroRepairResult> {
+  const missing = records.filter(
+    (record) =>
+      (record.latitude === null || record.longitude === null) &&
+      typeof record.cadastralRef !== 'string' &&
+      record.addressText.length > 0,
+  );
+  const deferredIds = new Set<string>();
+  if (missing.length === 0) return { repaired: 0, deferredIds };
+  const cache = await readGeoCache(missing.map((record) => `carto-${record.id}`));
+  const cacheWrites: Array<{ id: string; data: Record<string, unknown> }> = [];
+  let repaired = 0;
+
+  const queue: OfficialVutRecord[] = [];
+  for (const record of missing) {
+    const cached = cache.get(`carto-${record.id}`);
+    if (cached !== undefined) {
+      if (cached.latitude !== null && cached.longitude !== null) {
+        record.latitude = cached.latitude;
+        record.longitude = cached.longitude;
+        repaired += 1;
+        continue;
+      }
+      // Definitive failure at the current version: Google may try it.
+      if (cached.version >= CARTOCIUDAD_QUERY_VERSION) continue;
+    }
+    queue.push(record);
+  }
+
+  let queueIndex = 0;
+  const callStartedAt = Date.now();
+  const attemptOne = async (record: OfficialVutRecord): Promise<void> => {
+    let located: { latitude: number; longitude: number } | null = null;
+    let transient = false;
+    try {
+      const url = new URL(CARTOCIUDAD_URL);
+      // Sin código postal a propósito: CartoCiudad devuelve vacío cuando la
+      // consulta lo incluye ('Bidebarrieta 7, 48005 BILBAO' falla; sin CP no).
+      url.searchParams.set(
+        'q',
+        `${cleanAddressForGeocoding(record.addressText)}, ${cartoCiudadMunicipality(record.municipality)}`,
+      );
+      const response = await fetchImplementation(url, { signal: AbortSignal.timeout(10_000) });
+      if (!response.ok) {
+        transient = true;
+      } else {
+        located = parseCartoCiudadResponse(await response.text());
+      }
+    } catch {
+      transient = true;
+    }
+    if (
+      located !== null &&
+      !coordinatesPlausibleForMunicipality(record.municipality, located.latitude, located.longitude)
+    ) {
+      located = null;
+      state.failures.implausible = (state.failures.implausible ?? 0) + 1;
+    }
+    if (transient) {
+      state.failures.transient = (state.failures.transient ?? 0) + 1;
+      state.transientStreak += 1;
+      if (state.transientStreak >= 8) state.remaining = 0;
+      deferredIds.add(record.id);
+      return;
+    }
+    state.transientStreak = 0;
+    cacheWrites.push({
+      id: `carto-${record.id}`,
+      data: {
+        latitude: located?.latitude ?? null,
+        longitude: located?.longitude ?? null,
+        addressText: record.addressText,
+        municipality: record.municipality,
+        source: 'cartociudad',
+        version: CARTOCIUDAD_QUERY_VERSION,
+        updatedAt: Timestamp.now(),
+      },
+    });
+    if (located !== null) {
+      record.latitude = located.latitude;
+      record.longitude = located.longitude;
+      repaired += 1;
+    } else {
+      state.failures.no_portal = (state.failures.no_portal ?? 0) + 1;
+    }
+  };
+
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      if (state.remaining <= 0) return;
+      // Window per repair call, not per run: exhausting it only stops THIS
+      // municipality; the next one gets a fresh slice (budget stays global).
+      if (Date.now() - callStartedAt > CARTOCIUDAD_TIME_BUDGET_MS) return;
+      const record = queue[queueIndex];
+      if (record === undefined) return;
+      queueIndex += 1;
+      state.remaining -= 1;
+      await attemptOne(record);
+      await delay(CARTOCIUDAD_PACE_MS);
+    }
+  };
+  await Promise.all(Array.from({ length: CARTOCIUDAD_CONCURRENCY }, () => worker()));
+
   for (const record of queue.slice(queueIndex)) deferredIds.add(record.id);
 
   await commitChunks(
@@ -805,6 +972,7 @@ async function runSource(
     const vutCounters: DiffCounters = { written: 0, skipped: 0, deleted: 0 };
     const freshIds = new Set<string>();
     const catastroState = createCatastroState();
+    const cartoState = createCartoCiudadState();
     for (const municipality of source.municipalities) {
       const records = await source.fetchMunicipality(municipality, fetchImplementation);
       const previous = previousTotals.get(municipality) ?? 0;
@@ -815,14 +983,18 @@ async function runSource(
           `El registro oficial devolvió ${records.length} registros para ${municipality} (antes ${previous}); sincronización abortada.`,
         );
       }
-      // Cadastral references first (free, precise); the paid Geocoding API
-      // only sees records without a reference or whose reference failed for
-      // good — never the ones a future Catastro pass resolves for free.
+      // Free lanes first (Catastro by cadastral reference, CartoCiudad by
+      // address); the paid Geocoding API only sees what both failed for good
+      // — never records a future free pass could resolve.
       const catastro = await repairViaCatastro(records, catastroState, fetchImplementation);
+      const carto = await repairViaCartoCiudad(records, cartoState, fetchImplementation);
       const repaired =
         catastro.repaired +
+        carto.repaired +
         (await repairMissingCoordinates(
-          records.filter((record) => !catastro.deferredIds.has(record.id)),
+          records.filter(
+            (record) => !catastro.deferredIds.has(record.id) && !carto.deferredIds.has(record.id),
+          ),
           geocodeState,
           fetchImplementation,
         ));
@@ -883,6 +1055,8 @@ async function runSource(
       failures: geocodeState.failures,
       catastroLeft: catastroState.remaining,
       catastroFailures: catastroState.failures,
+      cartoLeft: cartoState.remaining,
+      cartoFailures: cartoState.failures,
     });
 
     // Ghost purge, scoped to this source's prefix: registrations withdrawn
@@ -927,7 +1101,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

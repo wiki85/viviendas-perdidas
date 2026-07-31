@@ -26,6 +26,7 @@ export {
   syncValencia,
   syncMallorca,
   syncNavarra,
+  syncEuskadi,
   adminSyncOfficialData,
 } from './scheduled/sync-openrta.js';
 export { exportPublicData } from './http/export-public-data.js';

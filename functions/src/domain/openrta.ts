@@ -96,6 +96,8 @@ export const MUNICIPALITY_CENTERS: Record<
   BENIDORM: { latitude: 38.5382, longitude: -0.131, radiusKm: 12 },
   PALMA: { latitude: 39.5696, longitude: 2.6502, radiusKm: 22 },
   PAMPLONA: { latitude: 42.8125, longitude: -1.644, radiusKm: 12 },
+  BILBAO: { latitude: 43.263, longitude: -2.935, radiusKm: 12 },
+  'DONOSTIA / SAN SEBASTIÁN': { latitude: 43.3183, longitude: -1.9812, radiusKm: 12 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

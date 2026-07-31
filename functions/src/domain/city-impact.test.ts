@@ -34,7 +34,7 @@ describe('computeCityImpact', () => {
 
   it('returns null ratios for cities without census data', () => {
     const impact = computeCityImpact({
-      cityId: 'bilbao',
+      cityId: 'zaragoza',
       households: 10,
       inhabitants: 25,
       officialTotal: 5,
@@ -44,8 +44,8 @@ describe('computeCityImpact', () => {
     expect(impact.placesPer100).toBeNull();
   });
 
-  it('covers the sixteen mirrored municipalities in the census table', () => {
-    expect(Object.keys(CITY_CENSUS)).toHaveLength(16);
+  it('covers the eighteen mirrored municipalities in the census table', () => {
+    expect(Object.keys(CITY_CENSUS)).toHaveLength(18);
     for (const census of Object.values(CITY_CENSUS)) {
       expect(census.mainDwellings).toBeGreaterThan(10_000);
       expect(census.population).toBeGreaterThan(70_000);

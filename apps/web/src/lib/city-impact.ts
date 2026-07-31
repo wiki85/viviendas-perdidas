@@ -12,7 +12,7 @@ export const HOUSEHOLD_FOOD_SPEND_EUR = 5_379;
 export const UNDER_15_SHARE = 0.138;
 export const PUPILS_PER_CLASSROOM = 21;
 
-const CITY_MAIN_DWELLINGS: Record<string, number> = {
+export const CITY_MAIN_DWELLINGS: Record<string, number> = {
   sevilla: 266_588,
   malaga: 218_245,
   granada: 98_316,
@@ -29,6 +29,8 @@ const CITY_MAIN_DWELLINGS: Record<string, number> = {
   benidorm: 27_912,
   palma: 159_316,
   pamplona: 78_924,
+  donostia: 79_285,
+  bilbao: 147_655,
 };
 
 export type CityImpactSummary = {

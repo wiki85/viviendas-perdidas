@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav';
+  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav' | 'eus';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -74,12 +74,23 @@ export const OFFICIAL_SOURCE_NAV: OfficialSourceInfo = {
   licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
+export const OFFICIAL_SOURCE_EUS: OfficialSourceInfo = {
+  id: 'eus',
+  registerName: 'Registro de Empresas y Actividades Turísticas de Euskadi (REATE)',
+  registerUrl:
+    'https://opendata.euskadi.eus/catalogo/-/viviendas-y-habitaciones-de-vivienda-particular-para-uso-turistico-en-euskadi/',
+  publisher: 'Gobierno Vasco (Open Data Euskadi)',
+  licenseName: 'CC BY 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
   OFFICIAL_SOURCE_GVA,
   OFFICIAL_SOURCE_CAIB,
   OFFICIAL_SOURCE_NAV,
+  OFFICIAL_SOURCE_EUS,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
@@ -88,5 +99,6 @@ export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('gva-')) return OFFICIAL_SOURCE_GVA;
   if (pinId.startsWith('caib-')) return OFFICIAL_SOURCE_CAIB;
   if (pinId.startsWith('nav-')) return OFFICIAL_SOURCE_NAV;
+  if (pinId.startsWith('eus-')) return OFFICIAL_SOURCE_EUS;
   return OFFICIAL_SOURCE_RTA;
 }

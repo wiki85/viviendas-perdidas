@@ -39,8 +39,20 @@ export function normalizeStreetNumber(value: string): string {
   return normalizeComparable(value).replace(/\s+/g, '');
 }
 
+/** Bilingual/alternate municipality names that must converge on one page:
+ * Google, the registries and typed searches spell these differently. */
+const CITY_SLUG_ALIASES: Readonly<Record<string, string>> = {
+  'valencia-valencia': 'valencia',
+  'san-sebastian': 'donostia',
+  'donostia-san-sebastian': 'donostia',
+  'palma-de-mallorca': 'palma',
+  'pamplona-iruna': 'pamplona',
+  iruna: 'pamplona',
+  'alacant-alicante': 'alicante',
+  alacant: 'alicante',
+};
+
 export function slugifyCity(value: string): string {
   const slug = normalizeComparable(value).replace(/\s+/g, '-');
-  if (slug === 'valencia' || slug === 'valencia valencia') return 'valencia';
-  return slug;
+  return CITY_SLUG_ALIASES[slug] ?? slug;
 }

@@ -49,6 +49,14 @@ function officialCredit(source: string): string {
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'eus') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://opendata.euskadi.eus/catalogo/-/viviendas-y-habitaciones-de-vivienda-particular-para-uso-turistico-en-euskadi/" rel="noopener noreferrer">Registro de Empresas y Actividades Turísticas de Euskadi (REATE)</a>
+      (Gobierno Vasco, Open Data Euskadi), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
+    </p>`;
+  }
   if (source === 'nav') {
     return `
     <p class="credit">
