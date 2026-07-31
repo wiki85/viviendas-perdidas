@@ -1055,26 +1055,38 @@ textarea:focus-visible,
   z-index: 26;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   max-width: calc(100% - 24px);
-  padding: 9px 16px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 11px 20px;
+  font-size: 0.86rem;
+  font-weight: 750;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #fff;
   text-decoration: none;
-  background: rgba(49, 93, 76, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: #d9604c;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(30, 43, 39, 0.28);
+  box-shadow: 0 10px 28px rgba(155, 59, 48, 0.4);
   backdrop-filter: blur(8px);
   animation: report-fab-in 0.3s ease;
 }
 
+/* Doble pulso de halo al aparecer: llama la vista sin ser un banner. */
+.report-fab::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(217, 96, 76, 0.65);
+  opacity: 0;
+  animation: report-fab-pulse 1.6s ease-out 0.35s 2;
+  pointer-events: none;
+}
+
 .report-fab:hover {
-  background: #274c3e;
+  background: #b84a38;
 }
 
 .report-fab svg {
@@ -1089,6 +1101,23 @@ textarea:focus-visible,
   to {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+}
+
+@keyframes report-fab-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-fab::after {
+    animation: none;
   }
 }
 

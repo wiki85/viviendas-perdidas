@@ -58,11 +58,13 @@ import { useVisibleScope } from './hooks/use-visible-scope';
 import { appConfig, capabilityNotice } from './lib/config';
 import {
   approximateBounds,
+  distanceMeters,
   listingIsInBounds,
   loadCityManifest,
   loadNeighborhoods,
   neighborhoodCenter,
 } from './lib/geo';
+import { cityDisplayName, coveredCityForPosition } from './lib/communities';
 import { getDeviceFingerprintHash } from './lib/device';
 import { summarizeCityImpact, type CityImpactSummary } from './lib/city-impact';
 import { calculateImpact } from './lib/impact';
@@ -331,8 +333,20 @@ export default function App() {
   }, [bounds, service, sourceMode, zoom]);
   // When the map settles on a city with data, load its report figures once
   // (cached per session) and show the ephemeral banner the first time.
-  const resolvedCityId = resolvedScope.scope.cityId;
-  const resolvedCityName = resolvedScope.city?.name ?? resolvedScope.scope.name;
+  // The geo manifest only knows the cities with neighbourhood polygons, so
+  // manual panning over e.g. Sevilla resolves no scope. The covered-city
+  // fallback (center + municipal radius, zero API calls) keeps the report
+  // button visible over every mirrored city.
+  const nearbyCityId = useMemo(
+    () => coveredCityForPosition(center, zoom, distanceMeters),
+    [center, zoom],
+  );
+  const resolvedCityId = resolvedScope.scope.cityId ?? nearbyCityId;
+  const resolvedCityName = resolvedScope.scope.cityId
+    ? (resolvedScope.city?.name ?? resolvedScope.scope.name)
+    : nearbyCityId
+      ? cityDisplayName(nearbyCityId)
+      : '';
   useEffect(() => {
     // Reset first: the previous city's report (and its floating button)
     // must never linger over a different city while the new one resolves.
