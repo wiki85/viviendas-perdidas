@@ -252,6 +252,24 @@ export function MethodologyPage({ onClose }: Props) {
             público CartoCiudad (IGN) como primera vía.
           </p>
           <p>
+            Los datos oficiales de <strong>Madrid</strong> proceden del conjunto{' '}
+            <strong>«Declaraciones responsables de actividad de viviendas de uso turístico»</strong>{' '}
+            de la <strong>Comunidad de Madrid</strong>, publicado en su portal de datos abiertos
+            bajo licencia{' '}
+            <a
+              className="text-link"
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              CC BY 4.0 <ExternalLink size={15} />
+            </a>
+            . El conjunto es una instantánea del listado vigente de declaraciones (se refresca
+            semanalmente: las altas aparecen y las bajas desaparecen), sin número de registro ni
+            plazas; cada vivienda se identifica por su dirección normalizada y se ubica con
+            CartoCiudad (IGN) a nivel de portal.
+          </p>
+          <p>
             <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
             filtran a viviendas de uso turístico y llars compartides publicadas en cada registro
             abierto, se reproyectan las coordenadas andaluzas de UTM (ETRS89 / UTM 30N, EPSG:25830)

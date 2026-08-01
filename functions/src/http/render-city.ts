@@ -64,7 +64,7 @@ function officialCredit(source: string): string {
       (Comunidad de Madrid), datos adaptados ·
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a> ·
       coordenadas de <a href="https://www.cartociudad.es/" rel="noopener noreferrer">CartoCiudad (IGN)</a>.
-      Declaraciones acumuladas desde 2025; la Comunidad no publica bajas. Sin respaldo oficial.
+      Instantánea semanal del listado vigente de declaraciones. Sin respaldo oficial.
     </p>`;
   }
   if (source === 'nav') {
