@@ -57,6 +57,16 @@ function officialCredit(source: string): string {
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'mad') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://datos.comunidad.madrid/dataset/declaraciones_actividad_viviendas_uso_turistico" rel="noopener noreferrer">Declaraciones responsables de viviendas de uso turístico</a>
+      (Comunidad de Madrid), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a> ·
+      coordenadas de <a href="https://www.cartociudad.es/" rel="noopener noreferrer">CartoCiudad (IGN)</a>.
+      Declaraciones acumuladas desde 2025; la Comunidad no publica bajas. Sin respaldo oficial.
+    </p>`;
+  }
   if (source === 'nav') {
     return `
     <p class="credit">

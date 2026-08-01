@@ -270,8 +270,8 @@ export function MethodologyPage({ onClose }: Props) {
             <strong>
               Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
               Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro,
-              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, IGN) respalda o avala este
-              proyecto
+              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, Comunidad de Madrid, IGN)
+              respalda o avala este proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan

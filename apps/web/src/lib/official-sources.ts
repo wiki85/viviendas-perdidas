@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav' | 'eus';
+  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -84,6 +84,22 @@ export const OFFICIAL_SOURCE_EUS: OfficialSourceInfo = {
   licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
+export const OFFICIAL_SOURCE_MAD: OfficialSourceInfo = {
+  id: 'mad',
+  registerName: 'Declaraciones responsables de viviendas de uso turístico',
+  registerUrl:
+    'https://datos.comunidad.madrid/dataset/declaraciones_actividad_viviendas_uso_turistico',
+  publisher: 'Comunidad de Madrid',
+  licenseName: 'CC BY 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  coordinatesCredit: {
+    name: 'CartoCiudad (IGN)',
+    url: 'https://www.cartociudad.es/',
+    licenseName: 'Instituto Geográfico Nacional',
+    licenseUrl: 'https://www.ign.es/',
+  },
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
@@ -91,6 +107,7 @@ export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_CAIB,
   OFFICIAL_SOURCE_NAV,
   OFFICIAL_SOURCE_EUS,
+  OFFICIAL_SOURCE_MAD,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
@@ -100,5 +117,6 @@ export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('caib-')) return OFFICIAL_SOURCE_CAIB;
   if (pinId.startsWith('nav-')) return OFFICIAL_SOURCE_NAV;
   if (pinId.startsWith('eus-')) return OFFICIAL_SOURCE_EUS;
+  if (pinId.startsWith('mad-')) return OFFICIAL_SOURCE_MAD;
   return OFFICIAL_SOURCE_RTA;
 }

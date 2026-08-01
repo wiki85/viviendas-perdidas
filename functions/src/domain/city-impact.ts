@@ -45,6 +45,7 @@ export const CITY_CENSUS: Record<string, CityCensus> = {
   pamplona: { mainDwellings: 78_924, population: 209_094 },
   donostia: { mainDwellings: 79_285, population: 189_866 },
   bilbao: { mainDwellings: 147_655, population: 351_124 },
+  madrid: { mainDwellings: 1_320_531, population: 3_506_730 },
 };
 
 export interface CityImpactInput {

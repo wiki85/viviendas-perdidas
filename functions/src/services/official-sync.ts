@@ -16,12 +16,17 @@ import { createMallorcaFetcher } from './mallorca-source.js';
 import { createNavarraFetcher } from './navarra-source.js';
 import { createEuskadiFetcher } from './euskadi-source.js';
 import { EUSKADI_MUNICIPALITIES } from '../domain/euskadi.js';
-import { cartoCiudadMunicipality, parseCartoCiudadResponse } from '../domain/cartociudad.js';
+import {
+  cartoCiudadMunicipality,
+  cartoCiudadMuniMatches,
+  parseCartoCiudadResponse,
+} from '../domain/cartociudad.js';
+import { createMadridFetcher } from './madrid-source.js';
 import { NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -91,6 +96,10 @@ export const SYNCED_NAV_MUNICIPALITIES: readonly string[] = NAVARRA_MUNICIPALITI
 export const SYNCED_EUS_MUNICIPALITIES: readonly string[] = EUSKADI_MUNICIPALITIES.map(
   (entry) => entry.name,
 );
+
+/** Madrid capital, mirrored from the Comunidad de Madrid declarations log.
+ * Synthetic ids, no upstream coordinates: CartoCiudad locates the portals. */
+export const SYNCED_MAD_MUNICIPALITIES: readonly string[] = ['MADRID'];
 
 async function fetchRtaPage(
   municipality: string,
@@ -201,12 +210,23 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       fetchMunicipality: fetcher.fetchMunicipality,
     };
   }
-  const fetcher = createEuskadiFetcher();
+  if (id === 'eus') {
+    const fetcher = createEuskadiFetcher();
+    return {
+      id,
+      idPrefix: 'eus-',
+      statsSource: 'eus',
+      municipalities: SYNCED_EUS_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  const fetcher = createMadridFetcher();
   return {
     id,
-    idPrefix: 'eus-',
-    statsSource: 'eus',
-    municipalities: SYNCED_EUS_MUNICIPALITIES,
+    idPrefix: 'mad-',
+    statsSource: 'mad',
+    municipalities: SYNCED_MAD_MUNICIPALITIES,
     prepare: fetcher.prepare,
     fetchMunicipality: fetcher.fetchMunicipality,
   };
@@ -776,7 +796,15 @@ async function repairViaCartoCiudad(
       if (!response.ok) {
         transient = true;
       } else {
-        located = parseCartoCiudadResponse(await response.text());
+        const parsed = parseCartoCiudadResponse(await response.text());
+        if (parsed !== null && !cartoCiudadMuniMatches(parsed.muni, record.municipality)) {
+          // Portal found… in another municipality: a Madrid-sized radius
+          // would let it through, so the geocoder's own muni is the judge.
+          state.failures.wrong_muni = (state.failures.wrong_muni ?? 0) + 1;
+          located = null;
+        } else {
+          located = parsed;
+        }
       }
     } catch {
       transient = true;
@@ -1107,7 +1135,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus', 'mad'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

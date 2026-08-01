@@ -82,14 +82,16 @@ export function OfficialSheet({ pin, onClose }: Props) {
             </span>
           </p>
           <dl className="official-spec">
-            <div className="official-spec__row">
-              <dt>
-                <BadgeCheck size={17} aria-hidden="true" /> Licencia turística
-              </dt>
-              <dd>
-                <strong className="official-spec__code">{pin.registrationCode}</strong>
-              </dd>
-            </div>
+            {pin.registrationCode.length > 0 && (
+              <div className="official-spec__row">
+                <dt>
+                  <BadgeCheck size={17} aria-hidden="true" /> Licencia turística
+                </dt>
+                <dd>
+                  <strong className="official-spec__code">{pin.registrationCode}</strong>
+                </dd>
+              </div>
+            )}
             <div className="official-spec__row">
               <dt>
                 <BedDouble size={17} aria-hidden="true" /> Capacidad

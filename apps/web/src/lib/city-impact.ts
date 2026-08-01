@@ -31,6 +31,7 @@ export const CITY_MAIN_DWELLINGS: Record<string, number> = {
   pamplona: 78_924,
   donostia: 79_285,
   bilbao: 147_655,
+  madrid: 1_320_531,
 };
 
 export type CityImpactSummary = {

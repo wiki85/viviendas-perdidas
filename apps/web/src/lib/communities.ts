@@ -32,6 +32,7 @@ export const COMMUNITIES: readonly CommunityInfo[] = [
   { id: 'illes-balears', name: 'Illes Balears', cityIds: ['palma'] },
   { id: 'navarra', name: 'Navarra', cityIds: ['pamplona'] },
   { id: 'euskadi', name: 'Euskadi', cityIds: ['donostia', 'bilbao'] },
+  { id: 'comunidad-de-madrid', name: 'Comunidad de Madrid', cityIds: ['madrid'] },
 ];
 
 const CITY_NAMES: Readonly<Record<string, string>> = {
@@ -53,6 +54,7 @@ const CITY_NAMES: Readonly<Record<string, string>> = {
   pamplona: 'Pamplona',
   donostia: 'Donostia / San Sebastián',
   bilbao: 'Bilbao',
+  madrid: 'Madrid',
 };
 
 export function cityDisplayName(cityId: string): string {
@@ -83,6 +85,7 @@ export const CITY_CENTERS: Readonly<
   pamplona: { lat: 42.8125, lng: -1.644, radiusKm: 12 },
   donostia: { lat: 43.3183, lng: -1.9812, radiusKm: 12 },
   bilbao: { lat: 43.263, lng: -2.935, radiusKm: 12 },
+  madrid: { lat: 40.4168, lng: -3.7038, radiusKm: 25 },
 };
 
 /** Covered city under the map center at city-level zoom, or null. */
