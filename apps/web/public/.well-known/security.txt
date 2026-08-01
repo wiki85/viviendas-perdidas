@@ -1,0 +1,7 @@
+# Viviendas Perdidas — aquiviviamos.com
+# Si has encontrado un problema de seguridad, gracias por avisarnos de forma responsable.
+Contact: https://www.aquiviviamos.com/
+# En la web: usa el icono de sobre (contacto) de la cabecera del mapa.
+Expires: 2027-08-01T20:09:33.000Z
+Preferred-Languages: es, en
+Canonical: https://www.aquiviviamos.com/.well-known/security.txt
