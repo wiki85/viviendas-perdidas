@@ -1,5 +1,6 @@
 import {
   ChartLine,
+  MailPlus,
   CircleHelp,
   Coffee,
   House,
@@ -30,6 +31,7 @@ type Props = {
   onSelectPlace: (place: SearchPlace) => void;
   onOpenAbout: () => void;
   onOpenContact: () => void;
+  onOpenNewsletter: () => void;
   onOpenStats: () => void;
   onOpenDonate: () => void;
   onShare: () => void;
@@ -67,6 +69,7 @@ export function TopBar({
   onSelectPlace,
   onOpenAbout,
   onOpenContact,
+  onOpenNewsletter,
   onOpenStats,
   onOpenDonate,
   onShare,
@@ -84,6 +87,15 @@ export function TopBar({
             aria-label={`Compartir datos de ${aggregate.name}`}
           >
             <Share2 size={19} />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={onOpenNewsletter}
+            title="El Recuento: suscríbete al boletín de datos"
+            aria-label="El Recuento: suscríbete al boletín de datos"
+          >
+            <MailPlus size={19} />
           </button>
           <button
             className="icon-button"

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, MailPlus, TrendingDown, TrendingUp } from 'lucide-react';
 import type { OfficialHistoryEntry } from '../domain/types';
 import { CITY_MAIN_DWELLINGS } from '../lib/city-impact';
 import { cityDisplayName, COMMUNITIES } from '../lib/communities';
@@ -8,6 +8,7 @@ import { BrandMark } from './BrandMark';
 type Props = {
   onClose: () => void;
   loadHistory: () => Promise<OfficialHistoryEntry[]>;
+  onOpenNewsletter: () => void;
 };
 
 const formatInt = (value: number) => value.toLocaleString('es-ES');
@@ -269,7 +270,7 @@ function DeltaBadge({ value }: { value: number }) {
   return <span className="viz-delta viz-delta--flat">= sin cambio</span>;
 }
 
-export function StatsPage({ onClose, loadHistory }: Props) {
+export function StatsPage({ onClose, loadHistory, onOpenNewsletter }: Props) {
   const [entries, setEntries] = useState<OfficialHistoryEntry[] | null>(null);
   const [error, setError] = useState(false);
   const [communityId, setCommunityId] = useState('todas');
@@ -581,11 +582,18 @@ export function StatsPage({ onClose, loadHistory }: Props) {
               }
             />
 
-            <p className="stats-page__sources">
-              ¿Quieres estas cifras en tu correo? Suscríbete a{' '}
-              <a href="/boletin">El Recuento, el boletín de datos</a>: cada semana o cada mes, las
-              variaciones de las zonas que elijas. También hay feeds RSS por ciudad.
-            </p>
+            <section className="stats-subscribe">
+              <div>
+                <h2>El Recuento: estas cifras, en tu correo</h2>
+                <p>
+                  Cada semana o cada mes, las variaciones de las zonas que elijas — y solo si hay
+                  cambios. También hay feeds RSS por ciudad.
+                </p>
+              </div>
+              <button className="button button--primary" type="button" onClick={onOpenNewsletter}>
+                <MailPlus size={18} /> Suscribirse gratis
+              </button>
+            </section>
           </>
         )}
       </article>

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, LogIn, Rss } from 'lucide-react';
 import type { NewsletterPreferences } from '../domain/types';
-import { cityDisplayName, COMMUNITIES } from '../lib/communities';
+import { cityDisplayName, COMMUNITIES, communityForCity } from '../lib/communities';
 import { BrandMark } from './BrandMark';
 
 type Props = {
   onClose: () => void;
+  /** City to pre-select after sign-in (the «Suscríbete a X» map button). */
+  preselectCityId?: string | null;
   signIn: () => Promise<{ email: string }>;
   loadPreferences: () => Promise<NewsletterPreferences>;
   savePreferences: (preferences: {
@@ -25,6 +27,7 @@ const MAX_SCOPES = 12;
  */
 export function NewsletterPage({
   onClose,
+  preselectCityId = null,
   signIn,
   loadPreferences,
   savePreferences,
@@ -66,7 +69,18 @@ export function NewsletterPage({
       const preferences = await loadPreferences();
       setEmail(account.email);
       setSubscribed(preferences.subscribed && preferences.scopes.length > 0);
-      setScopes(preferences.scopes);
+      // The map's «Suscríbete a X» button lands here: pre-check that city
+      // unless an existing scope (all / its community / itself) already covers it.
+      const citScope = preselectCityId ? `city:${preselectCityId}` : null;
+      const community = preselectCityId ? communityForCity(preselectCityId) : null;
+      const covered =
+        citScope === null ||
+        preferences.scopes.includes('all') ||
+        preferences.scopes.includes(citScope) ||
+        (community !== null && preferences.scopes.includes(`community:${community.id}`));
+      setScopes(
+        covered || citScope === null ? preferences.scopes : [...preferences.scopes, citScope],
+      );
       setWeekly(preferences.weekly);
       setMonthly(preferences.monthly);
     } catch {

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FileText, Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
+import { FileText, MailPlus, Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
 import type {
   Aggregate,
   CityDefinition,
@@ -226,6 +226,13 @@ export default function App() {
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
   const [statsOpen, setStatsOpen] = useState(currentPathIsStats);
   const [newsletterOpen, setNewsletterOpen] = useState(currentPathIsNewsletter);
+  const [newsletterCityHint, setNewsletterCityHint] = useState<string | null>(null);
+  const openNewsletter = useCallback((cityId?: string) => {
+    window.history.pushState({}, '', '/boletin');
+    setNewsletterCityHint(cityId ?? null);
+    setStatsOpen(false);
+    setNewsletterOpen(true);
+  }, []);
   const [donateOpen, setDonateOpen] = useState(false);
   // Sin ruta propia a propósito: la página de contacto no debe ser rastreable.
   const [contactOpen, setContactOpen] = useState(false);
@@ -906,6 +913,7 @@ export default function App() {
             setStatsOpen(false);
           }}
           loadHistory={() => service.listOfficialHistory()}
+          onOpenNewsletter={() => openNewsletter()}
         />
       </Suspense>
     );
@@ -918,7 +926,9 @@ export default function App() {
           onClose={() => {
             window.history.pushState({}, '', '/');
             setNewsletterOpen(false);
+            setNewsletterCityHint(null);
           }}
+          preselectCityId={newsletterCityHint}
           signIn={() => service.newsletterSignIn()}
           loadPreferences={() => service.getNewsletterPreferences()}
           savePreferences={(preferences) => service.saveNewsletterPreferences(preferences)}
@@ -975,6 +985,7 @@ export default function App() {
         onSelectPlace={selectPlace}
         onOpenAbout={openAbout}
         onOpenContact={() => setContactOpen(true)}
+        onOpenNewsletter={() => openNewsletter()}
         onOpenStats={() => {
           window.history.pushState({}, '', '/estadisticas');
           setStatsOpen(true);
@@ -1015,24 +1026,35 @@ export default function App() {
             <span /> Actualizando registros…
           </div>
         )}
-        {bannerVisible && cityReport && !registrationOpen && (
-          <CityImpactBanner
-            key={cityReport.id}
-            cityId={cityReport.id}
-            cityName={cityReport.name}
-            summary={cityReport.summary}
-            onClose={closeBanner}
-          />
-        )}
-        {cityReport && !bannerVisible && !registrationOpen && (
-          <a
-            className="report-fab"
-            href={`/ciudad/${encodeURIComponent(cityReport.id)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <FileText size={15} aria-hidden="true" /> Informe de {cityReport.name}
-          </a>
+        {cityReport && !registrationOpen && (
+          <div className="map-top-stack">
+            {bannerVisible && (
+              <CityImpactBanner
+                key={cityReport.id}
+                cityId={cityReport.id}
+                cityName={cityReport.name}
+                summary={cityReport.summary}
+                onClose={closeBanner}
+              />
+            )}
+            <div className="city-fabs">
+              <a
+                className="report-fab"
+                href={`/ciudad/${encodeURIComponent(cityReport.id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText size={15} aria-hidden="true" /> Informe de {cityReport.name}
+              </a>
+              <button
+                className="subscribe-fab"
+                type="button"
+                onClick={() => openNewsletter(cityReport.id)}
+              >
+                <MailPlus size={15} aria-hidden="true" /> Suscríbete a {cityReport.name}
+              </button>
+            </div>
+          </div>
         )}
         {!registrationOpen && !selectedListing && (
           <button

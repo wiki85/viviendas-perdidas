@@ -1047,17 +1047,43 @@ textarea:focus-visible,
 }
 
 /* Floating pill over the map linking to the visible city's impact report. */
-.report-fab {
+.map-top-stack {
   position: absolute;
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 26;
-  display: inline-flex;
+  z-index: 28;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
   max-width: calc(100% - 24px);
+}
+
+.map-top-stack .impact-banner {
+  position: static;
+  top: auto;
+  left: auto;
+  transform: none;
+  animation: report-fab-in 0.3s ease;
+}
+
+.city-fabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.report-fab,
+.subscribe-fab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
   padding: 11px 20px;
+  font: inherit;
   font-size: 0.86rem;
   font-weight: 750;
   white-space: nowrap;
@@ -1070,7 +1096,17 @@ textarea:focus-visible,
   border-radius: 999px;
   box-shadow: 0 10px 28px rgba(155, 59, 48, 0.4);
   backdrop-filter: blur(8px);
+  cursor: pointer;
   animation: report-fab-in 0.3s ease;
+}
+
+.subscribe-fab {
+  background: #315d4c;
+  box-shadow: 0 10px 28px rgba(36, 70, 58, 0.4);
+}
+
+.subscribe-fab:hover {
+  background: #24463a;
 }
 
 /* Doble pulso de halo al aparecer: llama la vista sin ser un banner. */
@@ -1089,18 +1125,19 @@ textarea:focus-visible,
   background: #b84a38;
 }
 
-.report-fab svg {
+.report-fab svg,
+.subscribe-fab svg {
   flex-shrink: 0;
 }
 
 @keyframes report-fab-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 
@@ -1123,13 +1160,15 @@ textarea:focus-visible,
 
 @media (min-width: 700px) {
   /* Clear the floating search card on narrower desktop windows. */
-  .report-fab {
+  .map-top-stack {
     left: max(50%, 600px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .report-fab {
+  .report-fab,
+  .subscribe-fab,
+  .map-top-stack .impact-banner {
     animation: none;
   }
 }
@@ -3437,4 +3476,35 @@ textarea:focus-visible,
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* --------------------- Estadísticas: bloque de suscripción ----------------- */
+
+.stats-subscribe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(49, 93, 76, 0.08);
+  border: 1px solid rgba(49, 93, 76, 0.22);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 26px;
+}
+
+.stats-subscribe h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.stats-subscribe p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #3c4a44;
+  max-width: 52ch;
+}
+
+.stats-subscribe .button {
+  flex-shrink: 0;
 }
