@@ -140,7 +140,10 @@ function formatHistoryDay(iso: string): string {
  * allows no external assets); with a single snapshot it renders the delta
  * chips and an explanatory note instead of a one-point line.
  */
-function officialEvolutionSection(history: OfficialHistoryPoint[]): string {
+export function officialEvolutionSection(
+  history: OfficialHistoryPoint[],
+  options: { heading?: boolean; noteHtml?: string } = {},
+): string {
   if (history.length === 0) return '';
   const last = history[history.length - 1];
   const previous = history.length > 1 ? (history[history.length - 2] ?? null) : null;
@@ -194,8 +197,11 @@ function officialEvolutionSection(history: OfficialHistoryPoint[]): string {
       </svg>`;
   }
 
+  const note =
+    options.noteHtml ??
+    'Instantáneas semanales del registro oficial de turismo. <a href="/estadisticas">Ver estadísticas de todas las ciudades</a>.';
   return `
-    <h2>Evolución del registro oficial</h2>
+    ${options.heading === false ? '' : '<h2>Evolución del registro oficial</h2>'}
     <div class="evo">
       <div class="evo-chips">
         ${chip(deltaLast, 'desde la sincronización anterior')}
@@ -203,11 +209,11 @@ function officialEvolutionSection(history: OfficialHistoryPoint[]): string {
         ${history.length === 1 ? `<span class="evo-chip evo-chip--flat">Primer registro del histórico: ${n(first.total)} viviendas (${formatHistoryDay(first.date)})</span>` : ''}
       </div>
       ${figure}
-      <p class="evo-note">Instantáneas semanales del registro oficial de turismo. <a href="/estadisticas">Ver estadísticas de todas las ciudades</a>.</p>
+      <p class="evo-note">${note}</p>
     </div>`;
 }
 
-const SHARED_CSS = `
+export const SHARED_CSS = `
   :root{color-scheme:light}
   *{box-sizing:border-box;margin:0}
   body{font:16px/1.6 system-ui,-apple-system,sans-serif;background:#f7f3eb;color:#1e2b27;padding:0 20px 48px}
@@ -270,10 +276,25 @@ const SHARED_CSS = `
   .evo-note{font-size:.78rem;color:#65716c;margin:8px 0 0}
   .evo-note a{color:#315d4c}
   code{background:rgba(30,43,39,.07);border-radius:6px;padding:2px 7px;font-size:.85em;word-break:break-all}
+  .embed-row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  .embed-row code{flex:1;min-width:0;display:block;background:#fff;border:1px solid rgba(30,43,39,.14);border-radius:10px;padding:9px 12px;font-size:.72rem;overflow-x:auto;white-space:nowrap}
+  .embed-row button{flex-shrink:0;font:inherit;font-size:.86rem;font-weight:700;color:#fff;background:#315d4c;border:0;border-radius:999px;padding:9px 16px;cursor:pointer}
+  @media (max-width:640px){.embed-row{flex-direction:column;align-items:stretch}}
 `;
 
 const SHARE_SCRIPT = `
 (function(){
+  document.querySelectorAll('[data-copy-target]').forEach(function(copyButton){
+    copyButton.addEventListener('click',function(){
+      var code=document.getElementById(copyButton.getAttribute('data-copy-target'));
+      if(!code||!navigator.clipboard)return;
+      navigator.clipboard.writeText(code.textContent||'').then(function(){
+        var original=copyButton.textContent;
+        copyButton.textContent='¡Copiado!';
+        setTimeout(function(){copyButton.textContent=original;},2000);
+      });
+    });
+  });
   var button=document.querySelector('[data-share-url]');
   if(!button)return;
   if(navigator.share)button.textContent='Más opciones…';
@@ -548,7 +569,15 @@ export function renderCityPage(
       <a href="/feeds/${escapeHtml(city.id)}.xml">feed RSS de ${escapeHtml(name)}</a> con cada
       variación del recuento oficial, listo para citar o automatizar
       (<a href="/prensa">cómo usarlo</a>).
-    </p>`
+    </p>
+    <p>
+      ¿Tienes una web? Inserta la gráfica de ${escapeHtml(name)} con este código; se actualiza
+      sola con cada sincronización:
+    </p>
+    <div class="embed-row">
+      <code id="embed-code">&lt;iframe src="${PUBLIC_ORIGIN}/embed/${escapeHtml(city.id)}/evolucion" title="Viviendas turísticas registradas — ${escapeHtml(name)}" width="100%" height="420" style="border:0;max-width:720px" loading="lazy"&gt;&lt;/iframe&gt;</code>
+      <button type="button" data-copy-target="embed-code">Copiar código</button>
+    </div>`
     : '';
   const body = `
     <h1>Viviendas perdidas en ${escapeHtml(name)}</h1>
@@ -698,6 +727,24 @@ export function renderPressPage(): string {
       que no verás duplicados.
     </p>
 
+    <h2>Inserta las gráficas en tu web</h2>
+    <p>
+      Cada gráfica y cada juego de cifras se puede incrustar en cualquier página con un iframe:
+      se actualiza solo con cada sincronización y lleva la fuente citada. Dos formatos por ámbito:
+      <code>/embed/&lt;ámbito&gt;/evolucion</code> (gráfica, alto recomendado 420) y
+      <code>/embed/&lt;ámbito&gt;/cifras</code> (totales y variaciones, alto 230). El ámbito es
+      <code>todo</code>, el identificador de una comunidad (<code>andalucia</code>,
+      <code>euskadi</code>…) o el de una ciudad (<code>sevilla</code>, <code>bilbao</code>…).
+    </p>
+    <div class="embed-row">
+      <code id="embed-ejemplo">&lt;iframe src="${PUBLIC_ORIGIN}/embed/todo/evolucion" title="Viviendas turísticas registradas en España" width="100%" height="420" style="border:0;max-width:720px" loading="lazy"&gt;&lt;/iframe&gt;</code>
+      <button type="button" data-copy-target="embed-ejemplo">Copiar ejemplo</button>
+    </div>
+    <p>
+      En la <a href="/estadisticas">página de estadísticas</a> y en cada página de ciudad hay un
+      botón «Copiar código» que genera el iframe exacto de lo que estés viendo.
+    </p>
+
     <h2>Boletín por correo</h2>
     <p>
       Si prefieres el correo, <a href="/boletin">El Recuento</a> envía las variaciones de las
@@ -741,6 +788,7 @@ export function renderPressPage(): string {
       isAccessibleForFree: true,
     },
     body,
+    withShareScript: true,
     feedPath: '/feeds/todo.xml',
     feedTitle: 'El Recuento · España',
   });

@@ -44,6 +44,49 @@ type SeriesPoint = { date: string; total: number };
 
 type SortKey = 'name' | 'total' | 'deltaLast' | 'deltaSinceFirst' | 'places' | 'pressure';
 
+/** Copy-paste iframe snippets so any site can embed the current selection. */
+function EmbedCodes({ slug, label }: { slug: string; label: string }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const snippet = (kind: 'evolucion' | 'cifras', height: number) =>
+    `<iframe src="https://www.aquiviviamos.com/embed/${slug}/${kind}" title="Viviendas turísticas registradas — ${label}" width="100%" height="${height}" style="border:0;max-width:720px" loading="lazy"></iframe>`;
+  const copy = (kind: 'evolucion' | 'cifras', height: number) => {
+    void navigator.clipboard?.writeText(snippet(kind, height)).then(() => {
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
+  return (
+    <section className="stats-embed">
+      <h2>Inserta estas cifras en tu web</h2>
+      <p>
+        Copia el código y pégalo en tu página o CMS: la gráfica se actualizará sola con cada
+        sincronización, con los datos de <strong>{label}</strong> (según los filtros de arriba) y su
+        fuente citada.
+      </p>
+      <div className="stats-embed__row">
+        <code>{snippet('evolucion', 420)}</code>
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={() => copy('evolucion', 420)}
+        >
+          {copied === 'evolucion' ? '¡Copiado!' : 'Copiar gráfica'}
+        </button>
+      </div>
+      <div className="stats-embed__row">
+        <code>{snippet('cifras', 230)}</code>
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={() => copy('cifras', 230)}
+        >
+          {copied === 'cifras' ? '¡Copiado!' : 'Copiar cifras'}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /**
  * Single-series evolution line: 2px stroke, 10% area wash, hairline grid,
  * crosshair snapped to the nearest sync date with a tooltip readout. The
@@ -526,6 +569,17 @@ export function StatsPage({ onClose, loadHistory }: Props) {
               Mallorca, Navarra y Euskadi (ver <a href="/metodologia">metodología y licencias</a>).
               La presión compara con los hogares principales del Censo 2021 (INE/IECA/Idescat).
             </p>
+
+            <EmbedCodes
+              slug={cityId !== 'todas' ? cityId : communityId !== 'todas' ? communityId : 'todo'}
+              label={
+                cityId !== 'todas'
+                  ? cityDisplayName(cityId)
+                  : communityId !== 'todas'
+                    ? (COMMUNITIES.find((entry) => entry.id === communityId)?.name ?? communityId)
+                    : 'España (ciudades cubiertas)'
+              }
+            />
 
             <p className="stats-page__sources">
               ¿Quieres estas cifras en tu correo? Suscríbete a{' '}

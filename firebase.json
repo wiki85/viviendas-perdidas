@@ -40,6 +40,13 @@
         }
       },
       {
+        "source": "/embed/**",
+        "function": {
+          "functionId": "embed",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "/prensa",
         "function": {
           "functionId": "prensa",

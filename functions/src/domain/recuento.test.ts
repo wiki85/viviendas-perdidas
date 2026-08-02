@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cityIdsForScope, scopeDisplayName } from './communities.js';
 import {
   buildFeedItems,
+  buildScopeSeries,
   computeCityDeltas,
   editionSubject,
   formatDeltaSigned,
@@ -84,6 +85,22 @@ describe('edition rendering', () => {
     expect(html).toContain('/estadisticas');
     expect(html).toContain('baja?t=abc');
     expect(html).toContain('CC BY 4.0');
+  });
+});
+
+describe('buildScopeSeries', () => {
+  it('carries each city forward and sums per date', () => {
+    const series = buildScopeSeries(HISTORY, ['sevilla', 'benidorm']);
+    expect(series).toEqual([
+      { date: '2026-07-20', total: 9500 },
+      { date: '2026-07-27', total: 9578 + 5633 },
+      { date: '2026-08-03', total: 9612 + 5645 },
+    ]);
+  });
+
+  it('ignores cities outside the scope', () => {
+    const series = buildScopeSeries(HISTORY, ['madrid']);
+    expect(series).toEqual([{ date: '2026-08-03', total: 1156 }]);
   });
 });
 

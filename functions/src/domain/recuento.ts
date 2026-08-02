@@ -179,6 +179,34 @@ export interface FeedItem {
   link: string;
 }
 
+/**
+ * Carried-forward sum of the scope's cities per history date: a city keeps
+ * its last known total on dates where it did not sync (the same rule the
+ * stats page applies, so every surface shows identical series).
+ */
+export function buildScopeSeries(
+  history: readonly HistoryPoint[],
+  cityIds: readonly string[],
+): Array<{ date: string; total: number }> {
+  const dates = [...new Set(history.map((point) => point.date))].sort();
+  const byCityDate = new Map<string, number>();
+  for (const point of history) byCityDate.set(`${point.cityId}|${point.date}`, point.total);
+  const wanted = new Set(cityIds);
+  const lastKnown = new Map<string, number>();
+  const series: Array<{ date: string; total: number }> = [];
+  for (const date of dates) {
+    for (const cityId of wanted) {
+      const total = byCityDate.get(`${cityId}|${date}`);
+      if (total !== undefined) lastKnown.set(cityId, total);
+    }
+    if (lastKnown.size === 0) continue;
+    let sum = 0;
+    for (const total of lastKnown.values()) sum += total;
+    series.push({ date, total: sum });
+  }
+  return series;
+}
+
 /** Items = every history date where the scope's carried-forward total moved. */
 export function buildFeedItems(
   history: readonly HistoryPoint[],
@@ -188,19 +216,9 @@ export function buildFeedItems(
   scopeLabel: string,
   maximum = 26,
 ): FeedItem[] {
-  const dates = [...new Set(history.map((point) => point.date))].sort();
-  const byCityDate = new Map<string, number>();
-  for (const point of history) byCityDate.set(`${point.cityId}|${point.date}`, point.total);
-  const lastKnown = new Map<string, number>();
   const items: FeedItem[] = [];
   let previousSum: number | null = null;
-  for (const date of dates) {
-    for (const cityId of cityIds) {
-      const total = byCityDate.get(`${cityId}|${date}`);
-      if (total !== undefined) lastKnown.set(cityId, total);
-    }
-    let sum = 0;
-    for (const total of lastKnown.values()) sum += total;
+  for (const { date, total: sum } of buildScopeSeries(history, cityIds)) {
     if (previousSum !== null && sum !== previousSum) {
       const delta = sum - previousSum;
       items.push({
