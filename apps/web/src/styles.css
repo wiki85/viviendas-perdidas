@@ -3234,19 +3234,33 @@ textarea:focus-visible,
 .newsletter-community {
   border: 1px solid rgba(30, 43, 39, 0.12);
   border-radius: 12px;
-  padding: 10px 14px 12px;
+  padding: 12px 14px;
   margin: 0;
   background: #fff;
+  min-width: 0;
 }
 
+/* Un legend nativo se dibuja montado sobre el borde del fieldset; con float
+   vuelve al flujo normal y queda DENTRO de la caja, pase lo que pase con el
+   número de comunidades o la longitud de los nombres. */
 .newsletter-community legend {
-  padding: 0 6px;
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 10px;
+  border-bottom: 1px solid rgba(30, 43, 39, 0.1);
+  padding-bottom: 8px;
+}
+
+.newsletter-community legend .newsletter-scope {
+  font-weight: 700;
 }
 
 .newsletter-cities {
+  clear: both;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 8px 18px;
 }
 
 .newsletter-scope {
@@ -3256,6 +3270,8 @@ textarea:focus-visible,
   font-size: 0.92rem;
   color: #1e2b27;
   cursor: pointer;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .newsletter-scope input {
