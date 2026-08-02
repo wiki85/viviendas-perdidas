@@ -144,7 +144,7 @@ export function renderEditionHtml(input: EditionInput): string {
     <div style="padding:26px 30px 20px;border-bottom:3px double rgba(30,43,39,.2)">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
         <td style="padding-right:14px">
-          <div style="width:46px;height:46px;border-radius:12px;background:#d9604c;text-align:center;line-height:46px;color:#fff;font-size:22px;font-weight:700">⌂</div>
+          <img src="${escapeHtml(input.siteUrl)}/icons/icon-192.png" width="46" height="46" alt="Aquí Vivíamos" style="display:block;border-radius:12px">
         </td>
         <td>
           <div style="font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#315d4c">Aquí Vivíamos</div>
@@ -240,6 +240,11 @@ export function renderFeedXml(
     <title>El Recuento · ${escapeHtml(scopeLabel)}</title>
     <link>${escapeHtml(siteUrl)}/estadisticas</link>
     <atom:link href="${escapeHtml(siteUrl)}${escapeHtml(feedPath)}" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>${escapeHtml(siteUrl)}/icons/icon-192.png</url>
+      <title>El Recuento · ${escapeHtml(scopeLabel)}</title>
+      <link>${escapeHtml(siteUrl)}/estadisticas</link>
+    </image>
     <description>El boletín de datos de Aquí Vivíamos: variaciones de los registros oficiales de viviendas de uso turístico. Datos CC BY 4.0 de los registros autonómicos.</description>
     <language>es</language>${entries}
   </channel>
