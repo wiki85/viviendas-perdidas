@@ -4,6 +4,7 @@ import {
   HOUSEHOLD_ANNUAL_SPEND_EUR,
   PUPILS_PER_CLASSROOM,
 } from '../domain/city-impact.js';
+import { ALL_CITY_IDS, COMMUNITIES, cityDisplayName } from '../domain/communities.js';
 import { escapeHtml, jsonForInlineScript, PUBLIC_ORIGIN } from './html.js';
 
 export interface CityStats {
@@ -268,6 +269,7 @@ const SHARED_CSS = `
   .evo-tick{font-size:10px;fill:#65716c}
   .evo-note{font-size:.78rem;color:#65716c;margin:8px 0 0}
   .evo-note a{color:#315d4c}
+  code{background:rgba(30,43,39,.07);border-radius:6px;padding:2px 7px;font-size:.85em;word-break:break-all}
 `;
 
 const SHARE_SCRIPT = `
@@ -294,8 +296,14 @@ function pageShell(options: {
   jsonLd: unknown;
   body: string;
   withShareScript?: boolean;
+  /** RSS autodiscovery: absolute feed path ('/feeds/sevilla.xml'). */
+  feedPath?: string;
+  feedTitle?: string;
 }): string {
   const canonicalUrl = `${PUBLIC_ORIGIN}${options.canonicalPath}`;
+  const feedLink = options.feedPath
+    ? `\n    <link rel="alternate" type="application/rss+xml" title="${escapeHtml(options.feedTitle ?? 'El Recuento')}" href="${escapeHtml(options.feedPath)}">`
+    : '';
   return `<!doctype html>
 <html lang="es">
   <head>
@@ -318,18 +326,18 @@ function pageShell(options: {
     <meta name="twitter:title" content="${escapeHtml(options.title)}">
     <meta name="twitter:description" content="${escapeHtml(options.description)}">
     <meta name="twitter:image" content="${escapeHtml(`${PUBLIC_ORIGIN}/og.png`)}">
-    <script type="application/ld+json">${jsonForInlineScript(options.jsonLd)}</script>
+    <script type="application/ld+json">${jsonForInlineScript(options.jsonLd)}</script>${feedLink}
     <style>${SHARED_CSS}</style>
   </head>
   <body>
     <header class="site">
-      <a href="/"><span class="mark" aria-hidden="true">⌂</span> Viviendas Perdidas</a>
+      <a href="/"><img src="/icons/icon-192.png" width="22" height="22" alt="" style="vertical-align:-4px;border-radius:6px"> Viviendas Perdidas</a>
     </header>
     <main>${options.body}</main>
     <footer>
       Proyecto ciudadano independiente y sin ánimo de lucro. Datos colaborativos y no oficiales.
       <a href="/metodologia">Metodología</a> · <a href="/acerca">Acerca del proyecto</a> ·
-      <a href="/ciudades">Datos por ciudad</a>
+      <a href="/ciudades">Datos por ciudad</a> · <a href="/prensa">Prensa y feeds</a>
     </footer>
     ${options.withShareScript ? `<script>${SHARE_SCRIPT}</script>` : ''}
   </body>
@@ -525,6 +533,23 @@ export function renderCityPage(
   const mapQuery = official
     ? `scope=${encodeURIComponent(city.id)}&fuente=ambas`
     : `scope=${encodeURIComponent(city.id)}`;
+  const covered = ALL_CITY_IDS.includes(city.id);
+  const followSection = covered
+    ? `
+    <h2>Sigue los datos de ${escapeHtml(name)}</h2>
+    <p>
+      <strong>El Recuento</strong>, el boletín de datos del proyecto, avisa por correo cuando el
+      registro oficial de ${escapeHtml(name)} suma o retira viviendas turísticas: cada semana o
+      cada mes, y solo si hay cambios.
+      <a href="/boletin">Suscríbete y elige tus zonas</a>.
+    </p>
+    <p>
+      Para redacciones, asociaciones y lectores RSS existe un
+      <a href="/feeds/${escapeHtml(city.id)}.xml">feed RSS de ${escapeHtml(name)}</a> con cada
+      variación del recuento oficial, listo para citar o automatizar
+      (<a href="/prensa">cómo usarlo</a>).
+    </p>`
+    : '';
   const body = `
     <h1>Viviendas perdidas en ${escapeHtml(name)}</h1>
     ${updatedLine}
@@ -533,6 +558,7 @@ export function renderCityPage(
     ${official ? officialEvolutionSection(history) : ''}
     <a class="cta" href="/?${escapeHtml(mapQuery)}">Ver ${escapeHtml(name)} en el mapa</a>
     ${impactSection}
+    ${followSection}
     ${shareSection(name, city.id, shareText)}
     ${neighborhoodsSection}
     <h2>¿Qué significan estas cifras?</h2>
@@ -560,6 +586,7 @@ export function renderCityPage(
     jsonLd,
     body,
     withShareScript: true,
+    ...(covered ? { feedPath: `/feeds/${city.id}.xml`, feedTitle: `El Recuento · ${name}` } : {}),
   });
 }
 
@@ -599,7 +626,7 @@ export function renderCitiesIndex(cities: CityIndexEntry[]): string {
 }
 
 export function renderSitemap(cities: CityStats[]): string {
-  const staticEntries = ['/', '/ciudades', '/metodologia', '/acerca'].map(
+  const staticEntries = ['/', '/ciudades', '/metodologia', '/acerca', '/prensa'].map(
     (path) => `  <url><loc>${PUBLIC_ORIGIN}${path}</loc></url>`,
   );
   const cityEntries = cities.map((city) => {
@@ -613,4 +640,108 @@ export function renderSitemap(cities: CityStats[]): string {
 ${[...staticEntries, ...cityEntries].join('\n')}
 </urlset>
 `;
+}
+
+/** /prensa — the door for newsrooms and associations: feeds, data, reuse. */
+export function renderPressPage(): string {
+  const feedRows = COMMUNITIES.flatMap((community) =>
+    community.cityIds.map(
+      (cityId) => `
+        <tr>
+          <td>${escapeHtml(cityDisplayName(cityId))}<br><small style="color:#65716c">${escapeHtml(community.name)}</small></td>
+          <td><code>${escapeHtml(`${PUBLIC_ORIGIN}/feeds/${cityId}.xml`)}</code></td>
+          <td><a href="/ciudad/${escapeHtml(cityId)}">página</a></td>
+        </tr>`,
+    ),
+  ).join('');
+
+  const body = `
+    <h1>Prensa y reutilización de datos</h1>
+    <p>
+      <strong>Viviendas Perdidas</strong> (aquiviviamos.com) documenta la conversión de viviendas
+      en alojamientos turísticos en España combinando los registros oficiales de turismo
+      autonómicos —más de 80.000 viviendas georreferenciadas en 19 ciudades— con aportaciones
+      vecinales verificables. Todo lo que hay aquí se puede citar, enlazar y reutilizar.
+    </p>
+
+    <h2>El Recuento: un feed RSS por ciudad</h2>
+    <p>
+      Cada vez que una sincronización semanal detecta que el registro oficial de una ciudad suma o
+      retira viviendas turísticas, su feed publica una entrada con la cifra exacta («▲ +34
+      viviendas turísticas en Sevilla») y los totales antes y después. Sin cambios no hay entrada:
+      cero ruido.
+    </p>
+    <p>
+      Feed de toda España: <code>${escapeHtml(`${PUBLIC_ORIGIN}/feeds/todo.xml`)}</code>
+    </p>
+    <table>
+      <thead><tr><th>Ciudad</th><th>Feed RSS</th><th></th></tr></thead>
+      <tbody>${feedRows}
+      </tbody>
+    </table>
+
+    <h2>Cómo usar los feeds</h2>
+    <p>
+      <strong>En un lector RSS</strong> (Feedly, Inoreader, NetNewsWire…): añade la URL del feed
+      tal cual. Las páginas de ciudad también anuncian su feed automáticamente, así que basta con
+      pegar la dirección de la página.
+    </p>
+    <p>
+      <strong>En una web o un CMS</strong>: cualquier módulo de RSS sirve — en WordPress, el
+      bloque «RSS» con la URL del feed muestra las últimas variaciones en tu página; en otros
+      gestores, cualquier widget o plugin equivalente.
+    </p>
+    <p>
+      <strong>Para alertas y automatizaciones</strong>: servicios como Zapier, Make o IFTTT pueden
+      vigilar el feed y avisarte por correo, Slack o Telegram cuando haya una entrada nueva de tu
+      ciudad. Cada entrada tiene un identificador estable (<code>ciudad_AAAA-MM-DD</code>), así
+      que no verás duplicados.
+    </p>
+
+    <h2>Boletín por correo</h2>
+    <p>
+      Si prefieres el correo, <a href="/boletin">El Recuento</a> envía las variaciones de las
+      zonas que elijas (ciudad, comunidad o toda España), cada semana o cada mes — y la edición
+      semanal solo sale si hubo cambios.
+    </p>
+
+    <h2>Datos y cifras citables</h2>
+    <p>
+      La <a href="/estadisticas">página de estadísticas</a> muestra la evolución del recuento
+      oficial con filtros por ciudad y comunidad; cada <a href="/ciudades">página de ciudad</a>
+      incluye sus cifras y su gráfica; y los registros vecinales se pueden
+      <a href="/datos">descargar en JSON</a>.
+    </p>
+
+    <h2>Cómo citarnos</h2>
+    <p>
+      Los datos oficiales proceden de los registros de turismo autonómicos (licencias CC BY 4.0 y
+      equivalentes; el detalle por fuente está en la <a href="/metodologia">metodología</a>). Una
+      fórmula que funciona: <em>«Datos de los registros oficiales de turismo autonómicos,
+      recopilados por Viviendas Perdidas (aquiviviamos.com)»</em>, con enlace. Ninguna
+      administración respalda este proyecto.
+    </p>
+
+    <div class="note">
+      ¿Necesitas un corte de datos concreto, una entrevista o contexto para una pieza? Escríbenos
+      desde el formulario de contacto del <a href="/">mapa</a> (icono del sobre, arriba a la
+      derecha) y te respondemos en cuanto podamos.
+    </div>`;
+
+  return pageShell({
+    title: 'Prensa y feeds RSS — Viviendas Perdidas',
+    description:
+      'Feeds RSS por ciudad, boletín de datos y cifras citables sobre viviendas turísticas en España: cómo usarlos y cómo citarnos.',
+    canonicalPath: '/prensa',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: 'Prensa y feeds RSS — Viviendas Perdidas',
+      inLanguage: 'es',
+      isAccessibleForFree: true,
+    },
+    body,
+    feedPath: '/feeds/todo.xml',
+    feedTitle: 'El Recuento · España',
+  });
 }

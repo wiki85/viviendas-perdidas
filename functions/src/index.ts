@@ -40,5 +40,5 @@ export { sendRecuentoSemanal, sendRecuentoMensual } from './scheduled/send-recue
 export { feeds } from './http/feeds.js';
 export { exportPublicData } from './http/export-public-data.js';
 export { shareScope } from './http/share-scope.js';
-export { cityPage, sitemap } from './http/public-pages.js';
+export { cityPage, prensa, sitemap } from './http/public-pages.js';
 export { onListingWrite } from './triggers/on-listing-write.js';

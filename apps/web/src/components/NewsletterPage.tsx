@@ -274,6 +274,11 @@ export function NewsletterPage({
             </a>
           </div>
           <p className="stats-page__sources">
+            ¿Eres periodista o representas a una asociación? En la{' '}
+            <a href="/prensa">página de prensa</a> explicamos cómo insertar los feeds en vuestra
+            web, automatizar alertas y citar los datos.
+          </p>
+          <p className="stats-page__sources">
             Datos de los registros oficiales autonómicos de turismo (CC BY 4.0); fuentes y licencias
             en la metodología. Ninguna administración respalda este proyecto.
           </p>

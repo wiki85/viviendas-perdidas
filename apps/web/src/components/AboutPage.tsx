@@ -77,6 +77,9 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
           <a className="text-link" href="/boletin">
             Suscribirse a El Recuento, el boletín de datos <ExternalLink size={15} />
           </a>
+          <a className="text-link" href="/prensa">
+            Prensa: feeds RSS y cómo citar los datos <ExternalLink size={15} />
+          </a>
         </section>
         <section className="about-page__section about-page__download">
           <div>

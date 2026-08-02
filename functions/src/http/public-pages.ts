@@ -8,6 +8,7 @@ import { integer, titleCaseSpanish } from './html.js';
 import {
   renderCitiesIndex,
   renderCityPage,
+  renderPressPage,
   renderSitemap,
   type CityIndexEntry,
   type CityStats,
@@ -246,6 +247,18 @@ export const cityPage = onRequest(
       });
       sendUnavailable(response);
     }
+  },
+);
+
+/** /prensa — static, server-rendered and long-cached. */
+export const prensa = onRequest(
+  { region: REGION, timeoutSeconds: 10, maxInstances: 5 },
+  (request, response) => {
+    if (request.method !== 'GET') {
+      sendNotFound(response);
+      return;
+    }
+    response.set(PAGE_HEADERS).status(200).type('html').send(renderPressPage());
   },
 );
 

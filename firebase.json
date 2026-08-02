@@ -40,6 +40,13 @@
         }
       },
       {
+        "source": "/prensa",
+        "function": {
+          "functionId": "prensa",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "/ciudad/**",
         "function": {
           "functionId": "cityPage",
