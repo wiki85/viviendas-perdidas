@@ -243,13 +243,27 @@ export function StatsPage({ onClose, loadHistory }: Props) {
   const model = useMemo(() => {
     if (!entries) return null;
     const scoped = entries.filter((entry) => scopeCityIds.includes(entry.cityId));
-    const byDate = new Map<string, number>();
+    // Carry-forward sum: only the cities synced on a given day get a fresh
+    // snapshot (the rest are weekly), so a naive per-date sum would collapse
+    // to the few just-synced cities. A city keeps its last known total until
+    // a newer snapshot replaces it — the line then means "known stock" and
+    // only moves when a sync actually changes something (or a new city
+    // enters the mirror).
+    const dates = [...new Set(scoped.map((entry) => entry.date))].sort();
+    const totalsByCityDate = new Map<string, number>();
     for (const entry of scoped) {
-      byDate.set(entry.date, (byDate.get(entry.date) ?? 0) + entry.total);
+      totalsByCityDate.set(`${entry.cityId}|${entry.date}`, entry.total);
     }
-    const series: SeriesPoint[] = [...byDate.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, total]) => ({ date, total }));
+    const lastKnown = new Map<string, number>();
+    const series: SeriesPoint[] = dates.map((date) => {
+      for (const id of scopeCityIds) {
+        const total = totalsByCityDate.get(`${id}|${date}`);
+        if (total !== undefined) lastKnown.set(id, total);
+      }
+      let sum = 0;
+      for (const total of lastKnown.values()) sum += total;
+      return { date, total: sum };
+    });
 
     const byCity = new Map<string, OfficialHistoryEntry[]>();
     for (const entry of scoped) {
