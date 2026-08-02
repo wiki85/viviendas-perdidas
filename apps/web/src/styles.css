@@ -2903,12 +2903,6 @@ textarea:focus-visible,
   max-width: 860px;
 }
 
-.stats-page__article h1 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .stats-page__intro {
   color: #3c4a44;
 }

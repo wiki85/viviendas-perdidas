@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ChartLine, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, TrendingDown, TrendingUp } from 'lucide-react';
 import type { OfficialHistoryEntry } from '../domain/types';
 import { CITY_MAIN_DWELLINGS } from '../lib/city-impact';
 import { cityDisplayName, COMMUNITIES } from '../lib/communities';
@@ -374,10 +374,7 @@ export function StatsPage({ onClose, loadHistory }: Props) {
       </nav>
       <article className="about-page__article stats-page__article">
         <p className="eyebrow">Estadísticas</p>
-        <h1>
-          <ChartLine size={26} aria-hidden="true" /> Evolución del registro oficial de viviendas
-          turísticas
-        </h1>
+        <h1>Evolución del registro oficial de viviendas turísticas</h1>
         <p className="stats-page__intro">
           Cada sincronización semanal con los registros autonómicos guarda una instantánea por
           ciudad: así puede verse dónde crecen las licencias, dónde se frenan y qué ciudades
