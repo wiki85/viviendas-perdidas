@@ -231,7 +231,7 @@ export function NewsletterPage({
               </button>
               {subscribed && (
                 <button
-                  className="button button--ghost"
+                  className="button button--report"
                   type="button"
                   disabled={busy}
                   onClick={() => void cancel()}
@@ -269,7 +269,7 @@ export function NewsletterPage({
                 ))}
               </select>
             </label>
-            <a className="button button--ghost" href={`/feeds/${feedCity}.xml`}>
+            <a className="button button--primary" href={`/feeds/${feedCity}.xml`}>
               Abrir feed
             </a>
           </div>
