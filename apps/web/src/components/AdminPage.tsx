@@ -18,6 +18,7 @@ import type {
   Listing,
   ListingsService,
   ListingType,
+  NewsletterSubscriber,
   PendingPhoto,
   PhotoDecision,
   ContactMessage,
@@ -30,7 +31,7 @@ type Props = {
   onClose: () => void;
 };
 
-type Tab = 'photos' | 'listings' | 'errors' | 'messages';
+type Tab = 'photos' | 'listings' | 'errors' | 'messages' | 'boletin';
 
 function prettyDetails(details: string): string {
   try {
@@ -78,6 +79,7 @@ export function AdminPage({ service, onClose }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
   const [messages, setMessages] = useState<ContactMessage[] | null>(null);
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[] | null>(null);
   const [drafts, setDrafts] = useState<
     Record<string, { type: ListingType; dwellings: number; locales: number }>
   >({});
@@ -137,6 +139,19 @@ export function AdminPage({ service, onClose }: Props) {
     }
   }, [service]);
 
+  const refreshSubscribers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setSubscribers(await service.adminListNewsletterSubscribers());
+    } catch (cause) {
+      setError(describeError(cause));
+      setSubscribers(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [service]);
+
   const deleteMessage = async (id: string) => {
     setBusyId(id);
     try {
@@ -154,8 +169,17 @@ export function AdminPage({ service, onClose }: Props) {
     if (tab === 'photos') void refreshPhotos();
     else if (tab === 'listings') void refreshListings();
     else if (tab === 'messages') void refreshMessages();
+    else if (tab === 'boletin') void refreshSubscribers();
     else void refreshErrors();
-  }, [email, refreshErrors, refreshListings, refreshMessages, refreshPhotos, tab]);
+  }, [
+    email,
+    refreshErrors,
+    refreshListings,
+    refreshMessages,
+    refreshPhotos,
+    refreshSubscribers,
+    tab,
+  ]);
 
   useEffect(() => {
     if (!photos) return;
@@ -474,6 +498,15 @@ export function AdminPage({ service, onClose }: Props) {
             >
               Mensajes {messages ? `(${messages.length})` : ''}
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'boletin'}
+              className={tab === 'boletin' ? 'is-active' : ''}
+              onClick={() => setTab('boletin')}
+            >
+              Boletín {subscribers ? `(${subscribers.filter((s) => s.active).length})` : ''}
+            </button>
             <div className="admin-tabs__side">
               <span className="admin-page__email">{email}</span>
               <button
@@ -484,7 +517,11 @@ export function AdminPage({ service, onClose }: Props) {
                     ? void refreshPhotos()
                     : tab === 'listings'
                       ? void refreshListings()
-                      : void refreshErrors()
+                      : tab === 'messages'
+                        ? void refreshMessages()
+                        : tab === 'boletin'
+                          ? void refreshSubscribers()
+                          : void refreshErrors()
                 }
                 disabled={loading}
                 aria-label="Recargar"
@@ -837,6 +874,48 @@ export function AdminPage({ service, onClose }: Props) {
                           Eliminar
                         </button>
                       </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {tab === 'boletin' && (
+            <>
+              <p className="admin-page__hint">
+                Suscriptores de El Recuento. La fuente de verdad es esta base de datos; Brevo solo
+                entrega los correos (pestaña Transaccional de Brevo para ver los envíos).
+              </p>
+              {subscribers && subscribers.length === 0 && !loading && (
+                <p className="admin-page__empty">Todavía no hay suscriptores.</p>
+              )}
+              <ul className="admin-page__list">
+                {(subscribers ?? []).map((entry) => (
+                  <li key={entry.email} className="admin-card">
+                    <div className="admin-card__body">
+                      <div className="admin-error__meta">
+                        <strong>{entry.email}</strong>
+                        <span>{entry.active ? 'activa' : 'de baja'}</span>
+                        <span>
+                          {[entry.weekly ? 'semanal' : null, entry.monthly ? 'mensual' : null]
+                            .filter(Boolean)
+                            .join(' + ') || 'sin frecuencia'}
+                        </span>
+                        {entry.createdAt && (
+                          <small>
+                            alta{' '}
+                            {new Date(entry.createdAt).toLocaleDateString('es-ES', {
+                              dateStyle: 'medium',
+                            })}
+                          </small>
+                        )}
+                      </div>
+                      <p className="admin-message__text">
+                        {entry.scopeLabels.length > 0
+                          ? entry.scopeLabels.join(' · ')
+                          : 'Sin zonas elegidas'}
+                      </p>
                     </div>
                   </li>
                 ))}

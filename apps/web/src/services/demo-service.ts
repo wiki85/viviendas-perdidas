@@ -16,6 +16,7 @@ import type {
   VoteResult,
   ContactMessage,
   NewsletterPreferences,
+  NewsletterSubscriber,
   OfficialHistoryEntry,
 } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
@@ -355,6 +356,19 @@ export class DemoListingsService implements ListingsService {
 
   async unsubscribeNewsletter(): Promise<void> {
     this.newsletterPreferences.subscribed = false;
+  }
+
+  async adminListNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return [
+      {
+        email: this.newsletterPreferences.email,
+        scopeLabels: ['Sevilla', 'Euskadi'],
+        weekly: true,
+        monthly: false,
+        active: this.newsletterPreferences.subscribed,
+        createdAt: new Date().toISOString(),
+      },
+    ];
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

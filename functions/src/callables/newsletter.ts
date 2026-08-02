@@ -5,7 +5,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { randomBytes } from 'node:crypto';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
-import { cityIdsForScope } from '../domain/communities.js';
+import { cityIdsForScope, scopeDisplayName } from '../domain/communities.js';
+import { requireModerator } from './common.js';
 
 /**
  * «El Recuento» subscriptions. Preferences live under the Firebase Auth uid
@@ -108,6 +109,33 @@ export const unsubscribeNewsletter = onCall(
       .doc(uid)
       .set({ unsubscribedAt: Timestamp.now() }, { merge: true });
     return { ok: true };
+  },
+);
+
+/** Panel de administración: quién está suscrito y a qué. Solo moderación. */
+export const adminListNewsletterSubscribers = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
+  async (request) => {
+    requireModerator(request);
+    const snapshot = await db.collection('newsletterSubscribers').limit(2000).get();
+    const subscribers = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        const scopes: string[] = Array.isArray(data.scopes)
+          ? data.scopes.filter((scope): scope is string => typeof scope === 'string')
+          : [];
+        return {
+          email: typeof data.email === 'string' ? data.email : '',
+          scopeLabels: scopes.map(scopeDisplayName),
+          weekly: data.weekly !== false,
+          monthly: data.monthly !== false,
+          active: data.unsubscribedAt === null || data.unsubscribedAt === undefined,
+          createdAt:
+            data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : null,
+        };
+      })
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    return { subscribers };
   },
 );
 

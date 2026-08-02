@@ -110,6 +110,10 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.unsubscribeNewsletter());
   }
 
+  adminListNewsletterSubscribers() {
+    return this.load().then((service) => service.adminListNewsletterSubscribers());
+  }
+
   submitContactMessage(input: ContactMessageInput) {
     return this.load().then((service) => service.submitContactMessage(input));
   }

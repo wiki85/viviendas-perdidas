@@ -74,6 +74,16 @@ export type OfficialHistoryEntry = {
   withLocation: number;
 };
 
+/** One subscriber row for the moderation panel. */
+export type NewsletterSubscriber = {
+  email: string;
+  scopeLabels: string[];
+  weekly: boolean;
+  monthly: boolean;
+  active: boolean;
+  createdAt: string | null;
+};
+
 /** «El Recuento» subscription preferences, keyed to the signed-in account. */
 export type NewsletterPreferences = {
   email: string;
@@ -339,6 +349,7 @@ export interface ListingsService {
     monthly: boolean;
   }): Promise<void>;
   unsubscribeNewsletter(): Promise<void>;
+  adminListNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
   adminListContactMessages(): Promise<ContactMessage[]>;
   adminDeleteContactMessage(id: string): Promise<void>;
   listPendingPhotos(): Promise<PendingPhoto[]>;

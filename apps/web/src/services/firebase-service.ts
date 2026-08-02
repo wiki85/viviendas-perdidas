@@ -51,6 +51,7 @@ import type {
   ContactMessage,
   ContactMessageInput,
   NewsletterPreferences,
+  NewsletterSubscriber,
   OfficialHistoryEntry,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
@@ -604,6 +605,15 @@ export class FirebaseListingsService implements ListingsService {
   async unsubscribeNewsletter(): Promise<void> {
     const callable = httpsCallable(this.functions, 'unsubscribeNewsletter');
     await callable({});
+  }
+
+  async adminListNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    const callable = httpsCallable<Record<string, never>, { subscribers: NewsletterSubscriber[] }>(
+      this.functions,
+      'adminListNewsletterSubscribers',
+    );
+    const response = await callable({});
+    return response.data.subscribers;
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

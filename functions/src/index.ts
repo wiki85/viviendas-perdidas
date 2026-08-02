@@ -34,6 +34,7 @@ export {
   getNewsletterPreferences,
   saveNewsletterPreferences,
   unsubscribeNewsletter,
+  adminListNewsletterSubscribers,
   bajaBoletin,
 } from './callables/newsletter.js';
 export { sendRecuentoSemanal, sendRecuentoMensual } from './scheduled/send-recuento.js';
