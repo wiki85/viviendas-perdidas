@@ -368,6 +368,22 @@ export class DemoListingsService implements ListingsService {
         active: this.newsletterPreferences.subscribed,
         createdAt: new Date().toISOString(),
       },
+      {
+        email: 'redaccion@demo.local',
+        scopeLabels: ['Toda España (ciudades cubiertas)'],
+        weekly: true,
+        monthly: true,
+        active: true,
+        createdAt: new Date(Date.now() - 86_400_000 * 3).toISOString(),
+      },
+      {
+        email: 'asociacion@demo.local',
+        scopeLabels: ['Comunitat Valenciana', 'Palma'],
+        weekly: false,
+        monthly: true,
+        active: false,
+        createdAt: new Date(Date.now() - 86_400_000 * 12).toISOString(),
+      },
     ];
   }
 

@@ -3334,3 +3334,67 @@ textarea:focus-visible,
 .newsletter-feeds .stats-filters {
   align-items: end;
 }
+
+/* ------------------------- Admin: tabla del boletín ----------------------- */
+
+.subs-table {
+  font-size: 0.84rem;
+}
+
+.subs-table th,
+.subs-table td {
+  padding: 7px 12px;
+}
+
+.subs-filters th {
+  background: #fff;
+  padding: 6px 12px 10px;
+}
+
+.subs-filters input,
+.subs-filters select {
+  font: inherit;
+  font-size: 0.8rem;
+  width: 100%;
+  min-width: 90px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(30, 43, 39, 0.18);
+  background: #fff;
+  color: inherit;
+}
+
+.subs-email {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.subs-zonas {
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subs-estado {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.subs-estado--activa {
+  background: rgba(49, 93, 76, 0.12);
+  color: #24463a;
+}
+
+.subs-estado--baja {
+  background: rgba(155, 59, 48, 0.12);
+  color: #7c2f26;
+}
+
+.subs-empty {
+  text-align: center;
+  color: #65716c;
+}

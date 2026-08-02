@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Camera,
@@ -32,6 +32,13 @@ type Props = {
 };
 
 type Tab = 'photos' | 'listings' | 'errors' | 'messages' | 'boletin';
+
+type SubSortKey = 'email' | 'zonas' | 'frecuencia' | 'estado' | 'alta';
+
+function frequencyLabel(entry: { weekly: boolean; monthly: boolean }): string {
+  const parts = [entry.weekly ? 'semanal' : null, entry.monthly ? 'mensual' : null].filter(Boolean);
+  return parts.join(' + ') || '—';
+}
 
 function prettyDetails(details: string): string {
   try {
@@ -80,6 +87,16 @@ export function AdminPage({ service, onClose }: Props) {
   const [errors, setErrors] = useState<ErrorLogEntry[] | null>(null);
   const [messages, setMessages] = useState<ContactMessage[] | null>(null);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[] | null>(null);
+  const [subSort, setSubSort] = useState<{ key: SubSortKey; direction: 'asc' | 'desc' }>({
+    key: 'alta',
+    direction: 'desc',
+  });
+  const [subFilters, setSubFilters] = useState({
+    email: '',
+    zonas: '',
+    frecuencia: 'todas',
+    estado: 'todas',
+  });
   const [drafts, setDrafts] = useState<
     Record<string, { type: ListingType; dwellings: number; locales: number }>
   >({});
@@ -151,6 +168,69 @@ export function AdminPage({ service, onClose }: Props) {
       setLoading(false);
     }
   }, [service]);
+
+  const visibleSubscribers = useMemo(() => {
+    if (!subscribers) return null;
+    const email = subFilters.email.trim().toLocaleLowerCase('es');
+    const zonas = subFilters.zonas.trim().toLocaleLowerCase('es');
+    const filtered = subscribers.filter((entry) => {
+      if (email && !entry.email.toLocaleLowerCase('es').includes(email)) return false;
+      if (zonas && !entry.scopeLabels.join(' · ').toLocaleLowerCase('es').includes(zonas)) {
+        return false;
+      }
+      if (subFilters.frecuencia === 'semanal' && !entry.weekly) return false;
+      if (subFilters.frecuencia === 'mensual' && !entry.monthly) return false;
+      if (subFilters.frecuencia === 'ambas' && !(entry.weekly && entry.monthly)) return false;
+      if (subFilters.estado === 'activa' && !entry.active) return false;
+      if (subFilters.estado === 'baja' && entry.active) return false;
+      return true;
+    });
+    const factor = subSort.direction === 'asc' ? 1 : -1;
+    const value = (entry: NewsletterSubscriber): string => {
+      switch (subSort.key) {
+        case 'email':
+          return entry.email;
+        case 'zonas':
+          return entry.scopeLabels.join(' · ');
+        case 'frecuencia':
+          return frequencyLabel(entry);
+        case 'estado':
+          return entry.active ? 'activa' : 'baja';
+        default:
+          return entry.createdAt ?? '';
+      }
+    };
+    return [...filtered].sort(
+      (a, b) => factor * value(a).localeCompare(value(b), 'es') || a.email.localeCompare(b.email),
+    );
+  }, [subscribers, subFilters, subSort]);
+
+  const toggleSubSort = (key: SubSortKey) => {
+    setSubSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: key === 'alta' ? 'desc' : 'asc' },
+    );
+  };
+
+  const subSortHeader = (key: SubSortKey, label: string) => (
+    <th
+      aria-sort={
+        subSort.key === key ? (subSort.direction === 'asc' ? 'ascending' : 'descending') : undefined
+      }
+    >
+      <button
+        type="button"
+        className={`stats-sort ${subSort.key === key ? 'is-active' : ''}`}
+        onClick={() => toggleSubSort(key)}
+      >
+        {label}
+        <span aria-hidden="true" className="stats-sort__arrow">
+          {subSort.key === key ? (subSort.direction === 'asc' ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
+  );
 
   const deleteMessage = async (id: string) => {
     setBusyId(id);
@@ -890,36 +970,105 @@ export function AdminPage({ service, onClose }: Props) {
               {subscribers && subscribers.length === 0 && !loading && (
                 <p className="admin-page__empty">Todavía no hay suscriptores.</p>
               )}
-              <ul className="admin-page__list">
-                {(subscribers ?? []).map((entry) => (
-                  <li key={entry.email} className="admin-card">
-                    <div className="admin-card__body">
-                      <div className="admin-error__meta">
-                        <strong>{entry.email}</strong>
-                        <span>{entry.active ? 'activa' : 'de baja'}</span>
-                        <span>
-                          {[entry.weekly ? 'semanal' : null, entry.monthly ? 'mensual' : null]
-                            .filter(Boolean)
-                            .join(' + ') || 'sin frecuencia'}
-                        </span>
-                        {entry.createdAt && (
-                          <small>
-                            alta{' '}
-                            {new Date(entry.createdAt).toLocaleDateString('es-ES', {
-                              dateStyle: 'medium',
-                            })}
-                          </small>
-                        )}
-                      </div>
-                      <p className="admin-message__text">
-                        {entry.scopeLabels.length > 0
-                          ? entry.scopeLabels.join(' · ')
-                          : 'Sin zonas elegidas'}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {subscribers && subscribers.length > 0 && (
+                <div className="stats-table-wrap">
+                  <table className="stats-table subs-table">
+                    <thead>
+                      <tr>
+                        {subSortHeader('email', 'Correo')}
+                        {subSortHeader('zonas', 'Zonas')}
+                        {subSortHeader('frecuencia', 'Frecuencia')}
+                        {subSortHeader('estado', 'Estado')}
+                        {subSortHeader('alta', 'Alta')}
+                      </tr>
+                      <tr className="subs-filters">
+                        <th>
+                          <input
+                            type="search"
+                            placeholder="Filtrar correo…"
+                            value={subFilters.email}
+                            onChange={(event) =>
+                              setSubFilters((f) => ({ ...f, email: event.target.value }))
+                            }
+                          />
+                        </th>
+                        <th>
+                          <input
+                            type="search"
+                            placeholder="Filtrar zonas…"
+                            value={subFilters.zonas}
+                            onChange={(event) =>
+                              setSubFilters((f) => ({ ...f, zonas: event.target.value }))
+                            }
+                          />
+                        </th>
+                        <th>
+                          <select
+                            value={subFilters.frecuencia}
+                            aria-label="Filtrar frecuencia"
+                            onChange={(event) =>
+                              setSubFilters((f) => ({ ...f, frecuencia: event.target.value }))
+                            }
+                          >
+                            <option value="todas">Todas</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="mensual">Mensual</option>
+                            <option value="ambas">Semanal + mensual</option>
+                          </select>
+                        </th>
+                        <th>
+                          <select
+                            value={subFilters.estado}
+                            aria-label="Filtrar estado"
+                            onChange={(event) =>
+                              setSubFilters((f) => ({ ...f, estado: event.target.value }))
+                            }
+                          >
+                            <option value="todas">Todos</option>
+                            <option value="activa">Activa</option>
+                            <option value="baja">De baja</option>
+                          </select>
+                        </th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(visibleSubscribers ?? []).map((entry) => (
+                        <tr key={entry.email}>
+                          <td className="subs-email">{entry.email}</td>
+                          <td className="subs-zonas" title={entry.scopeLabels.join(' · ')}>
+                            {entry.scopeLabels.join(' · ') || '—'}
+                          </td>
+                          <td>{frequencyLabel(entry)}</td>
+                          <td>
+                            <span
+                              className={`subs-estado ${entry.active ? 'subs-estado--activa' : 'subs-estado--baja'}`}
+                            >
+                              {entry.active ? 'activa' : 'de baja'}
+                            </span>
+                          </td>
+                          <td>
+                            {entry.createdAt
+                              ? new Date(entry.createdAt).toLocaleDateString('es-ES', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: '2-digit',
+                                })
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                      {visibleSubscribers && visibleSubscribers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="subs-empty">
+                            Ningún suscriptor coincide con los filtros.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
 
