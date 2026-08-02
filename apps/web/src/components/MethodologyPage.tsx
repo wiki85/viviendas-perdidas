@@ -75,7 +75,10 @@ export function MethodologyPage({ onClose }: Props) {
             turísticas oficiales con los hogares principales del Censo 2021 (IECA/SIMA), citando la
             evidencia académica de García-López et al. (<em>Journal of Urban Economics</em>, 2020)
             sobre el efecto del alquiler turístico en alquileres y precios. Cada página enlaza sus
-            fuentes.
+            fuentes. El Censo 2021 es el censo de viviendas más reciente publicado por el INE: el
+            Censo Anual solo actualiza población, y los censos de viviendas se publican cada tres o
+            cuatro años, así que es el último dato municipal oficial disponible; lo actualizaremos
+            en cuanto el INE publique el siguiente.
           </p>
           <a
             className="text-link"

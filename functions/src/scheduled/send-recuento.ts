@@ -123,6 +123,7 @@ export const sendRecuentoSemanal = onSchedule(
     memory: '256MiB',
     schedule: 'every monday 09:00',
     timeZone: 'Europe/Madrid',
+    secrets: ['BREVO_API_KEY'],
   },
   async () => runEdition('semanal', 8),
 );
@@ -135,6 +136,7 @@ export const sendRecuentoMensual = onSchedule(
     memory: '256MiB',
     schedule: '30 9 1 * *',
     timeZone: 'Europe/Madrid',
+    secrets: ['BREVO_API_KEY'],
   },
   async () => runEdition('mensual', 32),
 );
