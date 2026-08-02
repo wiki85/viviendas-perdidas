@@ -288,11 +288,22 @@ export function MethodologyPage({ onClose }: Props) {
             cuenta en el mapa.
           </p>
           <p>
+            Los <strong>límites de barrio</strong> que usa el mapa son los polígonos oficiales de
+            cada ciudad: Ajuntament de Barcelona, Ayuntamiento de Madrid, Ajuntament de València,
+            Ayuntamiento de Sevilla y Ayuntamiento de Málaga; Ayuntamiento de Donostia / San
+            Sebastián (CC BY-SA 3.0), Ayuntamiento de Pamplona (CC BY 4.0), IDE Palma (Ajuntament de
+            Palma), barrios estadísticos de EUSTAT vía geoEuskadi para Bilbao (CC BY), y la capa de
+            barrios urbanos de los Datos Espaciales de Referencia de Andalucía (DERA) del{' '}
+            <strong>Instituto de Estadística y Cartografía de Andalucía</strong> (CC BY 4.0) para
+            Granada, Córdoba, Cádiz, Huelva, Jaén, Almería, Jerez y Marbella.
+          </p>
+          <p>
             <strong>
               Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
               Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro,
-              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, Comunidad de Madrid, IGN)
-              respalda o avala este proyecto
+              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, Comunidad de Madrid, IGN,
+              EUSTAT, IECA ni los ayuntamientos que publican sus barrios) respalda o avala este
+              proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan
