@@ -1,7 +1,23 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-31T20:55:42.903Z",
+  "generatedAt": "2026-08-02T16:44:18.740Z",
   "cities": [
+    {
+      "id": "almeria",
+      "name": "Almería",
+      "center": [-2.4570155, 36.842209],
+      "bounds": {
+        "north": 36.869878,
+        "south": 36.81454,
+        "east": -2.426168,
+        "west": -2.487863
+      },
+      "geoJsonUrl": "/geo/almeria/neighborhoods.23efef61bab8.geojson",
+      "fallbackGeoJsonUrl": "/geo/almeria/neighborhoods.geojson",
+      "featureCount": 34,
+      "sha256": "23efef61bab845580165ee5e1a840bcd1793a59c345ce0899e271b825faf3dbc",
+      "representative": false
+    },
     {
       "id": "barcelona",
       "name": "Barcelona",
@@ -16,6 +32,134 @@
       "fallbackGeoJsonUrl": "/geo/barcelona/neighborhoods.geojson",
       "featureCount": 73,
       "sha256": "bb27a00685157357111574f908523c7c2b97b21a706acacb5d4a61033c297819",
+      "representative": false
+    },
+    {
+      "id": "bilbao",
+      "name": "Bilbao",
+      "center": [-2.9331195, 43.2519215],
+      "bounds": {
+        "north": 43.290132,
+        "south": 43.213711,
+        "east": -2.880261,
+        "west": -2.985978
+      },
+      "geoJsonUrl": "/geo/bilbao/neighborhoods.81007ec09761.geojson",
+      "fallbackGeoJsonUrl": "/geo/bilbao/neighborhoods.geojson",
+      "featureCount": 46,
+      "sha256": "81007ec09761d26b74d93026fd8319ae00cbcab8d7a067eb77326488fe9322d6",
+      "representative": false
+    },
+    {
+      "id": "cadiz",
+      "name": "Cádiz",
+      "center": [-6.2819755, 36.516519],
+      "bounds": {
+        "north": 36.543209,
+        "south": 36.489829,
+        "east": -6.25435,
+        "west": -6.309601
+      },
+      "geoJsonUrl": "/geo/cadiz/neighborhoods.c463112ea14f.geojson",
+      "fallbackGeoJsonUrl": "/geo/cadiz/neighborhoods.geojson",
+      "featureCount": 32,
+      "sha256": "c463112ea14fc7c8aa6bb49ce98c46f06d6db4710be572f4473d5956c420dc9e",
+      "representative": false
+    },
+    {
+      "id": "cordoba",
+      "name": "Córdoba",
+      "center": [-4.786144, 37.889298],
+      "bounds": {
+        "north": 37.934851,
+        "south": 37.843745,
+        "east": -4.745622,
+        "west": -4.826666
+      },
+      "geoJsonUrl": "/geo/cordoba/neighborhoods.283bdebfdbf2.geojson",
+      "fallbackGeoJsonUrl": "/geo/cordoba/neighborhoods.geojson",
+      "featureCount": 70,
+      "sha256": "283bdebfdbf286d966055ef3ad32b2cc48c0bb44eba9f9a748143a3f846ac4f0",
+      "representative": false
+    },
+    {
+      "id": "donostia",
+      "name": "Donostia / San Sebastián",
+      "center": [-1.9873315, 43.278041],
+      "bounds": {
+        "north": 43.338143,
+        "south": 43.217939,
+        "east": -1.887991,
+        "west": -2.086672
+      },
+      "geoJsonUrl": "/geo/donostia/neighborhoods.0e4d27d6a911.geojson",
+      "fallbackGeoJsonUrl": "/geo/donostia/neighborhoods.geojson",
+      "featureCount": 19,
+      "sha256": "0e4d27d6a9117c2452b76e74d97edfac239dcf21a717f1d537650052da2b30db",
+      "representative": false
+    },
+    {
+      "id": "granada",
+      "name": "Granada",
+      "center": [-3.597649, 37.1779055],
+      "bounds": {
+        "north": 37.213239,
+        "south": 37.142572,
+        "east": -3.547871,
+        "west": -3.647427
+      },
+      "geoJsonUrl": "/geo/granada/neighborhoods.cbdfdd0bf555.geojson",
+      "fallbackGeoJsonUrl": "/geo/granada/neighborhoods.geojson",
+      "featureCount": 33,
+      "sha256": "cbdfdd0bf555e9c906c0c64f0f90ed0fe594134810e52c1fcad1c771a343ba69",
+      "representative": false
+    },
+    {
+      "id": "huelva",
+      "name": "Huelva",
+      "center": [-6.9399995, 37.264676],
+      "bounds": {
+        "north": 37.28484,
+        "south": 37.244512,
+        "east": -6.916205,
+        "west": -6.963794
+      },
+      "geoJsonUrl": "/geo/huelva/neighborhoods.4285a4c49c74.geojson",
+      "fallbackGeoJsonUrl": "/geo/huelva/neighborhoods.geojson",
+      "featureCount": 54,
+      "sha256": "4285a4c49c74e2cfec9367bfd274807228ff85223404fa3beebb6acc02e38a54",
+      "representative": false
+    },
+    {
+      "id": "jaen",
+      "name": "Jaén",
+      "center": [-3.7928725, 37.779911],
+      "bounds": {
+        "north": 37.805212,
+        "south": 37.75461,
+        "east": -3.762675,
+        "west": -3.82307
+      },
+      "geoJsonUrl": "/geo/jaen/neighborhoods.9cd7da89d5bd.geojson",
+      "fallbackGeoJsonUrl": "/geo/jaen/neighborhoods.geojson",
+      "featureCount": 26,
+      "sha256": "9cd7da89d5bd1fdf23af79b23230ef2612282c986add492f7710aa8cc1d0d5a9",
+      "representative": false
+    },
+    {
+      "id": "jerez-de-la-frontera",
+      "name": "Jerez de la Frontera",
+      "center": [-6.117411499999999, 36.6882555],
+      "bounds": {
+        "north": 36.734946,
+        "south": 36.641565,
+        "east": -6.070466,
+        "west": -6.164357
+      },
+      "geoJsonUrl": "/geo/jerez-de-la-frontera/neighborhoods.df3efbe4d2ef.geojson",
+      "fallbackGeoJsonUrl": "/geo/jerez-de-la-frontera/neighborhoods.geojson",
+      "featureCount": 105,
+      "sha256": "df3efbe4d2efd845004ec312c0738b3c27c1b35ad934cf8ce83bd6030bbb3255",
       "representative": false
     },
     {
@@ -48,6 +192,54 @@
       "fallbackGeoJsonUrl": "/geo/malaga/neighborhoods.geojson",
       "featureCount": 419,
       "sha256": "18439136c0920f050928dbfbc206fae3e78e317741c140bf92f71a15765f62dc",
+      "representative": false
+    },
+    {
+      "id": "marbella",
+      "name": "Marbella",
+      "center": [-4.8731995, 36.497236],
+      "bounds": {
+        "north": 36.533334,
+        "south": 36.461138,
+        "east": -4.732256,
+        "west": -5.014143
+      },
+      "geoJsonUrl": "/geo/marbella/neighborhoods.e2aa1690eeae.geojson",
+      "fallbackGeoJsonUrl": "/geo/marbella/neighborhoods.geojson",
+      "featureCount": 211,
+      "sha256": "e2aa1690eeae3e3a5b15347c32a53e249d3159a955ff798149d0318bff81bb88",
+      "representative": false
+    },
+    {
+      "id": "palma",
+      "name": "Palma",
+      "center": [2.705458, 39.58103],
+      "bounds": {
+        "north": 39.658245,
+        "south": 39.503815,
+        "east": 2.847049,
+        "west": 2.563867
+      },
+      "geoJsonUrl": "/geo/palma/neighborhoods.d6317e4192bd.geojson",
+      "fallbackGeoJsonUrl": "/geo/palma/neighborhoods.geojson",
+      "featureCount": 88,
+      "sha256": "d6317e4192bd9cb379ae199a15ba9a23a8439287fd1923fd8793f1b9f358c4cf",
+      "representative": false
+    },
+    {
+      "id": "pamplona",
+      "name": "Pamplona",
+      "center": [-1.649745, 42.8155995],
+      "bounds": {
+        "north": 42.842442,
+        "south": 42.788757,
+        "east": -1.604482,
+        "west": -1.695008
+      },
+      "geoJsonUrl": "/geo/pamplona/neighborhoods.d6a64a441577.geojson",
+      "fallbackGeoJsonUrl": "/geo/pamplona/neighborhoods.geojson",
+      "featureCount": 14,
+      "sha256": "d6a64a441577a3ff795eaf1d15e5cc0bca36f7c7e47ed359b9a87ea77981b3ff",
       "representative": false
     },
     {
