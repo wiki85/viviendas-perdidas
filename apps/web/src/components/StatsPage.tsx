@@ -24,14 +24,19 @@ function formatDay(iso: string): string {
   return `${day}/${month}/${year?.slice(2)}`;
 }
 
-/** Rounded "nice" ticks (0 / 2.000 / 4.000…) for the y axis. */
+/** Rounded "nice" ticks (0 / 2.000 / 4.000…) for the y axis. The last tick
+ * always reaches or exceeds the maximum: the scale top must never clip the
+ * data (a 82k line above a 50k top rendered outside the plot). */
 function niceTicks(maximum: number): number[] {
   if (maximum <= 0) return [0];
   const raw = maximum / 3;
   const magnitude = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= raw) ?? magnitude * 10;
   const ticks: number[] = [];
-  for (let tick = 0; tick <= maximum + step * 0.05; tick += step) ticks.push(tick);
+  for (let tick = 0; ; tick += step) {
+    ticks.push(tick);
+    if (tick >= maximum) break;
+  }
   return ticks;
 }
 
