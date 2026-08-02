@@ -3183,3 +3183,32 @@ textarea:focus-visible,
 .stats-page__sources a {
   color: #315d4c;
 }
+
+.stats-sort {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.stats-sort__arrow {
+  font-size: 0.68rem;
+  opacity: 0.45;
+}
+
+.stats-sort.is-active .stats-sort__arrow {
+  opacity: 1;
+  color: #315d4c;
+}
+
+.stats-sort:hover .stats-sort__arrow {
+  opacity: 0.9;
+}

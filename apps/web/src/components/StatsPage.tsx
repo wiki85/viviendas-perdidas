@@ -42,6 +42,8 @@ function niceTicks(maximum: number): number[] {
 
 type SeriesPoint = { date: string; total: number };
 
+type SortKey = 'name' | 'total' | 'deltaLast' | 'deltaSinceFirst' | 'places' | 'pressure';
+
 /**
  * Single-series evolution line: 2px stroke, 10% area wash, hairline grid,
  * crosshair snapped to the nearest sync date with a tooltip readout. The
@@ -229,6 +231,10 @@ export function StatsPage({ onClose, loadHistory }: Props) {
   const [error, setError] = useState(false);
   const [communityId, setCommunityId] = useState('todas');
   const [cityId, setCityId] = useState('todas');
+  const [sort, setSort] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({
+    key: 'total',
+    direction: 'desc',
+  });
 
   useEffect(() => {
     loadHistory().then(setEntries, () => setError(true));
@@ -314,6 +320,49 @@ export function StatsPage({ onClose, loadHistory }: Props) {
       sharePct: knownDwellings > 0 ? Math.round((knownTotal / knownDwellings) * 1000) / 10 : null,
     };
   }, [entries, scopeCityIds]);
+
+  const sortedCities = useMemo(() => {
+    if (!model) return [];
+    const factor = sort.direction === 'asc' ? 1 : -1;
+    return [...model.cities].sort((a, b) => {
+      if (sort.key === 'name') return factor * a.name.localeCompare(b.name, 'es');
+      // Las ciudades sin censo (presión nula) van siempre al final.
+      const va = sort.key === 'pressure' ? a.pressure : a[sort.key];
+      const vb = sort.key === 'pressure' ? b.pressure : b[sort.key];
+      if (va === null && vb === null) return a.name.localeCompare(b.name, 'es');
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return factor * (va - vb) || a.name.localeCompare(b.name, 'es');
+    });
+  }, [model, sort]);
+
+  const toggleSort = (key: SortKey) => {
+    setSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: key === 'name' ? 'asc' : 'desc' },
+    );
+  };
+
+  const sortHeader = (key: SortKey, label: string, numeric = true) => (
+    <th
+      className={numeric ? 'num' : undefined}
+      aria-sort={
+        sort.key === key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined
+      }
+    >
+      <button
+        type="button"
+        className={`stats-sort ${sort.key === key ? 'is-active' : ''}`}
+        onClick={() => toggleSort(key)}
+      >
+        {label}
+        <span aria-hidden="true" className="stats-sort__arrow">
+          {sort.key === key ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
+  );
 
   return (
     <main className="about-page stats-page">
@@ -445,16 +494,16 @@ export function StatsPage({ onClose, loadHistory }: Props) {
                 <table className="stats-table">
                   <thead>
                     <tr>
-                      <th>Ciudad</th>
-                      <th className="num">Viviendas</th>
-                      <th className="num">Última sync</th>
-                      <th className="num">Desde el inicio</th>
-                      <th className="num">Plazas</th>
-                      <th className="num">Por 1.000 hogares</th>
+                      {sortHeader('name', 'Ciudad', false)}
+                      {sortHeader('total', 'Viviendas')}
+                      {sortHeader('deltaLast', 'Última sync')}
+                      {sortHeader('deltaSinceFirst', 'Desde el inicio')}
+                      {sortHeader('places', 'Plazas')}
+                      {sortHeader('pressure', 'Por 1.000 hogares')}
                     </tr>
                   </thead>
                   <tbody>
-                    {model.cities.map((city) => (
+                    {sortedCities.map((city) => (
                       <tr key={city.id}>
                         <td>
                           <a href={`/ciudad/${city.id}`}>{city.name}</a>
