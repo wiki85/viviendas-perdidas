@@ -50,6 +50,7 @@ import type {
   VoteResult,
   ContactMessage,
   ContactMessageInput,
+  NewsletterPreferences,
   OfficialHistoryEntry,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
@@ -568,6 +569,41 @@ export class FirebaseListingsService implements ListingsService {
       }
       throw cause;
     }
+  }
+
+  async newsletterSignIn(): Promise<{ email: string }> {
+    const { getAuth, GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+    const auth = getAuth(this.app);
+    let email = auth.currentUser?.email ?? null;
+    if (!email) {
+      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+      email = credential.user.email;
+    }
+    if (!email) throw new Error('La cuenta no tiene email visible.');
+    return { email };
+  }
+
+  async getNewsletterPreferences(): Promise<NewsletterPreferences> {
+    const callable = httpsCallable<Record<string, never>, NewsletterPreferences>(
+      this.functions,
+      'getNewsletterPreferences',
+    );
+    const response = await callable({});
+    return response.data;
+  }
+
+  async saveNewsletterPreferences(preferences: {
+    scopes: string[];
+    weekly: boolean;
+    monthly: boolean;
+  }): Promise<void> {
+    const callable = httpsCallable(this.functions, 'saveNewsletterPreferences');
+    await callable(preferences);
+  }
+
+  async unsubscribeNewsletter(): Promise<void> {
+    const callable = httpsCallable(this.functions, 'unsubscribeNewsletter');
+    await callable({});
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

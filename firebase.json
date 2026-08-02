@@ -19,6 +19,20 @@
     "trailingSlash": false,
     "rewrites": [
       {
+        "source": "/boletin/baja",
+        "function": {
+          "functionId": "bajaBoletin",
+          "region": "europe-southwest1"
+        }
+      },
+      {
+        "source": "/feeds/**",
+        "function": {
+          "functionId": "feeds",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "/compartir/**",
         "function": {
           "functionId": "shareScope",

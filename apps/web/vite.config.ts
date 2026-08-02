@@ -23,6 +23,8 @@ export default defineConfig({
           /^\/datos/,
           /^\/robots/,
           /^\/\.well-known/,
+          /^\/feeds/,
+          /^\/boletin\/baja/,
         ],
         // Firestore, Maps and Functions stay network-only: no runtime caching.
         runtimeCaching: [],

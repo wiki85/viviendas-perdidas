@@ -30,6 +30,14 @@ export {
   syncMadrid,
   adminSyncOfficialData,
 } from './scheduled/sync-openrta.js';
+export {
+  getNewsletterPreferences,
+  saveNewsletterPreferences,
+  unsubscribeNewsletter,
+  bajaBoletin,
+} from './callables/newsletter.js';
+export { sendRecuentoSemanal, sendRecuentoMensual } from './scheduled/send-recuento.js';
+export { feeds } from './http/feeds.js';
 export { exportPublicData } from './http/export-public-data.js';
 export { shareScope } from './http/share-scope.js';
 export { cityPage, sitemap } from './http/public-pages.js';

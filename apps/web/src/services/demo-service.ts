@@ -15,6 +15,7 @@ import type {
   VoteKind,
   VoteResult,
   ContactMessage,
+  NewsletterPreferences,
   OfficialHistoryEntry,
 } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
@@ -322,6 +323,38 @@ export class DemoListingsService implements ListingsService {
 
   async adminSignIn(): Promise<{ email: string; moderator: boolean }> {
     return { email: 'moderacion@demo.local', moderator: true };
+  }
+
+  private newsletterPreferences: NewsletterPreferences = {
+    email: 'vecina@demo.local',
+    subscribed: false,
+    scopes: [],
+    weekly: true,
+    monthly: true,
+  };
+
+  async newsletterSignIn(): Promise<{ email: string }> {
+    return { email: this.newsletterPreferences.email };
+  }
+
+  async getNewsletterPreferences(): Promise<NewsletterPreferences> {
+    return { ...this.newsletterPreferences, scopes: [...this.newsletterPreferences.scopes] };
+  }
+
+  async saveNewsletterPreferences(preferences: {
+    scopes: string[];
+    weekly: boolean;
+    monthly: boolean;
+  }): Promise<void> {
+    this.newsletterPreferences = {
+      ...this.newsletterPreferences,
+      ...preferences,
+      subscribed: true,
+    };
+  }
+
+  async unsubscribeNewsletter(): Promise<void> {
+    this.newsletterPreferences.subscribed = false;
   }
 
   async listPendingPhotos(): Promise<PendingPhoto[]> {

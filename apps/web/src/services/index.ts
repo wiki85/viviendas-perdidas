@@ -94,6 +94,22 @@ class LazyFirebaseListingsService implements ListingsService {
     return this.load().then((service) => service.listOfficialHistory());
   }
 
+  newsletterSignIn() {
+    return this.load().then((service) => service.newsletterSignIn());
+  }
+
+  getNewsletterPreferences() {
+    return this.load().then((service) => service.getNewsletterPreferences());
+  }
+
+  saveNewsletterPreferences(preferences: { scopes: string[]; weekly: boolean; monthly: boolean }) {
+    return this.load().then((service) => service.saveNewsletterPreferences(preferences));
+  }
+
+  unsubscribeNewsletter() {
+    return this.load().then((service) => service.unsubscribeNewsletter());
+  }
+
   submitContactMessage(input: ContactMessageInput) {
     return this.load().then((service) => service.submitContactMessage(input));
   }

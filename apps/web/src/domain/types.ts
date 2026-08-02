@@ -74,6 +74,16 @@ export type OfficialHistoryEntry = {
   withLocation: number;
 };
 
+/** «El Recuento» subscription preferences, keyed to the signed-in account. */
+export type NewsletterPreferences = {
+  email: string;
+  subscribed: boolean;
+  /** 'all' | 'community:<id>' | 'city:<id>'. */
+  scopes: string[];
+  weekly: boolean;
+  monthly: boolean;
+};
+
 /** Contact-form submission (the hidden `website` field is the honeypot). */
 export type ContactMessageInput = {
   fullName: string;
@@ -321,6 +331,14 @@ export interface ListingsService {
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;
   submitContactMessage(input: ContactMessageInput): Promise<void>;
   listOfficialHistory(): Promise<OfficialHistoryEntry[]>;
+  newsletterSignIn(): Promise<{ email: string }>;
+  getNewsletterPreferences(): Promise<NewsletterPreferences>;
+  saveNewsletterPreferences(preferences: {
+    scopes: string[];
+    weekly: boolean;
+    monthly: boolean;
+  }): Promise<void>;
+  unsubscribeNewsletter(): Promise<void>;
   adminListContactMessages(): Promise<ContactMessage[]>;
   adminDeleteContactMessage(id: string): Promise<void>;
   listPendingPhotos(): Promise<PendingPhoto[]>;

@@ -37,6 +37,9 @@ const StatsPage = lazy(() =>
 const AdminPage = lazy(() =>
   import('./components/AdminPage').then((module) => ({ default: module.AdminPage })),
 );
+const NewsletterPage = lazy(() =>
+  import('./components/NewsletterPage').then((module) => ({ default: module.NewsletterPage })),
+);
 const MethodologyPage = lazy(() =>
   import('./components/MethodologyPage').then((module) => ({ default: module.MethodologyPage })),
 );
@@ -107,6 +110,10 @@ function currentPathIsMethodology() {
 
 function currentPathIsStats() {
   return window.location.pathname.replace(/\/$/, '') === '/estadisticas';
+}
+
+function currentPathIsNewsletter() {
+  return window.location.pathname.replace(/\/$/, '') === '/boletin';
 }
 
 function sharedScopeFromUrl(): string | null {
@@ -218,6 +225,7 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(currentPathIsAdmin);
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
   const [statsOpen, setStatsOpen] = useState(currentPathIsStats);
+  const [newsletterOpen, setNewsletterOpen] = useState(currentPathIsNewsletter);
   const [donateOpen, setDonateOpen] = useState(false);
   // Sin ruta propia a propósito: la página de contacto no debe ser rastreable.
   const [contactOpen, setContactOpen] = useState(false);
@@ -520,6 +528,8 @@ export default function App() {
       setAboutOpen(currentPathIsAbout());
       setAdminOpen(currentPathIsAdmin());
       setMethodologyOpen(currentPathIsMethodology());
+      setStatsOpen(currentPathIsStats());
+      setNewsletterOpen(currentPathIsNewsletter());
     };
     window.addEventListener('popstate', popState);
     return () => window.removeEventListener('popstate', popState);
@@ -896,6 +906,23 @@ export default function App() {
             setStatsOpen(false);
           }}
           loadHistory={() => service.listOfficialHistory()}
+        />
+      </Suspense>
+    );
+  }
+
+  if (newsletterOpen) {
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <NewsletterPage
+          onClose={() => {
+            window.history.pushState({}, '', '/');
+            setNewsletterOpen(false);
+          }}
+          signIn={() => service.newsletterSignIn()}
+          loadPreferences={() => service.getNewsletterPreferences()}
+          savePreferences={(preferences) => service.saveNewsletterPreferences(preferences)}
+          unsubscribe={() => service.unsubscribeNewsletter()}
         />
       </Suspense>
     );

@@ -526,6 +526,12 @@ export function StatsPage({ onClose, loadHistory }: Props) {
               Mallorca, Navarra y Euskadi (ver <a href="/metodologia">metodología y licencias</a>).
               La presión compara con los hogares principales del Censo 2021 (INE/IECA/Idescat).
             </p>
+
+            <p className="stats-page__sources">
+              ¿Quieres estas cifras en tu correo? Suscríbete a{' '}
+              <a href="/boletin">El Recuento, el boletín de datos</a>: cada semana o cada mes, las
+              variaciones de las zonas que elijas. También hay feeds RSS por ciudad.
+            </p>
           </>
         )}
       </article>

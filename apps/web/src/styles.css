@@ -3206,3 +3206,115 @@ textarea:focus-visible,
 .stats-sort:hover .stats-sort__arrow {
   opacity: 0.9;
 }
+
+/* ----------------------------- Newsletter page ---------------------------- */
+
+.newsletter-signin {
+  background: #fff;
+  border: 1px solid rgba(30, 43, 39, 0.12);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 18px 0;
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.newsletter-account {
+  color: #3c4a44;
+  margin: 14px 0 4px;
+}
+
+.newsletter-scopes {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+
+.newsletter-community {
+  border: 1px solid rgba(30, 43, 39, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px 12px;
+  margin: 0;
+  background: #fff;
+}
+
+.newsletter-community legend {
+  padding: 0 6px;
+}
+
+.newsletter-cities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.newsletter-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: #1e2b27;
+  cursor: pointer;
+}
+
+.newsletter-scope input {
+  accent-color: #315d4c;
+  width: 16px;
+  height: 16px;
+}
+
+.newsletter-scope input:disabled + *,
+.newsletter-scope:has(input:disabled) {
+  color: #97a19c;
+}
+
+.newsletter-scope--all {
+  font-weight: 700;
+}
+
+.newsletter-frequency {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.newsletter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0 8px;
+}
+
+.newsletter-message {
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 14px 0 0;
+  font-size: 0.92rem;
+}
+
+.newsletter-message--ok {
+  background: rgba(49, 93, 76, 0.12);
+  color: #24463a;
+}
+
+.newsletter-message--error {
+  background: rgba(155, 59, 48, 0.12);
+  color: #7c2f26;
+}
+
+.newsletter-feeds {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(30, 43, 39, 0.12);
+}
+
+.newsletter-feeds h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.newsletter-feeds .stats-filters {
+  align-items: end;
+}
