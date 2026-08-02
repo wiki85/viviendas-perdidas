@@ -71,10 +71,13 @@ describe('renderCityPage', () => {
     expect(html).toContain('Registro oficial de turismo');
     expect(html).toContain('Junta de Andalucía');
     // es-ES omits the thousands separator on 4-digit numbers.
-    expect(html).toContain('<strong>9578</strong>');
-    // Combined card: 34 vecinales + 9578 oficiales, with per-source toggles.
-    expect(html).toContain('<strong>9612</strong>');
-    expect(html).toContain('viviendas en alquiler turístico (ambas fuentes)');
+    expect(html).toContain('Registro oficial de turismo (9578)');
+    // Single dynamic row: 34 vecinales + 9578 oficiales = 9612 combinadas,
+    // with the per-state values baked into data attributes.
+    expect(html).toContain('data-ambas="9612"');
+    expect(html).toContain('data-oficial="9578"');
+    expect(html).toContain('data-vecinal="34"');
+    expect(html).toContain('viviendas en alquiler turístico');
     expect(html).toContain('data-toggle-source="oficial"');
     expect(html).toContain('data-toggle-source="vecinal"');
     // 9.578 VUT sobre 266.588 hogares principales del Censo 2021 ≈ 3,6%.

@@ -277,16 +277,14 @@ export const SHARED_CSS = `
   .evo-note a{color:#315d4c}
   code{background:rgba(30,43,39,.07);border-radius:6px;padding:2px 7px;font-size:.85em;word-break:break-all}
   .src-card{background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px;padding:16px 18px;margin:6px 0 24px}
-  .src-card .stats{margin:0}
+  .src-card .stats{margin:12px 0 0}
   .src-card .stat{background:#f7f3eb;border-color:rgba(30,43,39,.08)}
   .src-totals .stat strong{color:#9b3b30}
-  .src-note{font-size:.85rem;color:#65716c;margin:10px 0 12px}
-  .src-toggles{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}
-  .src-toggles button{font:inherit;font-size:.82rem;font-weight:700;padding:7px 14px;border-radius:999px;border:1px solid rgba(49,93,76,.3);background:rgba(49,93,76,.1);color:#24463a;cursor:pointer}
+  .src-note{font-size:.85rem;color:#65716c;margin:10px 0 0}
+  .src-toggles{display:flex;flex-wrap:wrap;gap:8px}
+  .src-toggles button{font:inherit;font-size:.82rem;font-weight:700;padding:7px 14px;border-radius:999px;border:1px solid rgba(49,93,76,.3);background:rgba(49,93,76,.12);color:#24463a;cursor:pointer}
   .src-toggles button[aria-pressed="false"]{background:transparent;color:#77837d;border-color:rgba(30,43,39,.18);text-decoration:line-through}
-  .src-card [data-source-panel]{margin-top:14px}
-  .src-card [data-source-panel][hidden]{display:none}
-  .src-card h3{font-size:.95rem;margin:0 0 8px}
+  .src-card [data-source-detail][hidden]{display:none}
   .src-card .credit{margin:10px 0 0}
   .embed-row{display:flex;gap:10px;align-items:center;margin:10px 0}
   .embed-row code{flex:1;min-width:0;display:block;background:#fff;border:1px solid rgba(30,43,39,.14);border-radius:10px;padding:9px 12px;font-size:.72rem;overflow-x:auto;white-space:nowrap}
@@ -296,13 +294,34 @@ export const SHARED_CSS = `
 
 const SHARE_SCRIPT = `
 (function(){
-  document.querySelectorAll('[data-toggle-source]').forEach(function(toggle){
+  var sourceToggles=Array.prototype.slice.call(document.querySelectorAll('[data-toggle-source]'));
+  function pressed(name){
+    var toggle=sourceToggles.find(function(t){return t.getAttribute('data-toggle-source')===name;});
+    return toggle?toggle.getAttribute('aria-pressed')==='true':false;
+  }
+  function applySources(){
+    var oficial=pressed('oficial');
+    var vecinal=pressed('vecinal');
+    var key=oficial&&vecinal?'ambas':oficial?'oficial':'vecinal';
+    document.querySelectorAll('[data-dynamic]').forEach(function(el){
+      var value=el.getAttribute('data-'+key);
+      if(value!==null)el.textContent=value;
+    });
+    document.querySelectorAll('[data-source-detail]').forEach(function(el){
+      if(pressed(el.getAttribute('data-source-detail')))el.removeAttribute('hidden');
+      else el.setAttribute('hidden','');
+    });
+  }
+  sourceToggles.forEach(function(toggle){
     toggle.addEventListener('click',function(){
-      var panel=document.querySelector('[data-source-panel="'+toggle.getAttribute('data-toggle-source')+'"]');
-      if(!panel)return;
-      var visible=toggle.getAttribute('aria-pressed')==='true';
-      toggle.setAttribute('aria-pressed',visible?'false':'true');
-      if(visible)panel.setAttribute('hidden','');else panel.removeAttribute('hidden');
+      var on=toggle.getAttribute('aria-pressed')==='true';
+      if(on){
+        // Al menos una fuente siempre activa.
+        var otherOn=sourceToggles.some(function(t){return t!==toggle&&t.getAttribute('aria-pressed')==='true';});
+        if(!otherOn)return;
+      }
+      toggle.setAttribute('aria-pressed',on?'false':'true');
+      applySources();
     });
   });
   document.querySelectorAll('[data-copy-target]').forEach(function(copyButton){
@@ -447,40 +466,35 @@ export function renderCityPage(
       <div class="stat"><strong>${n(city.lostCommercial)}</strong><span>comercios convertidos</span></div>
     </div>`;
 
-  // Sin registro oficial la página conserva la caja vecinal simple; con él,
-  // una única tarjeta muestra los totales combinados y cada fuente puede
-  // mostrarse u ocultarse (sin JavaScript ambas quedan visibles).
+  // Sin registro oficial la página conserva la caja vecinal simple. Con él,
+  // una única fila de números: los botones eligen la fuente (oficial,
+  // vecinal o ambas) y las cifras cambian dinámicamente. Sin JavaScript se
+  // muestran los totales combinados.
   const communitySection = official ? '' : communityGrid;
+  const officialInhabitants = inhabitants - city.lostInhabitants;
+  const dyn = (ambas: string, oficial: string, vecinal: string) =>
+    `data-dynamic data-ambas="${escapeHtml(ambas)}" data-oficial="${escapeHtml(oficial)}" data-vecinal="${escapeHtml(vecinal)}"`;
   const officialSection = official
     ? `
     <h2>Viviendas dedicadas al turismo</h2>
     <div class="src-card">
-      <div class="stats src-totals">
-        <div class="stat"><strong>${n(totalDwellings)}</strong><span>viviendas en alquiler turístico (ambas fuentes)</span></div>
-        <div class="stat"><strong>${n(households)}</strong><span>hogares que ya no pueden vivir ahí</span></div>
-        <div class="stat"><strong>${n(inhabitants)}</strong><span>personas desplazadas</span></div>
-      </div>
-      <p class="src-note">
-        Suma del registro oficial de turismo y de los registros vecinales de este mapa. Las
-        viviendas «solo por habitaciones» no se cuentan como hogar desplazado.
-      </p>
-      <div class="src-toggles" role="group" aria-label="Mostrar u ocultar cada fuente">
-        <button type="button" data-toggle-source="oficial" aria-pressed="true">Registro oficial (${n(official.total)})</button>
+      <div class="src-toggles" role="group" aria-label="Elegir las fuentes que suman">
+        <button type="button" data-toggle-source="oficial" aria-pressed="true">Registro oficial de turismo (${n(official.total)})</button>
         <button type="button" data-toggle-source="vecinal" aria-pressed="true">Registros vecinales (${n(city.lostDwellings)})</button>
       </div>
-      <div data-source-panel="oficial">
-        <h3>Registro oficial de turismo</h3>
-        <div class="stats stats--official">
-          <div class="stat"><strong>${n(official.total)}</strong><span>viviendas turísticas registradas</span></div>
-          <div class="stat"><strong>${n(official.entireHomes)}</strong><span>viviendas completas</span></div>
-          <div class="stat"><strong>${n(official.roomsOnly)}</strong><span>solo por habitaciones</span></div>
-          <div class="stat"><strong>${n(official.places)}</strong><span>plazas turísticas</span></div>
-        </div>
-        ${officialCredit(official.source)}
+      <div class="stats src-totals">
+        <div class="stat"><strong ${dyn(n(totalDwellings), n(official.total), n(city.lostDwellings))}>${n(totalDwellings)}</strong><span>viviendas en alquiler turístico</span></div>
+        <div class="stat"><strong ${dyn(n(households), n(officialEntire), n(city.lostFamilies))}>${n(households)}</strong><span>hogares que ya no pueden vivir ahí</span></div>
+        <div class="stat"><strong ${dyn(n(inhabitants), n(officialInhabitants), n(city.lostInhabitants))}>${n(inhabitants)}</strong><span>personas desplazadas</span></div>
+        <div class="stat"><strong ${dyn(n(official.places), n(official.places), '—')}>${n(official.places)}</strong><span>plazas turísticas oficiales</span></div>
       </div>
-      <div data-source-panel="vecinal">
-        <h3>Registros vecinales</h3>
-        ${communityGrid}
+      <p class="src-note" ${dyn(
+        'Suma del registro oficial de turismo y de los registros vecinales de este mapa. Las viviendas «solo por habitaciones» no se cuentan como hogar desplazado.',
+        `Solo el registro oficial: ${n(officialEntire)} viviendas completas y ${n(official.roomsOnly)} «solo por habitaciones» (estas no cuentan como hogar desplazado).`,
+        'Solo los registros vecinales aportados por la ciudadanía en este mapa, verificables y en construcción.',
+      )}>Suma del registro oficial de turismo y de los registros vecinales de este mapa. Las viviendas «solo por habitaciones» no se cuentan como hogar desplazado.</p>
+      <div data-source-detail="oficial">
+        ${officialCredit(official.source)}
       </div>
     </div>`
     : '';
