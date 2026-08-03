@@ -25,16 +25,24 @@ function formatDay(iso: string): string {
   return `${day}/${month}/${year?.slice(2)}`;
 }
 
-/** Rounded "nice" ticks (0 / 2.000 / 4.000…) for the y axis. The last tick
- * always reaches or exceeds the maximum: the scale top must never clip the
- * data (a 82k line above a 50k top rendered outside the plot). */
-function niceTicks(maximum: number): number[] {
-  if (maximum <= 0) return [0];
-  const raw = maximum / 3;
+/** Rounded "nice" ticks fitted to the DATA RANGE, not to zero: with totals
+ * around 80k a weekly delta of a few hundred is invisible on a 0-based axis,
+ * so the domain hugs [min, max] (first tick ≤ min, last tick ≥ max — data
+ * never clips). Absolute labels stay on the axis, so the zoomed scale is
+ * always explicit. */
+function niceTicks(minimum: number, maximum: number): number[] {
+  if (maximum <= minimum) {
+    // Flat series (or a single point): open a small window around the value.
+    const margin = Math.max(1, Math.round(maximum * 0.01));
+    minimum = Math.max(0, minimum - margin);
+    maximum += margin;
+  }
+  const raw = (maximum - minimum) / 3;
   const magnitude = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= raw) ?? magnitude * 10;
+  const start = Math.max(0, Math.floor(minimum / step) * step);
   const ticks: number[] = [];
-  for (let tick = 0; ; tick += step) {
+  for (let tick = start; ; tick += step) {
     ticks.push(tick);
     if (tick >= maximum) break;
   }
@@ -102,13 +110,16 @@ function EvolutionChart({ points }: { points: SeriesPoint[] }) {
 
   if (points.length === 0) return null;
   const maxTotal = Math.max(...points.map((point) => point.total));
-  const ticks = niceTicks(maxTotal);
+  const minTotal = Math.min(...points.map((point) => point.total));
+  const ticks = niceTicks(minTotal, maxTotal);
+  const floor = ticks[0] ?? minTotal;
   const top = ticks[ticks.length - 1] ?? maxTotal;
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const x = (index: number) =>
     pad.left + (points.length === 1 ? innerW / 2 : (index / (points.length - 1)) * innerW);
-  const y = (value: number) => pad.top + innerH - (top === 0 ? 0 : (value / top) * innerH);
+  const y = (value: number) =>
+    pad.top + innerH - (top === floor ? 0 : ((value - floor) / (top - floor)) * innerH);
 
   const path = points
     .map(
@@ -116,7 +127,8 @@ function EvolutionChart({ points }: { points: SeriesPoint[] }) {
         `${index === 0 ? 'M' : 'L'}${x(index).toFixed(1)},${y(point.total).toFixed(1)}`,
     )
     .join(' ');
-  const area = `${path} L${x(points.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
+  const plotBottom = (pad.top + innerH).toFixed(1);
+  const area = `${path} L${x(points.length - 1).toFixed(1)},${plotBottom} L${x(0).toFixed(1)},${plotBottom} Z`;
   const last = points[points.length - 1];
 
   const onMove = (event: React.PointerEvent) => {
