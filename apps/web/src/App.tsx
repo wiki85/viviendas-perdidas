@@ -126,6 +126,7 @@ function sharedSourceFromUrl(): SourceMode | null {
   const fuente = new URLSearchParams(window.location.search).get('fuente');
   if (fuente === 'oficial') return 'official';
   if (fuente === 'ambas') return 'both';
+  if (fuente === 'vecinal') return 'citizens';
   return null;
 }
 
@@ -238,9 +239,7 @@ export default function App() {
   const [contactOpen, setContactOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingImpact, setPendingImpact] = useState<PendingImpact | null>(null);
-  const [sourceMode, setSourceMode] = useState<SourceMode>(
-    () => sharedSourceFromUrl() ?? 'citizens',
-  );
+  const [sourceMode, setSourceMode] = useState<SourceMode>(() => sharedSourceFromUrl() ?? 'both');
   const [officialData, setOfficialData] = useState<
     { kind: 'cells'; cells: OfficialCell[] } | { kind: 'pins'; pins: OfficialPin[] } | null
   >(null);
@@ -854,7 +853,7 @@ export default function App() {
     // The link carries the active data source so the recipient (and the
     // social card) sees the same figures, official registry included.
     const fuenteParam =
-      sourceMode === 'official' ? 'oficial' : sourceMode === 'both' ? 'ambas' : null;
+      sourceMode === 'official' ? 'oficial' : sourceMode === 'both' ? 'ambas' : 'vecinal';
     const url =
       metricsAggregate.scope === 'country'
         ? `${window.location.origin}${fuenteParam ? `/?fuente=${fuenteParam}` : ''}`
