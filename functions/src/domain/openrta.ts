@@ -99,6 +99,13 @@ export const MUNICIPALITY_CENTERS: Record<
   BILBAO: { latitude: 43.263, longitude: -2.935, radiusKm: 12 },
   'DONOSTIA / SAN SEBASTIÁN': { latitude: 43.3183, longitude: -1.9812, radiusKm: 12 },
   MADRID: { latitude: 40.4168, longitude: -3.7038, radiusKm: 25 },
+  TORREVIEJA: { latitude: 37.9787, longitude: -0.6822, radiusKm: 15 },
+  CALP: { latitude: 38.6446, longitude: 0.0453, radiusKm: 10 },
+  DÉNIA: { latitude: 38.8408, longitude: 0.1057, radiusKm: 15 },
+  CALVIÀ: { latitude: 39.5657, longitude: 2.5062, radiusKm: 18 },
+  ALCÚDIA: { latitude: 39.8499, longitude: 3.124, radiusKm: 12 },
+  GIRONA: { latitude: 41.9794, longitude: 2.8214, radiusKm: 12 },
+  TARRAGONA: { latitude: 41.1189, longitude: 1.2445, radiusKm: 15 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

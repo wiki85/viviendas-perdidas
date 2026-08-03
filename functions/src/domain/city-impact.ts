@@ -46,6 +46,13 @@ export const CITY_CENSUS: Record<string, CityCensus> = {
   donostia: { mainDwellings: 79_285, population: 189_866 },
   bilbao: { mainDwellings: 147_655, population: 351_124 },
   madrid: { mainDwellings: 1_320_531, population: 3_506_730 },
+  torrevieja: { mainDwellings: 36_829, population: 98_533 },
+  calp: { mainDwellings: 9_839, population: 27_616 },
+  denia: { mainDwellings: 17_648, population: 47_261 },
+  calvia: { mainDwellings: 20_609, population: 53_793 },
+  alcudia: { mainDwellings: 7_983, population: 21_907 },
+  girona: { mainDwellings: 38_711, population: 108_666 },
+  tarragona: { mainDwellings: 53_551, population: 143_649 },
 };
 
 export interface CityImpactInput {

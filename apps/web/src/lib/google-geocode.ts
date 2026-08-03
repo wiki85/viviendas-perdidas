@@ -8,6 +8,8 @@ const CITY_SLUG_ALIASES: Readonly<Record<string, string>> = {
   iruna: 'pamplona',
   'alacant-alicante': 'alicante',
   alacant: 'alicante',
+  calpe: 'calp',
+  gerona: 'girona',
 };
 
 export function slugifyMunicipality(value: string) {

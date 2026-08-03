@@ -23,13 +23,13 @@ export const COMMUNITIES: readonly CommunityInfo[] = [
       'marbella',
     ],
   },
-  { id: 'cataluna', name: 'Cataluña', cityIds: ['barcelona'] },
+  { id: 'cataluna', name: 'Cataluña', cityIds: ['barcelona', 'girona', 'tarragona'] },
   {
     id: 'comunitat-valenciana',
     name: 'Comunitat Valenciana',
-    cityIds: ['valencia', 'alicante', 'benidorm'],
+    cityIds: ['valencia', 'alicante', 'benidorm', 'torrevieja', 'calp', 'denia'],
   },
-  { id: 'illes-balears', name: 'Illes Balears', cityIds: ['palma'] },
+  { id: 'illes-balears', name: 'Illes Balears', cityIds: ['palma', 'calvia', 'alcudia'] },
   { id: 'navarra', name: 'Navarra', cityIds: ['pamplona'] },
   { id: 'euskadi', name: 'Euskadi', cityIds: ['donostia', 'bilbao'] },
   { id: 'comunidad-de-madrid', name: 'Comunidad de Madrid', cityIds: ['madrid'] },
@@ -55,6 +55,13 @@ const CITY_NAMES: Readonly<Record<string, string>> = {
   donostia: 'Donostia / San Sebastián',
   bilbao: 'Bilbao',
   madrid: 'Madrid',
+  torrevieja: 'Torrevieja',
+  calp: 'Calp',
+  denia: 'Dénia',
+  calvia: 'Calvià',
+  alcudia: 'Alcúdia',
+  girona: 'Girona',
+  tarragona: 'Tarragona',
 };
 
 export function cityDisplayName(cityId: string): string {
@@ -86,6 +93,13 @@ export const CITY_CENTERS: Readonly<
   donostia: { lat: 43.3183, lng: -1.9812, radiusKm: 12 },
   bilbao: { lat: 43.263, lng: -2.935, radiusKm: 12 },
   madrid: { lat: 40.4168, lng: -3.7038, radiusKm: 25 },
+  torrevieja: { lat: 37.9787, lng: -0.6822, radiusKm: 15 },
+  calp: { lat: 38.6446, lng: 0.0453, radiusKm: 10 },
+  denia: { lat: 38.8408, lng: 0.1057, radiusKm: 15 },
+  calvia: { lat: 39.5657, lng: 2.5062, radiusKm: 18 },
+  alcudia: { lat: 39.8499, lng: 3.124, radiusKm: 12 },
+  girona: { lat: 41.9794, lng: 2.8214, radiusKm: 12 },
+  tarragona: { lat: 41.1189, lng: 1.2445, radiusKm: 15 },
 };
 
 /** Covered city under the map center at city-level zoom, or null. */

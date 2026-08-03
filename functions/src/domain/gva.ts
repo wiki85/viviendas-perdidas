@@ -19,6 +19,9 @@ export const GVA_MUNICIPALITIES: readonly GvaMunicipality[] = [
   { codProvincia: '46', codMunicipio: '250', name: 'VALÈNCIA', cityId: 'valencia' },
   { codProvincia: '03', codMunicipio: '014', name: 'ALICANTE', cityId: 'alicante' },
   { codProvincia: '03', codMunicipio: '031', name: 'BENIDORM', cityId: 'benidorm' },
+  { codProvincia: '03', codMunicipio: '133', name: 'TORREVIEJA', cityId: 'torrevieja' },
+  { codProvincia: '03', codMunicipio: '047', name: 'CALP', cityId: 'calp' },
+  { codProvincia: '03', codMunicipio: '063', name: 'DÉNIA', cityId: 'denia' },
 ];
 
 /**

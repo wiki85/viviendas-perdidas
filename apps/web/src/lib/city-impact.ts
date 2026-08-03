@@ -32,6 +32,13 @@ export const CITY_MAIN_DWELLINGS: Record<string, number> = {
   donostia: 79_285,
   bilbao: 147_655,
   madrid: 1_320_531,
+  torrevieja: 36_829,
+  calp: 9_839,
+  denia: 17_648,
+  calvia: 20_609,
+  alcudia: 7_983,
+  girona: 38_711,
+  tarragona: 53_551,
 };
 
 export type CityImpactSummary = {

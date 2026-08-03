@@ -44,11 +44,14 @@ describe('computeCityImpact', () => {
     expect(impact.placesPer100).toBeNull();
   });
 
-  it('covers the nineteen mirrored municipalities in the census table', () => {
-    expect(Object.keys(CITY_CENSUS)).toHaveLength(19);
+  it('covers the twenty-six mirrored municipalities in the census table', () => {
+    expect(Object.keys(CITY_CENSUS)).toHaveLength(26);
+    // Floors sized for the smallest mirrored towns (Alcúdia: ~8k dwellings,
+    // ~22k inhabitants) — a typo of one order of magnitude still fails.
     for (const census of Object.values(CITY_CENSUS)) {
-      expect(census.mainDwellings).toBeGreaterThan(10_000);
-      expect(census.population).toBeGreaterThan(70_000);
+      expect(census.mainDwellings).toBeGreaterThan(5_000);
+      expect(census.population).toBeGreaterThan(15_000);
+      expect(census.population).toBeGreaterThan(census.mainDwellings);
     }
   });
 });

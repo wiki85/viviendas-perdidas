@@ -71,7 +71,7 @@ export const SYNCED_MUNICIPALITIES: readonly string[] = [
 
 /** Catalan municipalities mirrored from the Registre de Turisme (Socrata
  * spelling). Coordinates come from the city-hall open-data join. */
-export const SYNCED_CAT_MUNICIPALITIES: readonly string[] = ['Barcelona'];
+export const SYNCED_CAT_MUNICIPALITIES: readonly string[] = ['Barcelona', 'Girona', 'Tarragona'];
 
 /** Valencian municipalities mirrored from the GVA register (canonical
  * spelling of domain/gva.ts). Coordinates resolve via the Catastro. */
@@ -82,7 +82,7 @@ export const SYNCED_GVA_MUNICIPALITIES: readonly string[] = GVA_MUNICIPALITIES.m
 /** Mallorcan municipalities mirrored from the insular register (Municipi
  * spelling, uppercase). Half the features carry WGS84 geometry; the rest
  * geocode by address. */
-export const SYNCED_CAIB_MUNICIPALITIES: readonly string[] = ['PALMA'];
+export const SYNCED_CAIB_MUNICIPALITIES: readonly string[] = ['PALMA', 'CALVIÀ', 'ALCÚDIA'];
 
 /** Navarrese municipalities mirrored from the Registro de Turismo (canonical
  * spelling of domain/navarra.ts). No coordinates upstream: all geocoded. */
