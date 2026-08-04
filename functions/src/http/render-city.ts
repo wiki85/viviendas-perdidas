@@ -350,7 +350,7 @@ const SHARE_SCRIPT = `
 })();
 `;
 
-function pageShell(options: {
+export function pageShell(options: {
   title: string;
   description: string;
   canonicalPath: string;
@@ -398,7 +398,8 @@ function pageShell(options: {
     <footer>
       Proyecto ciudadano independiente y sin ánimo de lucro. Datos colaborativos y no oficiales.
       <a href="/metodologia">Metodología</a> · <a href="/acerca">Acerca del proyecto</a> ·
-      <a href="/ciudades">Datos por ciudad</a> · <a href="/prensa">Prensa y feeds</a>
+      <a href="/ciudades">Datos por ciudad</a> · <a href="/prensa">Prensa y feeds</a> ·
+      <a href="/fuentes">Fuentes</a>
     </footer>
     ${options.withShareScript ? `<script>${SHARE_SCRIPT}</script>` : ''}
   </body>
@@ -709,7 +710,7 @@ export function renderCitiesIndex(cities: CityIndexEntry[]): string {
 }
 
 export function renderSitemap(cities: CityStats[]): string {
-  const staticEntries = ['/', '/ciudades', '/metodologia', '/acerca', '/prensa'].map(
+  const staticEntries = ['/', '/ciudades', '/metodologia', '/acerca', '/prensa', '/fuentes'].map(
     (path) => `  <url><loc>${PUBLIC_ORIGIN}${path}</loc></url>`,
   );
   const cityEntries = cities.map((city) => {
@@ -817,7 +818,8 @@ export function renderPressPage(): string {
     <h2>Cómo citarnos</h2>
     <p>
       Los datos oficiales proceden de los registros de turismo autonómicos (licencias CC BY 4.0 y
-      equivalentes; el detalle por fuente está en la <a href="/metodologia">metodología</a>). Una
+      equivalentes; el detalle por fuente, con enlaces, problemas conocidos y un ranking de
+      transparencia, está en la <a href="/fuentes">página de fuentes</a>). Una
       fórmula que funciona: <em>«Datos de los registros oficiales de turismo autonómicos,
       recopilados por Viviendas Perdidas (aquiviviamos.com)»</em>, con enlace. Ninguna
       administración respalda este proyecto.

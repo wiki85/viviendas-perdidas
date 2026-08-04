@@ -26,6 +26,7 @@ export default defineConfig({
           /^\/feeds/,
           /^\/boletin\/baja/,
           /^\/prensa/,
+          /^\/fuentes/,
           /^\/embed/,
         ],
         // Firestore, Maps and Functions stay network-only: no runtime caching.

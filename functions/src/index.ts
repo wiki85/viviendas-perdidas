@@ -42,5 +42,5 @@ export { feeds } from './http/feeds.js';
 export { embed } from './http/embed.js';
 export { exportPublicData } from './http/export-public-data.js';
 export { shareScope } from './http/share-scope.js';
-export { cityPage, prensa, sitemap } from './http/public-pages.js';
+export { cityPage, fuentes, prensa, sitemap } from './http/public-pages.js';
 export { onListingWrite } from './triggers/on-listing-write.js';

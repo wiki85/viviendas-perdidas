@@ -157,6 +157,9 @@ async function fetchRtaMunicipality(
 }
 
 function buildSource(id: OfficialSourceId): OfficialSource {
+  // RECORDATORIO: cualquier cambio de fuente (URL, esquema, cadencia,
+  // licencia, comunidad nueva) obliga a actualizar la página pública
+  // /fuentes (http/render-sources.ts) en el mismo cambio.
   if (id === 'rta') {
     return {
       id,

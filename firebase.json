@@ -47,6 +47,13 @@
         }
       },
       {
+        "source": "/fuentes",
+        "function": {
+          "functionId": "fuentes",
+          "region": "europe-southwest1"
+        }
+      },
+      {
         "source": "/prensa",
         "function": {
           "functionId": "prensa",

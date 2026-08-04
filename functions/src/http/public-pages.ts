@@ -16,6 +16,7 @@ import {
   type OfficialCityStats,
   type OfficialHistoryPoint,
 } from './render-city.js';
+import { renderSourcesPage } from './render-sources.js';
 
 const CITY_ID_PATTERN = /^[a-z0-9-]+$/u;
 
@@ -247,6 +248,18 @@ export const cityPage = onRequest(
       });
       sendUnavailable(response);
     }
+  },
+);
+
+/** /fuentes — static, server-rendered and long-cached. */
+export const fuentes = onRequest(
+  { region: REGION, timeoutSeconds: 10, maxInstances: 5 },
+  (request, response) => {
+    if (request.method !== 'GET') {
+      sendNotFound(response);
+      return;
+    }
+    response.set(PAGE_HEADERS).status(200).type('html').send(renderSourcesPage());
   },
 );
 
