@@ -27,7 +27,7 @@ export const RUBRIC = [
     label: 'Identificador registral estable',
     max: 15,
     detail:
-      'Signatura oficial única y persistente que permite seguir cada vivienda entre sincronizaciones sin inventar claves.',
+      'Número de registro oficial único y persistente que permite seguir cada vivienda entre sincronizaciones sin inventar claves.',
   },
   {
     key: 'riqueza',
@@ -122,7 +122,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Signatura registral, dirección, código postal, municipio (código INE), dormitorios, plazas y — la joya — referencia catastral en el ~99% de filas. La figura valenciana siempre cede la vivienda completa.',
+      'Número de registro, dirección, código postal, municipio (código INE), dormitorios, plazas y — la joya — referencia catastral en el ~99% de filas. La figura valenciana siempre cede la vivienda completa.',
     ],
     posicionamiento:
       'Resolvemos la referencia catastral contra la Sede del Catastro (centroide de parcela), que da ubicación a nivel de portal sin coste; el resto va a CartoCiudad y geocodificación comercial.',
@@ -196,7 +196,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Signatura, grupo de alta (ETV/ETVPL/ETV60/habitatge turístic — siempre vivienda completa), dirección, municipio, plazas y coordenadas WGS84 en aproximadamente la mitad de las fichas.',
+      'Número de registro, grupo de alta (ETV/ETVPL/ETV60/habitatge turístic — siempre vivienda completa), dirección, municipio, plazas y coordenadas WGS84 en aproximadamente la mitad de las fichas.',
     ],
     posicionamiento:
       'Usamos las coordenadas del propio registre cuando existen y son plausibles; la otra mitad se geocodifica por dirección (CartoCiudad y geocodificación comercial).',
@@ -331,17 +331,17 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Signatura registral estable, nombre comercial, dirección, municipio, código postal, dormitorios, plazas y — ejemplar — coordenadas WGS84 en el 100% de las fichas. Toda vivienda vacacional canaria es la vivienda completa.',
+      'Número de registro estable, nombre comercial, dirección, municipio, código postal, dormitorios, plazas y — ejemplar — coordenadas WGS84 en el 100% de las fichas. Toda vivienda vacacional canaria es la vivienda completa.',
     ],
     posicionamiento:
       'Usamos directamente las coordenadas publicadas por el Gobierno de Canarias, validadas contra un radio municipal de plausibilidad. No hay que geocodificar nada: es la fuente más completa de España en este aspecto.',
     problemas: [
-      'Unas decenas de signaturas aparecen duplicadas en el volcado (nos quedamos con la última aparición).',
+      'Unas decenas de números de registro aparecen duplicados en el volcado (nos quedamos con la última aparición).',
       'El marcador «_U» (no consta) afecta a un puñado de direcciones y plazas.',
       'Algunas grafías de municipio son inconsistentes («Santa Cruz Tenerife» sin «De», «San Bartolome» sin tilde).',
     ],
     mejoras: [
-      'Depurar las signaturas duplicadas y normalizar las grafías de municipio.',
+      'Depurar los números de registro duplicados y normalizar las grafías de municipio.',
       'Publicar el dataset bajo una licencia estándar (CC BY 4.0) en lugar del aviso legal propio.',
     ],
     frecuencia: 'Refresco diario del volcado; nosotros sincronizamos cada viernes.',
