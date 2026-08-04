@@ -63,7 +63,9 @@ export const syncValencia = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    // Seis municipios (~35k registros GVA) + cachés de geocodificación
+    // desbordan los 512MiB desde la ampliación de agosto de 2026.
+    memory: '1GiB',
     schedule: 'every wednesday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
