@@ -39,6 +39,15 @@ export const CITY_MAIN_DWELLINGS: Record<string, number> = {
   alcudia: 7_983,
   girona: 38_711,
   tarragona: 53_551,
+  'las-palmas-de-gran-canaria': 143_217,
+  'santa-cruz-de-tenerife': 81_056,
+  arona: 33_223,
+  adeje: 19_314,
+  'san-bartolome-de-tirajana': 22_312,
+  mogan: 8_118,
+  'la-oliva': 11_087,
+  yaiza: 6_431,
+  tias: 7_881,
 };
 
 export type CityImpactSummary = {

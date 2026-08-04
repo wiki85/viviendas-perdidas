@@ -44,8 +44,8 @@ describe('computeCityImpact', () => {
     expect(impact.placesPer100).toBeNull();
   });
 
-  it('covers the twenty-six mirrored municipalities in the census table', () => {
-    expect(Object.keys(CITY_CENSUS)).toHaveLength(26);
+  it('covers the thirty-five mirrored municipalities in the census table', () => {
+    expect(Object.keys(CITY_CENSUS)).toHaveLength(35);
     // Floors sized for the smallest mirrored towns (Alcúdia: ~8k dwellings,
     // ~22k inhabitants) — a typo of one order of magnitude still fails.
     for (const census of Object.values(CITY_CENSUS)) {

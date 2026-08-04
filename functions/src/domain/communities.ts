@@ -33,6 +33,21 @@ export const COMMUNITIES: readonly CommunityInfo[] = [
   { id: 'navarra', name: 'Navarra', cityIds: ['pamplona'] },
   { id: 'euskadi', name: 'Euskadi', cityIds: ['donostia', 'bilbao'] },
   { id: 'comunidad-de-madrid', name: 'Comunidad de Madrid', cityIds: ['madrid'] },
+  {
+    id: 'canarias',
+    name: 'Canarias',
+    cityIds: [
+      'las-palmas-de-gran-canaria',
+      'santa-cruz-de-tenerife',
+      'arona',
+      'adeje',
+      'san-bartolome-de-tirajana',
+      'mogan',
+      'la-oliva',
+      'yaiza',
+      'tias',
+    ],
+  },
 ];
 
 export const CITY_NAMES: Readonly<Record<string, string>> = {
@@ -62,6 +77,15 @@ export const CITY_NAMES: Readonly<Record<string, string>> = {
   alcudia: 'Alcúdia',
   girona: 'Girona',
   tarragona: 'Tarragona',
+  'las-palmas-de-gran-canaria': 'Las Palmas de Gran Canaria',
+  'santa-cruz-de-tenerife': 'Santa Cruz de Tenerife',
+  arona: 'Arona',
+  adeje: 'Adeje',
+  'san-bartolome-de-tirajana': 'San Bartolomé de Tirajana',
+  mogan: 'Mogán',
+  'la-oliva': 'La Oliva',
+  yaiza: 'Yaiza',
+  tias: 'Tías',
 };
 
 export function cityDisplayName(cityId: string): string {

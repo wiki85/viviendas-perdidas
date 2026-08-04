@@ -33,6 +33,21 @@ export const COMMUNITIES: readonly CommunityInfo[] = [
   { id: 'navarra', name: 'Navarra', cityIds: ['pamplona'] },
   { id: 'euskadi', name: 'Euskadi', cityIds: ['donostia', 'bilbao'] },
   { id: 'comunidad-de-madrid', name: 'Comunidad de Madrid', cityIds: ['madrid'] },
+  {
+    id: 'canarias',
+    name: 'Canarias',
+    cityIds: [
+      'las-palmas-de-gran-canaria',
+      'santa-cruz-de-tenerife',
+      'arona',
+      'adeje',
+      'san-bartolome-de-tirajana',
+      'mogan',
+      'la-oliva',
+      'yaiza',
+      'tias',
+    ],
+  },
 ];
 
 const CITY_NAMES: Readonly<Record<string, string>> = {
@@ -62,6 +77,15 @@ const CITY_NAMES: Readonly<Record<string, string>> = {
   alcudia: 'Alcúdia',
   girona: 'Girona',
   tarragona: 'Tarragona',
+  'las-palmas-de-gran-canaria': 'Las Palmas de Gran Canaria',
+  'santa-cruz-de-tenerife': 'Santa Cruz de Tenerife',
+  arona: 'Arona',
+  adeje: 'Adeje',
+  'san-bartolome-de-tirajana': 'San Bartolomé de Tirajana',
+  mogan: 'Mogán',
+  'la-oliva': 'La Oliva',
+  yaiza: 'Yaiza',
+  tias: 'Tías',
 };
 
 export function cityDisplayName(cityId: string): string {
@@ -100,6 +124,15 @@ export const CITY_CENTERS: Readonly<
   alcudia: { lat: 39.8499, lng: 3.124, radiusKm: 12 },
   girona: { lat: 41.9794, lng: 2.8214, radiusKm: 12 },
   tarragona: { lat: 41.1189, lng: 1.2445, radiusKm: 15 },
+  'las-palmas-de-gran-canaria': { lat: 28.1235, lng: -15.4363, radiusKm: 16 },
+  'santa-cruz-de-tenerife': { lat: 28.4636, lng: -16.2518, radiusKm: 18 },
+  arona: { lat: 28.0996, lng: -16.681, radiusKm: 14 },
+  adeje: { lat: 28.117, lng: -16.726, radiusKm: 16 },
+  'san-bartolome-de-tirajana': { lat: 27.85, lng: -15.58, radiusKm: 24 },
+  mogan: { lat: 27.8848, lng: -15.7145, radiusKm: 18 },
+  'la-oliva': { lat: 28.611, lng: -13.927, radiusKm: 20 },
+  yaiza: { lat: 28.91, lng: -13.8, radiusKm: 16 },
+  tias: { lat: 28.94, lng: -13.65, radiusKm: 11 },
 };
 
 /** Covered city under the map center at city-level zoom, or null. */

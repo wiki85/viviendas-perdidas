@@ -6,7 +6,7 @@
  */
 export type OfficialSourceInfo = {
   /** Short id, mirrors officialStats.source. */
-  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad';
+  id: 'openrta' | 'rtc' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad' | 'can';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -100,6 +100,16 @@ export const OFFICIAL_SOURCE_MAD: OfficialSourceInfo = {
   },
 };
 
+export const OFFICIAL_SOURCE_CAN: OfficialSourceInfo = {
+  id: 'can',
+  registerName: 'Registro General Turístico de Canarias (viviendas vacacionales)',
+  registerUrl:
+    'https://datos.canarias.es/catalogos/general/dataset/establecimientos-extrahoteleros-de-tipologia-vivienda-vacacional-inscritos-en-el-registro',
+  publisher: 'Gobierno de Canarias',
+  licenseName: 'Reutilización con atribución (aviso legal datos.canarias.es)',
+  licenseUrl: 'https://datos.canarias.es/portal/aviso-legal-y-condiciones-de-uso',
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
@@ -108,6 +118,7 @@ export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_NAV,
   OFFICIAL_SOURCE_EUS,
   OFFICIAL_SOURCE_MAD,
+  OFFICIAL_SOURCE_CAN,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
@@ -118,5 +129,6 @@ export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('nav-')) return OFFICIAL_SOURCE_NAV;
   if (pinId.startsWith('eus-')) return OFFICIAL_SOURCE_EUS;
   if (pinId.startsWith('mad-')) return OFFICIAL_SOURCE_MAD;
+  if (pinId.startsWith('can-')) return OFFICIAL_SOURCE_CAN;
   return OFFICIAL_SOURCE_RTA;
 }

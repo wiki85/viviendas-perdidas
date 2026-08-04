@@ -68,6 +68,14 @@ function officialCredit(source: string): string {
       Instantánea semanal del listado vigente de declaraciones. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'can') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://datos.canarias.es/catalogos/general/dataset/establecimientos-extrahoteleros-de-tipologia-vivienda-vacacional-inscritos-en-el-registro" rel="noopener noreferrer">Registro General Turístico de Canarias (viviendas vacacionales)</a>
+      (Gobierno de Canarias, datos.canarias.es), datos adaptados ·
+      <a href="https://datos.canarias.es/portal/aviso-legal-y-condiciones-de-uso" rel="noopener noreferrer">reutilización con atribución</a>. Sin respaldo oficial.
+    </p>`;
+  }
   if (source === 'nav') {
     return `
     <p class="credit">

@@ -282,10 +282,21 @@ export function MethodologyPage({ onClose }: Props) {
             las viviendas en celdas geográficas (geohash) para dibujarlas y contarlas según el nivel
             de zoom. Las coordenadas de origen manifiestamente erróneas (algunas fichas vienen
             tecleadas a cientos de km de su municipio) se descartan y se recolocan geocodificando la
-            dirección publicada. Solo se refleja un subconjunto de municipios (diez andaluces,
-            Barcelona, València, Alicante, Benidorm, Palma, Pamplona, Donostia y Bilbao); el pequeño
-            porcentaje de registros que no puede ubicarse con precisión de calle no se dibuja ni se
-            cuenta en el mapa.
+            dirección publicada. Solo se refleja el subconjunto de municipios dados de alta en el
+            mapa (la lista completa, con su fuente y estado, está en la página de{' '}
+            <a className="text-link" href="/fuentes">
+              fuentes
+            </a>
+            ); el pequeño porcentaje de registros que no puede ubicarse con precisión de calle no se
+            dibuja ni se cuenta en el mapa.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Canarias</strong> proceden del{' '}
+            <strong>Registro General Turístico de Canarias</strong> (viviendas vacacionales) del{' '}
+            <strong>Gobierno de Canarias</strong>, publicado en datos.canarias.es con refresco
+            diario y reutilizable con atribución. Es la fuente más completa de España en
+            geolocalización: el 100% de las fichas incluye coordenadas, que usamos directamente
+            validándolas contra el término municipal.
           </p>
           <p>
             Los <strong>límites de barrio</strong> que usa el mapa son los polígonos oficiales de
@@ -301,9 +312,9 @@ export function MethodologyPage({ onClose }: Props) {
             <strong>
               Ninguna administración citada (Junta de Andalucía, Generalitat de Catalunya,
               Ajuntament de Barcelona, Generalitat Valenciana, Dirección General del Catastro,
-              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, Comunidad de Madrid, IGN,
-              EUSTAT, IECA ni los ayuntamientos que publican sus barrios) respalda o avala este
-              proyecto
+              Consell de Mallorca, Gobierno de Navarra, Gobierno Vasco, Comunidad de Madrid,
+              Gobierno de Canarias, IGN, EUSTAT, IECA ni los ayuntamientos que publican sus barrios)
+              respalda o avala este proyecto
             </strong>
             : la cita es un crédito neutral de las fuentes y no implica relación ni aprobación
             alguna. Los datos oficiales se ofrecen «tal cual», sin garantías, y se sincronizan

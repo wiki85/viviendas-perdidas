@@ -317,6 +317,44 @@ export const SOURCES: SourceEntry[] = [
     licencia: 'CC BY 4.0',
     score: { ubicacion: 4, identificador: 0, riqueza: 5, frecuencia: 10, acceso: 8, licencia: 10 },
   },
+  {
+    id: 'can',
+    ccaa: 'Canarias',
+    registro:
+      'Registro General Turístico de Canarias (viviendas vacacionales) — Gobierno de Canarias',
+    cities:
+      'Las Palmas de Gran Canaria, Santa Cruz de Tenerife, Arona, Adeje, San Bartolomé de Tirajana, Mogán, La Oliva, Yaiza y Tías',
+    links: [
+      {
+        label: 'Dataset de viviendas vacacionales (datos.canarias.es)',
+        url: 'https://datos.canarias.es/catalogos/general/dataset/establecimientos-extrahoteleros-de-tipologia-vivienda-vacacional-inscritos-en-el-registro',
+      },
+    ],
+    datos: [
+      'Signatura registral estable, nombre comercial, dirección, municipio, código postal, dormitorios, plazas y — ejemplar — coordenadas WGS84 en el 100% de las fichas. Toda vivienda vacacional canaria es la vivienda completa.',
+    ],
+    posicionamiento:
+      'Usamos directamente las coordenadas publicadas por el Gobierno de Canarias, validadas contra un radio municipal de plausibilidad. No hay que geocodificar nada: es la fuente más completa de España en este aspecto.',
+    problemas: [
+      'Unas decenas de signaturas aparecen duplicadas en el volcado (nos quedamos con la última aparición).',
+      'El marcador «_U» (no consta) afecta a un puñado de direcciones y plazas.',
+      'Algunas grafías de municipio son inconsistentes («Santa Cruz Tenerife» sin «De», «San Bartolome» sin tilde).',
+    ],
+    mejoras: [
+      'Depurar las signaturas duplicadas y normalizar las grafías de municipio.',
+      'Publicar el dataset bajo una licencia estándar (CC BY 4.0) en lugar del aviso legal propio.',
+    ],
+    frecuencia: 'Refresco diario del volcado; nosotros sincronizamos cada viernes.',
+    licencia: 'Aviso legal del Gobierno de Canarias (reutilización con atribución).',
+    score: {
+      ubicacion: 25,
+      identificador: 15,
+      riqueza: 16,
+      frecuencia: 20,
+      acceso: 9,
+      licencia: 7,
+    },
+  },
 ];
 
 export function sourceTotal(entry: SourceEntry): number {

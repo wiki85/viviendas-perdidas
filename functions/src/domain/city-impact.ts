@@ -53,6 +53,15 @@ export const CITY_CENSUS: Record<string, CityCensus> = {
   alcudia: { mainDwellings: 7_983, population: 21_907 },
   girona: { mainDwellings: 38_711, population: 108_666 },
   tarragona: { mainDwellings: 53_551, population: 143_649 },
+  'las-palmas-de-gran-canaria': { mainDwellings: 143_217, population: 381_868 },
+  'santa-cruz-de-tenerife': { mainDwellings: 81_056, population: 211_957 },
+  arona: { mainDwellings: 33_223, population: 87_793 },
+  adeje: { mainDwellings: 19_314, population: 50_021 },
+  'san-bartolome-de-tirajana': { mainDwellings: 22_312, population: 54_291 },
+  mogan: { mainDwellings: 8_118, population: 21_172 },
+  'la-oliva': { mainDwellings: 11_087, population: 30_022 },
+  yaiza: { mainDwellings: 6_431, population: 18_842 },
+  tias: { mainDwellings: 7_881, population: 21_613 },
 };
 
 export interface CityImpactInput {

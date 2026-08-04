@@ -19,7 +19,7 @@ describe('rúbrica de fuentes', () => {
 
   it('cubre las siete fuentes sincronizadas', () => {
     expect(SOURCES.map((source) => source.id).sort()).toEqual(
-      ['caib', 'cat', 'eus', 'gva', 'mad', 'nav', 'rta'].sort(),
+      ['caib', 'can', 'cat', 'eus', 'gva', 'mad', 'nav', 'rta'].sort(),
     );
   });
 });

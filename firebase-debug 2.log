@@ -1,0 +1,28 @@
+[debug] [2026-08-04T18:58:10.486Z] ----------------------------------------------------------------------
+[debug] [2026-08-04T18:58:10.486Z] Command:       /opt/homebrew/Cellar/node/26.0.0/bin/node /Users/wiki/Documents/GitHub/Mapa de Despoblación/node_modules/.bin/firebase projects:list
+[debug] [2026-08-04T18:58:10.487Z] CLI Version:   14.27.0
+[debug] [2026-08-04T18:58:10.487Z] Platform:      darwin
+[debug] [2026-08-04T18:58:10.487Z] Node Version:  v26.0.0
+[debug] [2026-08-04T18:58:10.487Z] Time:          Tue Aug 04 2026 20:58:10 GMT+0200 (Central European Summer Time)
+[debug] [2026-08-04T18:58:10.487Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-04T18:58:10.542Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-04T18:58:10.542Z] > authorizing via signed-in user (wiki85@gmail.com)
+[debug] [2026-08-04T18:58:10.543Z] Checked if tokens are valid: true, expires at: 1785872534413
+[debug] [2026-08-04T18:58:10.543Z] Checked if tokens are valid: true, expires at: 1785872534413
+[debug] [2026-08-04T18:58:10.543Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-08-04T18:58:35.717Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-08-04T18:58:35.717Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] ┌──────────────────────┬────────────────────────────────┬────────────────┬──────────────────────┐
+│ Project Display Name │ Project ID                     │ Project Number │ Resource Location ID │
+├──────────────────────┼────────────────────────────────┼────────────────┼──────────────────────┤
+│ Mapa de Despoblacion │ mapa-de-despoblacion (current) │ 671653930890   │ [Not specified]      │
+└──────────────────────┴────────────────────────────────┴────────────────┴──────────────────────┘
+[info] 
+[info] 1 project(s) total.
+[debug] [2026-08-04T18:58:44.696Z] Error: Timed out.
+    at Timeout._onTimeout (/Users/wiki/Documents/GitHub/Mapa de Despoblación/node_modules/firebase-tools/lib/utils.js:275:49)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.

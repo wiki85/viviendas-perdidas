@@ -28,6 +28,7 @@ export {
   syncNavarra,
   syncEuskadi,
   syncMadrid,
+  syncCanarias,
   adminSyncOfficialData,
 } from './scheduled/sync-openrta.js';
 export {

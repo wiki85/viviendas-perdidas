@@ -106,6 +106,15 @@ export const MUNICIPALITY_CENTERS: Record<
   ALCÚDIA: { latitude: 39.8499, longitude: 3.124, radiusKm: 12 },
   GIRONA: { latitude: 41.9794, longitude: 2.8214, radiusKm: 12 },
   TARRAGONA: { latitude: 41.1189, longitude: 1.2445, radiusKm: 15 },
+  ARONA: { latitude: 28.0996, longitude: -16.681, radiusKm: 14 },
+  ADEJE: { latitude: 28.117, longitude: -16.726, radiusKm: 16 },
+  'LA OLIVA': { latitude: 28.611, longitude: -13.927, radiusKm: 20 },
+  'LAS PALMAS DE GRAN CANARIA': { latitude: 28.1235, longitude: -15.4363, radiusKm: 16 },
+  'SAN BARTOLOMÉ DE TIRAJANA': { latitude: 27.85, longitude: -15.58, radiusKm: 24 },
+  MOGÁN: { latitude: 27.8848, longitude: -15.7145, radiusKm: 18 },
+  YAIZA: { latitude: 28.91, longitude: -13.8, radiusKm: 16 },
+  TÍAS: { latitude: 28.94, longitude: -13.65, radiusKm: 11 },
+  'SANTA CRUZ DE TENERIFE': { latitude: 28.4636, longitude: -16.2518, radiusKm: 18 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

@@ -13,6 +13,8 @@ import { parseCatastroCoordinates, GVA_MUNICIPALITIES } from '../domain/gva.js';
 import { createCatalunyaFetcher } from './catalunya-source.js';
 import { createValenciaFetcher } from './valencia-source.js';
 import { createMallorcaFetcher } from './mallorca-source.js';
+import { createCanariasFetcher } from './canarias-source.js';
+import { CANARIAS_MUNICIPALITIES } from '../domain/canarias.js';
 import { createNavarraFetcher } from './navarra-source.js';
 import { createEuskadiFetcher } from './euskadi-source.js';
 import { EUSKADI_MUNICIPALITIES } from '../domain/euskadi.js';
@@ -26,7 +28,7 @@ import { NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad';
+export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad' | 'can';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -100,6 +102,12 @@ export const SYNCED_EUS_MUNICIPALITIES: readonly string[] = EUSKADI_MUNICIPALITI
 /** Madrid capital, mirrored from the Comunidad de Madrid declarations log.
  * Synthetic ids, no upstream coordinates: CartoCiudad locates the portals. */
 export const SYNCED_MAD_MUNICIPALITIES: readonly string[] = ['MADRID'];
+
+/** Municipios canarios espejados (nombre para mostrar; el fetcher traduce
+ * desde la grafía del CSV). */
+export const SYNCED_CAN_MUNICIPALITIES: readonly string[] = CANARIAS_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
 
 async function fetchRtaPage(
   municipality: string,
@@ -198,6 +206,17 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       idPrefix: 'caib-',
       statsSource: 'caib',
       municipalities: SYNCED_CAIB_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'can') {
+    const fetcher = createCanariasFetcher();
+    return {
+      id,
+      idPrefix: 'can-',
+      statsSource: 'can',
+      municipalities: SYNCED_CAN_MUNICIPALITIES,
       prepare: fetcher.prepare,
       fetchMunicipality: fetcher.fetchMunicipality,
     };
@@ -1138,7 +1157,7 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus', 'mad'] as const) {
+  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus', 'mad', 'can'] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );

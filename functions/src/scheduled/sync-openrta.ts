@@ -165,6 +165,27 @@ export const syncMadrid = onSchedule(
   },
 );
 
+export const syncCanarias = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    // ~72k filas de CSV en memoria al preparar la descarga completa.
+    memory: '1GiB',
+    schedule: 'every friday 05:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'can',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Canarias sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {
