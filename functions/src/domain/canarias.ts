@@ -68,9 +68,12 @@ export function parseCanariasRow(
   const addressText = text(row.direccion);
   const latitude = Number(text(row.latitud));
   const longitude = Number(text(row.longitud));
+  // ~30% de fichas traen (0,0) — la isla nula: se tratan como sin ubicar y
+  // los carriles de geocodificación las resuelven por dirección.
   const plausible =
     Number.isFinite(latitude) &&
     Number.isFinite(longitude) &&
+    !(latitude === 0 && longitude === 0) &&
     coordinatesPlausibleForMunicipality(municipality.name, latitude, longitude);
   const places = Number(text(row.plazas));
   return {

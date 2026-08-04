@@ -17,6 +17,7 @@ import type {
 } from './domain/types';
 import { CityImpactBanner } from './components/CityImpactBanner';
 import { CookieNotice } from './components/CookieNotice';
+import { DonateBanner } from './components/DonateBanner';
 import { DonateSheet } from './components/DonateSheet';
 import { ListingSheet } from './components/ListingSheet';
 import { OfficialSheet } from './components/OfficialSheet';
@@ -1099,6 +1100,7 @@ export default function App() {
       )}
       {donateOpen && <DonateSheet onClose={() => setDonateOpen(false)} />}
       <CookieNotice />
+      <DonateBanner onOpen={() => setDonateOpen(true)} />
       {toast && <ToastMessage toast={toast} onClose={() => setToast(null)} />}
       <span className="sr-only" aria-live="polite">
         {displayedAggregate.name}: {displayedAggregate.lostFamilies} familias y{' '}

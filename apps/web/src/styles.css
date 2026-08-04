@@ -3508,3 +3508,86 @@ textarea:focus-visible,
 .stats-subscribe .button {
   flex-shrink: 0;
 }
+
+/* ----------------------------- Banner de donación -------------------------- */
+
+.donate-banner {
+  position: fixed;
+  z-index: 34;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: min(560px, calc(100% - 20px));
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto 30px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 253, 248, 0.97);
+  border: 1px solid rgba(217, 96, 76, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(30, 43, 39, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.donate-banner__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(217, 96, 76, 0.14);
+  color: #b84a38;
+}
+
+.donate-banner p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #3c4a44;
+}
+
+.donate-banner__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: #fff;
+  background: #d9604c;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.donate-banner__cta:hover {
+  background: #b84a38;
+}
+
+.donate-banner__close {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #65716c;
+  cursor: pointer;
+}
+
+.donate-banner__close:hover {
+  background: rgba(30, 43, 39, 0.08);
+}
+
+@media (max-width: 480px) {
+  .donate-banner {
+    grid-template-columns: minmax(0, 1fr) auto 30px;
+  }
+  .donate-banner__icon {
+    display: none;
+  }
+}

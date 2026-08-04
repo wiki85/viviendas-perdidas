@@ -39,6 +39,12 @@ describe('parseCanariasRow', () => {
     expect(record).toMatchObject({ places: 0, addressText: '' });
   });
 
+  it('treats the (0,0) null island as missing coordinates', () => {
+    const record = parseCanariasRow({ ...ROW, latitud: '0', longitud: '0' }, ARONA);
+    expect(record?.latitude).toBeNull();
+    expect(record?.longitude).toBeNull();
+  });
+
   it('drops coordinates outside the municipality radius', () => {
     // Madrid coords declared for an Arona dwelling: implausible.
     const record = parseCanariasRow({ ...ROW, latitud: '40.4168', longitud: '-3.7038' }, ARONA);
