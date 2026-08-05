@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Coffee, Copy, CreditCard, ExternalLink, Smartphone, X } from 'lucide-react';
+import {
+  Check,
+  Coffee,
+  Copy,
+  CreditCard,
+  ExternalLink,
+  HeartHandshake,
+  Smartphone,
+  X,
+} from 'lucide-react';
 import { appConfig } from '../lib/config';
 
 type Props = {
@@ -30,7 +39,7 @@ export function DonateSheet({ onClose }: Props) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const [amount, setAmount] = useState<number>(COFFEE_PRICE_EUR);
   const [copied, setCopied] = useState(false);
-  const { bizumPhone, cardUrl } = appConfig.donation;
+  const { bizumPhone, cardUrl, recurringUrl } = appConfig.donation;
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -135,6 +144,25 @@ export function DonateSheet({ onClose }: Props) {
               <p>El pago se procesa de forma segura en una página externa.</p>
               <a className="button button--primary" href={cardUrl} target="_blank" rel="noreferrer">
                 Donar {formatEuros(amount)} con tarjeta <ExternalLink size={16} />
+              </a>
+            </div>
+          )}
+          {recurringUrl && (
+            <div className="donate-method">
+              <h3>
+                <HeartHandshake size={17} /> Hazte mecenas
+              </h3>
+              <p>
+                Un café <strong>cada mes</strong>, automático y cancelable cuando quieras: la forma
+                más útil de sostener los costes fijos del proyecto.
+              </p>
+              <a
+                className="button button--secondary"
+                href={recurringUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Apoyar cada mes <ExternalLink size={16} />
               </a>
             </div>
           )}
