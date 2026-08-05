@@ -24,6 +24,15 @@ export interface CanariasMunicipality {
 }
 
 export const CANARIAS_MUNICIPALITIES: readonly CanariasMunicipality[] = [
+  // Los tres primeros van en cabeza a propósito: cada pasada consume sus
+  // ventanas de geocodificación por orden y los últimos morían de hambre.
+  {
+    sourceName: 'Santa Cruz Tenerife',
+    name: 'SANTA CRUZ DE TENERIFE',
+    cityId: 'santa-cruz-de-tenerife',
+  },
+  { sourceName: 'Yaiza', name: 'YAIZA', cityId: 'yaiza' },
+  { sourceName: 'Tias', name: 'TÍAS', cityId: 'tias' },
   { sourceName: 'Arona', name: 'ARONA', cityId: 'arona' },
   { sourceName: 'Adeje', name: 'ADEJE', cityId: 'adeje' },
   { sourceName: 'La Oliva', name: 'LA OLIVA', cityId: 'la-oliva' },
@@ -38,13 +47,6 @@ export const CANARIAS_MUNICIPALITIES: readonly CanariasMunicipality[] = [
     cityId: 'san-bartolome-de-tirajana',
   },
   { sourceName: 'Mogan', name: 'MOGÁN', cityId: 'mogan' },
-  { sourceName: 'Yaiza', name: 'YAIZA', cityId: 'yaiza' },
-  { sourceName: 'Tias', name: 'TÍAS', cityId: 'tias' },
-  {
-    sourceName: 'Santa Cruz Tenerife',
-    name: 'SANTA CRUZ DE TENERIFE',
-    cityId: 'santa-cruz-de-tenerife',
-  },
 ];
 
 const NOT_AVAILABLE = '_U';
