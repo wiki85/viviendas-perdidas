@@ -27,10 +27,10 @@ export const OFFICIAL_SOURCE_RTA: OfficialSourceInfo = {
 
 export const OFFICIAL_SOURCE_RTC: OfficialSourceInfo = {
   id: 'rtc',
-  registerName: 'Registre de Turisme de Catalunya',
+  registerName: 'Registro de Turismo de Cataluña',
   registerUrl: 'https://analisi.transparenciacatalunya.cat/d/t2h3-cgys',
   publisher: "Generalitat de Catalunya (Departament d'Empresa i Treball)",
-  licenseName: 'Llicència oberta d’ús d’informació – Catalunya',
+  licenseName: 'Licencia abierta de uso de información – Cataluña',
   licenseUrl: 'https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies',
   coordinatesCredit: {
     name: 'Ajuntament de Barcelona (Open Data BCN)',
@@ -42,7 +42,7 @@ export const OFFICIAL_SOURCE_RTC: OfficialSourceInfo = {
 
 export const OFFICIAL_SOURCE_GVA: OfficialSourceInfo = {
   id: 'gva',
-  registerName: 'Registre de Turisme de la Comunitat Valenciana',
+  registerName: 'Registro de Turismo de la Comunidad Valenciana',
   registerUrl: 'https://dadesobertes.gva.es/es/dataset/758f8f8e-c5af-4622-b268-a6c591710a51',
   publisher: 'Generalitat Valenciana',
   licenseName: 'CC BY 4.0',
@@ -57,7 +57,7 @@ export const OFFICIAL_SOURCE_GVA: OfficialSourceInfo = {
 
 export const OFFICIAL_SOURCE_CAIB: OfficialSourceInfo = {
   id: 'caib',
-  registerName: "Registre d'Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca",
+  registerName: 'Registro de Viviendas Turísticas y Estancias Turísticas en Vivienda de Mallorca',
   registerUrl: 'https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca',
   publisher: 'Consell de Mallorca (Dades Obertes GOIB)',
   licenseName: 'CC BY 4.0',

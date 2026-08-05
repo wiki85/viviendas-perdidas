@@ -160,7 +160,7 @@ export function MethodologyPage({ onClose }: Props) {
           </p>
           <p>
             Los datos oficiales de <strong>Barcelona</strong> proceden del{' '}
-            <strong>«Registre de Turisme de Catalunya»</strong> de la{' '}
+            <strong>«Registro de Turismo de Cataluña»</strong> de la{' '}
             <strong>Generalitat de Catalunya</strong> (Departament d&rsquo;Empresa i Treball),
             publicado en el portal de datos abiertos de la Generalitat bajo la{' '}
             <a
@@ -169,15 +169,15 @@ export function MethodologyPage({ onClose }: Props) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Llicència oberta d&rsquo;ús d&rsquo;informació – Catalunya <ExternalLink size={15} />
+              Licencia abierta de uso de información – Cataluña <ExternalLink size={15} />
             </a>
             , completado con las coordenadas y plazas del conjunto «Viviendas de uso turístico de la
             ciudad de Barcelona» del <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY
             4.0), cruzando ambos por número de registro.
           </p>
           <p>
-            Los datos oficiales de la <strong>Comunitat Valenciana</strong> proceden del{' '}
-            <strong>«Registre de Turisme de la Comunitat Valenciana»</strong> (lista diaria de
+            Los datos oficiales de la <strong>Comunidad Valenciana</strong> proceden del{' '}
+            <strong>«Registro de Turismo de la Comunidad Valenciana»</strong> (lista diaria de
             viviendas de uso turístico) de la <strong>Generalitat Valenciana</strong>, publicado en
             su portal de datos abiertos bajo licencia{' '}
             <a
@@ -203,10 +203,10 @@ export function MethodologyPage({ onClose }: Props) {
           <p>
             Los datos oficiales de <strong>Mallorca</strong> proceden del{' '}
             <strong>
-              «Registre d&rsquo;Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca»
+              «Registro de Viviendas Turísticas y Estancias Turísticas en Vivienda de Mallorca»
             </strong>{' '}
             del <strong>Consell de Mallorca</strong>, publicado en el portal de datos abiertos del
-            Govern de les Illes Balears bajo licencia{' '}
+            Gobierno de las Islas Baleares bajo licencia{' '}
             <a
               className="text-link"
               href="https://creativecommons.org/licenses/by/4.0/"
@@ -300,8 +300,8 @@ export function MethodologyPage({ onClose }: Props) {
           </p>
           <p>
             Los <strong>límites de barrio</strong> que usa el mapa son los polígonos oficiales de
-            cada ciudad: Ajuntament de Barcelona, Ayuntamiento de Madrid, Ajuntament de València,
-            Ayuntamiento de Sevilla y Ayuntamiento de Málaga; Ayuntamiento de Donostia / San
+            cada ciudad: Ayuntamiento de Barcelona, Ayuntamiento de Madrid, Ayuntamiento de
+            Valencia, Ayuntamiento de Sevilla y Ayuntamiento de Málaga; Ayuntamiento de San
             Sebastián (CC BY-SA 3.0), Ayuntamiento de Pamplona (CC BY 4.0), IDE Palma (Ajuntament de
             Palma), barrios estadísticos de EUSTAT vía geoEuskadi para Bilbao (CC BY), y la capa de
             barrios urbanos de los Datos Espaciales de Referencia de Andalucía (DERA) del{' '}
@@ -334,7 +334,7 @@ export function MethodologyPage({ onClose }: Props) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Ver el Registre de Turisme de Catalunya <ExternalLink size={15} />
+            Ver el Registro de Turismo de Cataluña <ExternalLink size={15} />
           </a>
         </section>
 

@@ -4,7 +4,7 @@ export const LOCAL_PLACES: SearchPlace[] = [
   {
     id: 'local-ruzafa',
     primary: 'Russafa (Ruzafa)',
-    secondary: "L'Eixample, València · 46006",
+    secondary: "L'Eixample, Valencia · 46006",
     position: { lat: 39.4623, lng: -0.3734 },
     bounds: { north: 39.4687, south: 39.4549, east: -0.3634, west: -0.3836 },
     zoom: 15,
@@ -14,7 +14,7 @@ export const LOCAL_PLACES: SearchPlace[] = [
   {
     id: 'local-46006',
     primary: '46006',
-    secondary: 'Russafa y En Corts, València',
+    secondary: 'Russafa y En Corts, Valencia',
     position: { lat: 39.4596, lng: -0.3732 },
     zoom: 15,
     cityId: 'valencia',
@@ -23,7 +23,7 @@ export const LOCAL_PLACES: SearchPlace[] = [
   {
     id: 'local-valencia',
     primary: 'València',
-    secondary: 'Comunitat Valenciana',
+    secondary: 'Comunidad Valenciana',
     position: { lat: 39.4699, lng: -0.3763 },
     zoom: 12,
     cityId: 'valencia',

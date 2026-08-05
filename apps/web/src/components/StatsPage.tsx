@@ -578,9 +578,9 @@ export function StatsPage({ onClose, loadHistory, onOpenNewsletter }: Props) {
             </section>
 
             <p className="stats-page__sources">
-              Fuentes: registros oficiales de turismo de Andalucía, Cataluña, Comunitat Valenciana,
-              Mallorca, Navarra y Euskadi (ver <a href="/metodologia">metodología y licencias</a>).
-              La presión compara con los hogares principales del Censo 2021 (INE/IECA/Idescat).
+              Fuentes: los registros oficiales de turismo autonómicos (la lista completa, con
+              licencias y puntuación de calidad, está en la <a href="/fuentes">página de fuentes</a>
+              ). La presión compara con los hogares principales del Censo 2021 (INE/IECA/Idescat).
             </p>
 
             <EmbedCodes

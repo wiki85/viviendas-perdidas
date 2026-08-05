@@ -140,7 +140,7 @@ describe('renderCityPage', () => {
       [],
       official,
     );
-    expect(html).toContain('Registre de Turisme de Catalunya');
+    expect(html).toContain('Registro de Turismo de Cataluña');
     expect(html).toContain('Ajuntament de Barcelona');
     expect(html).not.toContain('Junta de Andalucía');
     // 10.650 VUT sobre 671.177 hogares principales (Idescat, Censo 2021) ≈ 1,6%.
@@ -213,7 +213,7 @@ describe('renderCityPage', () => {
       [],
       official,
     );
-    expect(html).toContain('Registre de Turisme de la Comunitat Valenciana');
+    expect(html).toContain('Registro de Turismo de la Comunidad Valenciana');
     expect(html).toContain('Catastro');
     expect(html).not.toContain('Junta de Andalucía');
     // 5.765 VUT sobre 328.979 hogares principales (INE, Censo 2021) ≈ 1,8%.

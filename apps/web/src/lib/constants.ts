@@ -31,7 +31,7 @@ export const FALLBACK_CITIES: CityDefinition[] = [
   },
   {
     id: 'valencia',
-    name: 'València',
+    name: 'Valencia',
     center: { lat: 39.4699, lng: -0.3763 },
     bounds: { north: 39.5906, south: 39.275, east: -0.2724, west: -0.4316 },
     geoJsonUrl: '/geo/valencia/neighborhoods.geojson',

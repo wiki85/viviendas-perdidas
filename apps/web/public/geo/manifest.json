@@ -84,7 +84,7 @@
     },
     {
       "id": "donostia",
-      "name": "Donostia / San Sebastián",
+      "name": "San Sebastián",
       "center": [-1.9873315, 43.278041],
       "bounds": {
         "north": 43.338143,
@@ -260,7 +260,7 @@
     },
     {
       "id": "valencia",
-      "name": "València",
+      "name": "Valencia",
       "center": [-0.3539515, 39.4227605],
       "bounds": {
         "north": 39.566594,

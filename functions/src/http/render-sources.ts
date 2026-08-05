@@ -112,9 +112,9 @@ export const SOURCES: SourceEntry[] = [
   },
   {
     id: 'gva',
-    ccaa: 'Comunitat Valenciana',
-    registro: 'Registre de Turisme de la Comunitat Valenciana — Generalitat Valenciana',
-    cities: 'València, Alicante, Benidorm, Torrevieja, Calp y Dénia',
+    ccaa: 'Comunidad Valenciana',
+    registro: 'Registro de Turismo de la Comunidad Valenciana — Generalitat Valenciana',
+    cities: 'Valencia, Alicante, Benidorm, Torrevieja, Calpe y Denia',
     links: [
       {
         label: 'Dataset diario (dadesobertes.gva.es)',
@@ -147,7 +147,7 @@ export const SOURCES: SourceEntry[] = [
   {
     id: 'cat',
     ccaa: 'Cataluña',
-    registro: 'Registre de Turisme de Catalunya (RTC) — Generalitat de Catalunya',
+    registro: 'Registro de Turismo de Cataluña (RTC) — Generalitat de Catalunya',
     cities: 'Barcelona, Girona y Tarragona',
     links: [
       {
@@ -160,7 +160,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      "Número de inscripción estable, modalidad separable (habitatge d'ús turístic vs llar compartida), dirección con piso y puerta, código postal y plazas en la mayoría de filas.",
+      'Número de inscripción estable, modalidad separable (vivienda de uso turístico frente a hogar compartido), dirección con piso y puerta, código postal y plazas en la mayoría de filas.',
     ],
     posicionamiento:
       'En Barcelona cruzamos por número de registro con el dataset municipal del Ajuntament, que sí publica coordenadas (100% ubicadas). En Girona y Tarragona el registro no trae coordenadas y geocodificamos por dirección con CartoCiudad y geocodificación comercial en varias pasadas.',
@@ -174,7 +174,7 @@ export const SOURCES: SourceEntry[] = [
     ],
     frecuencia: 'Dataset actualizado a diario; nosotros sincronizamos cada martes.',
     licencia:
-      "Llicència oberta d'ús d'informació – Catalunya (equivalente a CC BY); coordenadas municipales CC BY 4.0.",
+      'Licencia abierta de uso de información – Cataluña (equivalente a CC BY); coordenadas municipales CC BY 4.0.',
     score: {
       ubicacion: 10,
       identificador: 15,
@@ -186,9 +186,9 @@ export const SOURCES: SourceEntry[] = [
   },
   {
     id: 'caib',
-    ccaa: 'Illes Balears (Mallorca)',
-    registro: "Registre insular d'habitatges turístics de Mallorca — Consell de Mallorca",
-    cities: 'Palma, Calvià y Alcúdia',
+    ccaa: 'Islas Baleares (Mallorca)',
+    registro: 'Registro insular de viviendas turísticas de Mallorca — Consell de Mallorca',
+    cities: 'Palma, Calvià y Alcudia',
     links: [
       {
         label: 'GeoJSON del catálogo CAIB',
@@ -196,7 +196,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Número de registro, grupo de alta (ETV/ETVPL/ETV60/habitatge turístic — siempre vivienda completa), dirección, municipio, plazas y coordenadas WGS84 en aproximadamente la mitad de las fichas.',
+      'Número de registro, grupo de alta (ETV/ETVPL/ETV60/vivienda turística — siempre vivienda completa), dirección, municipio, plazas y coordenadas WGS84 en aproximadamente la mitad de las fichas.',
     ],
     posicionamiento:
       'Usamos las coordenadas del propio registre cuando existen y son plausibles; la otra mitad se geocodifica por dirección (CartoCiudad y geocodificación comercial).',

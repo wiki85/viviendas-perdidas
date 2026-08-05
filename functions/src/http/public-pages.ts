@@ -17,6 +17,7 @@ import {
   type OfficialHistoryPoint,
 } from './render-city.js';
 import { renderSourcesPage } from './render-sources.js';
+import { CITY_NAMES } from '../domain/communities.js';
 
 const CITY_ID_PATTERN = /^[a-z0-9-]+$/u;
 
@@ -233,6 +234,9 @@ export const cityPage = onRequest(
               ? titleCaseSpanish(officialData.municipality)
               : cityId,
           );
+      // El nombre canónico en castellano manda sobre lo que diga la base de
+      // datos («València», «Donostia / San Sebastián»...).
+      city.name = CITY_NAMES[city.id] ?? city.name;
       const [neighborhoods, history] = await Promise.all([
         listNeighborhoods(city.id),
         official !== null ? listCityHistory(city.id) : Promise.resolve([]),

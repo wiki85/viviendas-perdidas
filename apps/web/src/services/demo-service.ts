@@ -378,7 +378,7 @@ export class DemoListingsService implements ListingsService {
       },
       {
         email: 'asociacion@demo.local',
-        scopeLabels: ['Comunitat Valenciana', 'Palma'],
+        scopeLabels: ['Comunidad Valenciana', 'Palma'],
         weekly: false,
         monthly: true,
         active: false,

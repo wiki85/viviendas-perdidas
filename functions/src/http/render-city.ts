@@ -36,8 +36,8 @@ function officialCredit(source: string): string {
   if (source === 'rtc') {
     return `
     <p class="credit">
-      Fuente: <a href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys" rel="noopener noreferrer">Registre de Turisme de Catalunya</a>
-      (Generalitat de Catalunya, <a href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies" rel="noopener noreferrer">llicència oberta d'ús d'informació</a>),
+      Fuente: <a href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys" rel="noopener noreferrer">Registro de Turismo de Cataluña</a>
+      (Generalitat de Catalunya, <a href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies" rel="noopener noreferrer">licencia abierta de uso de información</a>),
       coordenadas del <a href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic" rel="noopener noreferrer">Ajuntament de Barcelona</a>
       (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>), datos adaptados. Sin respaldo oficial.
     </p>`;
@@ -45,7 +45,7 @@ function officialCredit(source: string): string {
   if (source === 'caib') {
     return `
     <p class="credit">
-      Fuente: <a href="https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca" rel="noopener noreferrer">Registre d'Habitatges Turístics i Estades Turístiques en Habitatge de Mallorca</a>
+      Fuente: <a href="https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca" rel="noopener noreferrer">Registro de Viviendas Turísticas y Estancias Turísticas en Vivienda de Mallorca</a>
       (Consell de Mallorca, Dades Obertes GOIB), datos adaptados ·
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
     </p>`;
@@ -87,7 +87,7 @@ function officialCredit(source: string): string {
   if (source === 'gva') {
     return `
     <p class="credit">
-      Fuente: <a href="https://dadesobertes.gva.es/es/dataset/758f8f8e-c5af-4622-b268-a6c591710a51" rel="noopener noreferrer">Registre de Turisme de la Comunitat Valenciana</a>
+      Fuente: <a href="https://dadesobertes.gva.es/es/dataset/758f8f8e-c5af-4622-b268-a6c591710a51" rel="noopener noreferrer">Registro de Turismo de la Comunidad Valenciana</a>
       (Generalitat Valenciana), datos adaptados ·
       <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a> ·
       coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.

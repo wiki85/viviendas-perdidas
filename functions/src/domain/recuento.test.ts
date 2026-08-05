@@ -30,8 +30,8 @@ describe('scopes', () => {
   });
 
   it('labels scopes for humans', () => {
-    expect(scopeDisplayName('community:comunitat-valenciana')).toBe('Comunitat Valenciana');
-    expect(scopeDisplayName('city:donostia')).toBe('Donostia / San Sebastián');
+    expect(scopeDisplayName('community:comunitat-valenciana')).toBe('Comunidad Valenciana');
+    expect(scopeDisplayName('city:donostia')).toBe('San Sebastián');
   });
 });
 

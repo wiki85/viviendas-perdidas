@@ -106,15 +106,15 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             >
               CC BY 4.0 <ExternalLink size={15} />
             </a>
-            ), de la <strong>Generalitat de Catalunya</strong> (Registre de Turisme de Catalunya,
-            llicència oberta d&rsquo;ús d&rsquo;informació), con coordenadas del{' '}
+            ), de la <strong>Generalitat de Catalunya</strong> (Registro de Turismo de Cataluña,
+            licencia abierta de uso de información), con coordenadas del{' '}
             <strong>Ajuntament de Barcelona</strong> (Open Data BCN, CC BY 4.0), y de la{' '}
-            <strong>Generalitat Valenciana</strong> (Registre de Turisme de la Comunitat Valenciana,
+            <strong>Generalitat Valenciana</strong> (Registro de Turismo de la Comunidad Valenciana,
             CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro, y del{' '}
-            <strong>Consell de Mallorca</strong> (Registre d&rsquo;Habitatges Turístics de Mallorca,
-            CC BY 4.0), del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra, CC
-            BY 4.0), del <strong>Gobierno Vasco</strong> (REATE, Open Data Euskadi, CC BY 4.0) y de
-            la <strong>Comunidad de Madrid</strong> (declaraciones responsables de VUT, CC BY 4.0).
+            <strong>Consell de Mallorca</strong> (Registro de Viviendas Turísticas de Mallorca, CC
+            BY 4.0), del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra, CC BY
+            4.0), del <strong>Gobierno Vasco</strong> (REATE, Open Data Euskadi, CC BY 4.0) y de la{' '}
+            <strong>Comunidad de Madrid</strong> (declaraciones responsables de VUT, CC BY 4.0).
             Adaptamos los datos originales y ninguna administración respalda este proyecto; el
             detalle completo está en la metodología.
           </p>
