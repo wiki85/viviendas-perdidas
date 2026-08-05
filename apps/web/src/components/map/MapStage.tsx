@@ -40,6 +40,7 @@ export type MapStageProps = {
   onViewportChange: (center: LatLng, zoom: number, bounds: MapBounds) => void;
   onSelectListing: (listing: Listing) => void;
   onSelectOfficial: (pin: OfficialPin) => void;
+  onSelectOfficialStack: (pins: OfficialPin[]) => void;
   onPickLocation: (position: LatLng) => void;
 };
 

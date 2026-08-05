@@ -15,8 +15,8 @@ type Props = {
   onClose: () => void;
 };
 
-// Precio medio de un café en España, la unidad de donación por defecto.
-const COFFEE_PRICE_EUR = 1.8;
+// Un café redondo: la unidad de donación por defecto.
+const COFFEE_PRICE_EUR = 2;
 const AMOUNTS = [
   { value: COFFEE_PRICE_EUR, label: 'Un café' },
   { value: 5, label: '5 €' },

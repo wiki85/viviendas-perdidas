@@ -3591,3 +3591,103 @@ textarea:focus-visible,
     display: none;
   }
 }
+
+/* ----------------------- Pines oficiales apilados -------------------------- */
+
+.map-marker--official-stack {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  font:
+    700 11px/1 system-ui,
+    sans-serif;
+  color: #fff;
+  background: #315d4c;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.map-marker--official-stack--many {
+  background: #24463a;
+  border-color: #d9f2e5;
+}
+
+.map-marker--official-stack:hover {
+  transform: scale(1.12);
+}
+
+/* ------------------------ Hoja de portal apilado --------------------------- */
+
+.stack-sheet__body {
+  display: grid;
+  gap: 6px;
+  padding: 4px 18px 18px;
+}
+
+.stack-sheet__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(49, 93, 76, 0.12);
+  color: #24463a;
+}
+
+.stack-sheet__body h2 {
+  font-size: 1.05rem;
+  margin: 4px 0 0;
+}
+
+.stack-sheet__address {
+  margin: 0;
+  color: #65716c;
+  font-size: 0.86rem;
+}
+
+.stack-sheet__list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.stack-sheet__list button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  text-align: left;
+  background: #fff;
+  border: 1px solid rgba(30, 43, 39, 0.14);
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.stack-sheet__list button:hover {
+  border-color: rgba(49, 93, 76, 0.45);
+  background: rgba(49, 93, 76, 0.05);
+}
+
+.stack-sheet__list strong {
+  font-size: 0.88rem;
+}
+
+.stack-sheet__list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #65716c;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}

@@ -21,6 +21,7 @@ import { DonateBanner } from './components/DonateBanner';
 import { DonateSheet } from './components/DonateSheet';
 import { ListingSheet } from './components/ListingSheet';
 import { OfficialSheet } from './components/OfficialSheet';
+import { OfficialStackSheet } from './components/OfficialStackSheet';
 import { MapStage, type CameraCommand } from './components/map/MapStage';
 import { TopBar } from './components/TopBar';
 
@@ -223,6 +224,7 @@ export default function App() {
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [placementMode, setPlacementMode] = useState(false);
   const [pickedPosition, setPickedPosition] = useState<LatLng | null>(null);
+  const [selectedStack, setSelectedStack] = useState<OfficialPin[] | null>(null);
   const [aboutOpen, setAboutOpen] = useState(currentPathIsAbout);
   const [adminOpen, setAdminOpen] = useState(currentPathIsAdmin);
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
@@ -357,11 +359,9 @@ export default function App() {
     [center, zoom],
   );
   const resolvedCityId = resolvedScope.scope.cityId ?? nearbyCityId;
-  const resolvedCityName = resolvedScope.scope.cityId
-    ? (resolvedScope.city?.name ?? resolvedScope.scope.name)
-    : nearbyCityId
-      ? cityDisplayName(nearbyCityId)
-      : '';
+  // cityDisplayName capitaliza y castellaniza; el scope crudo puede llegar
+  // en minúsculas ('arona') desde una URL compartida.
+  const resolvedCityName = resolvedCityId ? cityDisplayName(resolvedCityId) : '';
   useEffect(() => {
     // Reset first: the previous city's report (and its floating button)
     // must never linger over a different city while the new one resolves.
@@ -698,7 +698,14 @@ export default function App() {
   const selectOfficialPin = useCallback((pin: OfficialPin) => {
     setSelectedId(null);
     setSelectedFallback(null);
+    setSelectedStack(null);
     setSelectedOfficial(pin);
+  }, []);
+  const selectOfficialStack = useCallback((pins: OfficialPin[]) => {
+    setSelectedId(null);
+    setSelectedFallback(null);
+    setSelectedOfficial(null);
+    setSelectedStack(pins);
   }, []);
   const pickLocation = useCallback((position: LatLng) => {
     setPickedPosition(position);
@@ -1009,6 +1016,7 @@ export default function App() {
           onViewportChange={updateViewport}
           onSelectListing={selectListing}
           onSelectOfficial={selectOfficialPin}
+          onSelectOfficialStack={selectOfficialStack}
           onPickLocation={pickLocation}
         />
         {(capabilityNotice || aggregateError || listingState.error) && (
@@ -1079,6 +1087,13 @@ export default function App() {
       )}
       {selectedOfficial && !selectedListing && (
         <OfficialSheet pin={selectedOfficial} onClose={() => setSelectedOfficial(null)} />
+      )}
+      {selectedStack && !selectedOfficial && !selectedListing && (
+        <OfficialStackSheet
+          pins={selectedStack}
+          onPick={selectOfficialPin}
+          onClose={() => setSelectedStack(null)}
+        />
       )}
       {registrationOpen && (
         <Suspense fallback={null}>
