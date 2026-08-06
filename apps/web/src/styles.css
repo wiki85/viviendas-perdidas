@@ -3611,11 +3611,6 @@ textarea:focus-visible,
   cursor: pointer;
 }
 
-.map-marker--official-stack--many {
-  background: #24463a;
-  border-color: #d9f2e5;
-}
-
 .map-marker--official-stack:hover {
   transform: scale(1.12);
 }

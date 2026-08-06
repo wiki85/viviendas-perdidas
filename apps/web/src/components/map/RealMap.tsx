@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import {
   AdvancedMarker,
@@ -70,12 +70,10 @@ function OfficialCellsLayer({ cells }: { cells: OfficialCell[] }) {
 
 /**
  * Exact official pins at high zoom, clustered for performance. Dwellings
- * sharing one portal collapse into a stack marker: up to SPIDERFY_MAX they
- * fan out in a spider on tap (legs anchored to the real position); above
- * that, the tap opens a list sheet — 45 overlapping dots tell nothing.
+ * sharing one portal collapse into a stack marker whose tap opens a list
+ * sheet with every registration at that address — overlapping dots tell
+ * nothing.
  */
-const SPIDERFY_MAX = 12;
-
 type StackableMarker = google.maps.marker.AdvancedMarkerElement & { stackCount?: number };
 
 function stackKeyFor(pin: OfficialPin): string {
@@ -109,89 +107,6 @@ function OfficialPinsLayer({
   onSelectStackRef.current = onSelectStack;
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const markersRef = useRef(new Map<string, StackableMarker>());
-  const spiderRef = useRef<{
-    key: string;
-    markers: google.maps.marker.AdvancedMarkerElement[];
-    legs: google.maps.Polyline[];
-  } | null>(null);
-
-  const collapseSpider = useCallback(() => {
-    const spider = spiderRef.current;
-    if (!spider) return;
-    for (const marker of spider.markers) marker.map = null;
-    for (const leg of spider.legs) leg.setMap(null);
-    spiderRef.current = null;
-  }, []);
-
-  const spiderfy = useCallback(
-    (group: OfficialPin[], key: string) => {
-      if (!map) return;
-      if (spiderRef.current?.key === key) {
-        collapseSpider();
-        return;
-      }
-      collapseSpider();
-      const first = group[0];
-      if (!first) return;
-      const zoom = map.getZoom() ?? 17;
-      const metersPerPixel =
-        (156543.03392 * Math.cos((first.location.lat * Math.PI) / 180)) / 2 ** zoom;
-      // Un anillo hasta 8; espiral suave por encima.
-      const markers: google.maps.marker.AdvancedMarkerElement[] = [];
-      const legs: google.maps.Polyline[] = [];
-      group.forEach((pin, index) => {
-        const angle = (index / group.length) * Math.PI * 2 - Math.PI / 2;
-        const radiusPx = group.length <= 8 ? 34 : 30 + index * 3.2;
-        const meters = radiusPx * metersPerPixel;
-        const lat = pin.location.lat + (meters * Math.sin(angle)) / 111_320;
-        const lng =
-          pin.location.lng +
-          (meters * Math.cos(angle)) / (111_320 * Math.cos((pin.location.lat * Math.PI) / 180));
-        const position = { lat, lng };
-        legs.push(
-          new google.maps.Polyline({
-            map,
-            path: [pin.location, position],
-            strokeColor: '#315d4c',
-            strokeOpacity: 0.55,
-            strokeWeight: 1.5,
-            zIndex: 4,
-            clickable: false,
-          }),
-        );
-        const marker = new google.maps.marker.AdvancedMarkerElement({
-          map,
-          position,
-          zIndex: 6,
-          content: officialDotElement(
-            `${pin.registrationCode} · Registro oficial de turismo`,
-            `Vivienda turística oficial ${pin.registrationCode}`,
-          ),
-        });
-        marker.addListener('click', () => {
-          onSelectRef.current(pin);
-        });
-        markers.push(marker);
-      });
-      spiderRef.current = { key, markers, legs };
-    },
-    [map, collapseSpider],
-  );
-
-  useEffect(() => {
-    if (!map) return;
-    // Cualquier interacción de cámara o toque en el mapa repliega la araña.
-    const listeners = [
-      map.addListener('click', collapseSpider),
-      map.addListener('zoom_changed', collapseSpider),
-      map.addListener('dragstart', collapseSpider),
-    ];
-    return () => {
-      listeners.forEach((listener) => listener.remove());
-      collapseSpider();
-    };
-  }, [map, collapseSpider]);
-
   useEffect(() => {
     if (!map || !google.maps.marker?.AdvancedMarkerElement) return;
     const clusterer = new MarkerClusterer({
@@ -248,14 +163,6 @@ function OfficialPinsLayer({
       units.set(unitKey, group);
     }
 
-    if (spiderRef.current && !units.has(`stack:${spiderRef.current.key}`)) {
-      // La pila abierta puede haber salido del viewport: replegar si ya no existe.
-      const stillThere = [...units.keys()].some((key) =>
-        key.startsWith(`stack:${spiderRef.current?.key ?? ''}:`),
-      );
-      if (!stillThere) collapseSpider();
-    }
-
     const current = markersRef.current;
     const removed: google.maps.marker.AdvancedMarkerElement[] = [];
     for (const [id, marker] of current) {
@@ -284,27 +191,20 @@ function OfficialPinsLayer({
       } else {
         const content = document.createElement('button');
         content.type = 'button';
-        const spiderable = group.length <= SPIDERFY_MAX;
-        content.className = spiderable
-          ? 'map-marker--official-stack'
-          : 'map-marker--official-stack map-marker--official-stack--many';
-        content.textContent = spiderable ? String(group.length) : `×${group.length}`;
+        content.className = 'map-marker--official-stack';
+        content.textContent = `×${group.length}`;
         content.title = `${group.length} viviendas turísticas oficiales en este portal`;
         content.setAttribute(
           'aria-label',
-          `${group.length} viviendas turísticas oficiales en la misma dirección. ${spiderable ? 'Desplegar' : 'Ver la lista'}.`,
+          `${group.length} viviendas turísticas oficiales en la misma dirección. Ver la lista.`,
         );
         marker = new google.maps.marker.AdvancedMarkerElement({
           position: first.location,
           content,
           zIndex: 2,
         });
-        const key = stackKeyFor(first);
         marker.stackCount = group.length;
-        marker.addListener('click', () => {
-          if (spiderable) spiderfy(group, key);
-          else onSelectStackRef.current(group);
-        });
+        marker.addListener('click', () => onSelectStackRef.current(group));
       }
       current.set(unitKey, marker);
       added.push(marker);
@@ -312,7 +212,7 @@ function OfficialPinsLayer({
     if (removed.length > 0) clusterer.removeMarkers(removed, true);
     if (added.length > 0) clusterer.addMarkers(added, true);
     if (removed.length > 0 || added.length > 0) clusterer.render();
-  }, [map, pins, spiderfy, collapseSpider]);
+  }, [map, pins]);
   return null;
 }
 
