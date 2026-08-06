@@ -51,7 +51,9 @@ function OfficialCellsLayer({ cells }: { cells: OfficialCell[] }) {
         map,
         position: cell.location,
         content,
-        zIndex: 1,
+        // Las burbujas grandes SIEMPRE por encima: una de «1» nunca debe
+        // tapar el número de una de «37k» solapada.
+        zIndex: Math.min(cell.count, 900_000),
       });
       marker.addListener('click', () => {
         map.panTo(cell.location);
@@ -123,7 +125,7 @@ function OfficialPinsLayer({
           const total = dwellings > 0 ? dwellings : count;
           return new google.maps.marker.AdvancedMarkerElement({
             position,
-            zIndex: 1,
+            zIndex: Math.min(total, 900_000),
             content: officialBubbleElement(
               total,
               `Grupo de ${total} viviendas turísticas oficiales. Acercar.`,
