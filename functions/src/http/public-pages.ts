@@ -18,6 +18,7 @@ import {
 } from './render-city.js';
 import { renderSourcesPage } from './render-sources.js';
 import { CITY_NAMES } from '../domain/communities.js';
+import { neighborhoodDisplayName } from '../services/geo.js';
 
 const CITY_ID_PATTERN = /^[a-z0-9-]+$/u;
 
@@ -62,6 +63,19 @@ function cityFromDoc(id: string, data: FirebaseFirestore.DocumentData): CityStat
     lostCommercial: integer(data.lostCommercial),
     updatedAt: toDate(data.updatedAt),
   };
+}
+
+function officialNeighborhoods(
+  data: FirebaseFirestore.DocumentData | undefined,
+): Record<string, number> {
+  const raw: unknown = data?.neighborhoods;
+  if (typeof raw !== 'object' || raw === null) return {};
+  const counts: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const count = integer(value);
+    if (count > 0) counts[key] = count;
+  }
+  return counts;
 }
 
 function officialFromDoc(data: FirebaseFirestore.DocumentData): OfficialCityStats {
@@ -148,26 +162,60 @@ async function listCityHistory(cityId: string): Promise<OfficialHistoryPoint[]> 
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-async function listNeighborhoods(cityId: string): Promise<NeighborhoodStats[]> {
+async function listNeighborhoods(
+  cityId: string,
+  officialByNeighborhood: Record<string, number>,
+): Promise<NeighborhoodStats[]> {
   const snapshot = await db
     .collection('aggregates')
     .where('scope', '==', 'neighborhood')
     .where('cityId', '==', cityId)
     .get();
-  return snapshot.docs
-    .map((doc) => {
-      const data = doc.data();
-      return {
-        name: typeof data.name === 'string' && data.name.length > 0 ? data.name : doc.id,
-        lostDwellings: integer(data.lostDwellings),
-        lostFamilies: integer(data.lostFamilies),
-        lostCommercial: integer(data.lostCommercial),
-        listingsCount: integer(data.listingsCount),
-      };
-    })
-    .filter((entry) => entry.listingsCount > 0)
-    .sort((a, b) => b.lostDwellings - a.lostDwellings || a.name.localeCompare(b.name, 'es'))
-    .slice(0, 40);
+  // Unión de ambas fuentes por id de barrio; el nombre canónico sale del
+  // manifiesto geográfico (los agregados antiguos guardaban el slug).
+  const merged = new Map<string, NeighborhoodStats>();
+  for (const [neighborhoodId, officialCount] of Object.entries(officialByNeighborhood)) {
+    if (officialCount <= 0) continue;
+    merged.set(neighborhoodId, {
+      name: neighborhoodDisplayName(cityId, neighborhoodId),
+      officialCount,
+      lostDwellings: 0,
+      lostFamilies: 0,
+      lostCommercial: 0,
+    });
+  }
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    if (integer(data.listingsCount) <= 0) continue;
+    const neighborhoodId =
+      typeof data.neighborhoodId === 'string' && data.neighborhoodId.length > 0
+        ? data.neighborhoodId
+        : doc.id;
+    const existing = merged.get(neighborhoodId);
+    const community = {
+      lostDwellings: integer(data.lostDwellings),
+      lostFamilies: integer(data.lostFamilies),
+      lostCommercial: integer(data.lostCommercial),
+    };
+    if (existing) {
+      existing.lostDwellings += community.lostDwellings;
+      existing.lostFamilies += community.lostFamilies;
+      existing.lostCommercial += community.lostCommercial;
+    } else {
+      merged.set(neighborhoodId, {
+        name: neighborhoodDisplayName(cityId, neighborhoodId),
+        officialCount: 0,
+        ...community,
+      });
+    }
+  }
+  return [...merged.values()]
+    .sort(
+      (a, b) =>
+        b.officialCount + b.lostDwellings - (a.officialCount + a.lostDwellings) ||
+        a.name.localeCompare(b.name, 'es'),
+    )
+    .slice(0, 60);
 }
 
 export const cityPage = onRequest(
@@ -238,7 +286,7 @@ export const cityPage = onRequest(
       // datos («València», «Donostia / San Sebastián»...).
       city.name = CITY_NAMES[city.id] ?? city.name;
       const [neighborhoods, history] = await Promise.all([
-        listNeighborhoods(city.id),
+        listNeighborhoods(city.id, officialNeighborhoods(officialData)),
         official !== null ? listCityHistory(city.id) : Promise.resolve([]),
       ]);
       response

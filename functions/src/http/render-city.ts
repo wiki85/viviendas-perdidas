@@ -111,6 +111,8 @@ export type CityIndexEntry = CityStats & { officialTotal?: number };
 
 export interface NeighborhoodStats {
   name: string;
+  /** Viviendas del registro oficial de turismo ubicadas en el barrio. */
+  officialCount: number;
   lostDwellings: number;
   lostFamilies: number;
   lostCommercial: number;
@@ -595,17 +597,16 @@ export function renderCityPage(
   const neighborhoodRows = neighborhoods
     .map(
       (entry) =>
-        `<tr><td>${escapeHtml(entry.name)}</td><td class="num">${n(entry.lostDwellings)}</td><td class="num">${n(entry.lostFamilies)}</td><td class="num">${n(entry.lostCommercial)}</td></tr>`,
+        `<tr><td>${escapeHtml(entry.name)}</td><td class="num">${n(entry.officialCount)}</td><td class="num">${n(entry.lostDwellings)}</td><td class="num">${n(entry.lostCommercial)}</td></tr>`,
     )
     .join('');
   const neighborhoodsSection =
     neighborhoods.length > 0
       ? `<h2>Desglose por barrios</h2>
         <table>
-          <thead><tr><th>Barrio</th><th class="num">Viviendas</th><th class="num">Familias</th><th class="num">Locales</th></tr></thead>
+          <thead><tr><th>Barrio</th><th class="num">Registro oficial</th><th class="num">Vecinales</th><th class="num">Locales</th></tr></thead>
           <tbody>${neighborhoodRows}</tbody>
-        </table>
-        <p class="updated">La asignación a barrios es aproximada y solo refleja registros vecinales.</p>`
+        </table>`
       : '';
 
   const jsonLd = {

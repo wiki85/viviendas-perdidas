@@ -24,7 +24,7 @@ function city(overrides: Partial<CityStats> = {}): CityStats {
 describe('renderCityPage', () => {
   it('renders the city figures, canonical URL and map deep link', () => {
     const html = renderCityPage(city(), [
-      { name: 'Russafa', lostDwellings: 20, lostFamilies: 20, lostCommercial: 1 },
+      { name: 'Russafa', officialCount: 0, lostDwellings: 20, lostFamilies: 20, lostCommercial: 1 },
     ]);
     expect(html).toContain('Viviendas perdidas en València');
     expect(html).toContain('<strong>34</strong>');

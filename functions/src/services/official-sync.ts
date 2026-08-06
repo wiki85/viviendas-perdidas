@@ -15,6 +15,7 @@ import { createValenciaFetcher } from './valencia-source.js';
 import { createMallorcaFetcher } from './mallorca-source.js';
 import { createCanariasFetcher } from './canarias-source.js';
 import { CANARIAS_MUNICIPALITIES } from '../domain/canarias.js';
+import { resolveNeighborhood } from './geo.js';
 import { createNavarraFetcher } from './navarra-source.js';
 import { createEuskadiFetcher } from './euskadi-source.js';
 import { EUSKADI_MUNICIPALITIES } from '../domain/euskadi.js';
@@ -1083,6 +1084,20 @@ async function runSource(
           ),
           places: records.reduce((sum, record) => sum + record.places, 0),
           withLocation: records.filter((record) => record.latitude !== null).length,
+          // Recuento por barrio oficial (solo ciudades con polígonos en el
+          // manifiesto geográfico): alimenta el desglose de las páginas de
+          // ciudad. Se recalcula entero en cada sincronización.
+          neighborhoods: records.reduce<Record<string, number>>((accumulator, record) => {
+            if (record.latitude === null || record.longitude === null) return accumulator;
+            const neighborhood = resolveNeighborhood(cityId, {
+              latitude: record.latitude,
+              longitude: record.longitude,
+            });
+            if (neighborhood !== null) {
+              accumulator[neighborhood.id] = (accumulator[neighborhood.id] ?? 0) + 1;
+            }
+            return accumulator;
+          }, {}),
           source: source.statsSource,
           updatedAt: Timestamp.now(),
         };
