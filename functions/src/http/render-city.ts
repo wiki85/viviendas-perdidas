@@ -296,6 +296,9 @@ export const SHARED_CSS = `
   .src-toggles button[aria-pressed="false"]{background:transparent;color:#77837d;border-color:rgba(30,43,39,.18);text-decoration:line-through}
   .src-card [data-source-detail][hidden]{display:none}
   .src-card .credit{margin:10px 0 0}
+  .barrios-scroll{max-height:660px;overflow-y:auto;background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px}
+  .barrios-scroll table{border:0;border-radius:0}
+  .barrios-scroll thead th{position:sticky;top:0;background:#eef3f0;z-index:1}
   .sub-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:rgba(49,93,76,.09);border:1px solid rgba(49,93,76,.25);border-radius:12px;padding:10px 14px;margin:14px 0 4px;font-size:.9rem}
   .sub-strip p{margin:0;flex:1;min-width:200px;color:#24463a}
   .sub-strip a{flex-shrink:0;display:inline-block;background:#315d4c;color:#fff;text-decoration:none;font-weight:700;padding:9px 16px;border-radius:999px;font-size:.85rem}
@@ -603,10 +606,12 @@ export function renderCityPage(
   const neighborhoodsSection =
     neighborhoods.length > 0
       ? `<h2>Desglose por barrios</h2>
+        <div class="barrios-scroll">
         <table>
           <thead><tr><th>Barrio</th><th class="num">Registro oficial</th><th class="num">Vecinales</th><th class="num">Locales</th></tr></thead>
           <tbody>${neighborhoodRows}</tbody>
-        </table>`
+        </table>
+        </div>`
       : '';
 
   const jsonLd = {
