@@ -56,8 +56,13 @@ function OfficialCellsLayer({ cells }: { cells: OfficialCell[] }) {
         zIndex: Math.min(cell.count, 900_000),
       });
       marker.addListener('click', () => {
-        map.panTo(cell.location);
-        map.setZoom(CELL_ZOOM_AFTER_CLICK[cell.precision] ?? 15);
+        // Atómico: panTo+setZoom por separado ampliaba sobre el centro
+        // ANTIGUO (el pan es animado) y dejaba la cámara en mitad del
+        // océano al pinchar burbujas lejanas (Canarias desde la vista inicial).
+        map.moveCamera({
+          center: cell.location,
+          zoom: CELL_ZOOM_AFTER_CLICK[cell.precision] ?? 15,
+        });
       });
       return marker;
     });
