@@ -1,7 +1,55 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-02T16:44:18.740Z",
+  "generatedAt": "2026-08-06T20:37:19.996Z",
   "cities": [
+    {
+      "id": "adeje",
+      "name": "Adeje",
+      "center": [-16.747197, 28.102276000000003],
+      "bounds": {
+        "north": 28.13857,
+        "south": 28.065982,
+        "east": -16.706655,
+        "west": -16.787739
+      },
+      "geoJsonUrl": "/geo/adeje/neighborhoods.2a285a1ec10c.geojson",
+      "fallbackGeoJsonUrl": "/geo/adeje/neighborhoods.geojson",
+      "featureCount": 6,
+      "sha256": "2a285a1ec10c07b4c4cf6eea0bb4c44f39e9d19e1231d75661bac434cb8eb935",
+      "representative": false
+    },
+    {
+      "id": "alcudia",
+      "name": "Alcudia",
+      "center": [3.1301915, 39.8413775],
+      "bounds": {
+        "north": 39.868424,
+        "south": 39.814331,
+        "east": 3.162776,
+        "west": 3.097607
+      },
+      "geoJsonUrl": "/geo/alcudia/neighborhoods.24a7f3704164.geojson",
+      "fallbackGeoJsonUrl": "/geo/alcudia/neighborhoods.geojson",
+      "featureCount": 5,
+      "sha256": "24a7f37041648c4a5a63cb4dcf150014f66a855b4a7ace023017825ff8076c0b",
+      "representative": false
+    },
+    {
+      "id": "alicante",
+      "name": "Alicante",
+      "center": [-0.51561, 38.3492315],
+      "bounds": {
+        "north": 38.537565,
+        "south": 38.160898,
+        "east": -0.374675,
+        "west": -0.656545
+      },
+      "geoJsonUrl": "/geo/alicante/neighborhoods.5ed39f742d9d.geojson",
+      "fallbackGeoJsonUrl": "/geo/alicante/neighborhoods.geojson",
+      "featureCount": 46,
+      "sha256": "5ed39f742d9d635a3eb35c6fa59874a6161d3c4600a0519f364a8a9889eaeb27",
+      "representative": false
+    },
     {
       "id": "almeria",
       "name": "Almería",
@@ -19,6 +67,22 @@
       "representative": false
     },
     {
+      "id": "arona",
+      "name": "Arona",
+      "center": [-16.687762499999998, 28.0361455],
+      "bounds": {
+        "north": 28.068678,
+        "south": 28.003613,
+        "east": -16.638219,
+        "west": -16.737306
+      },
+      "geoJsonUrl": "/geo/arona/neighborhoods.434f7e3bea25.geojson",
+      "fallbackGeoJsonUrl": "/geo/arona/neighborhoods.geojson",
+      "featureCount": 3,
+      "sha256": "434f7e3bea25dbdbebcc9bc832017bfc2292bc8f2d8394fc675c66b5741ae383",
+      "representative": false
+    },
+    {
       "id": "barcelona",
       "name": "Barcelona",
       "center": [2.140189, 41.3926685],
@@ -32,6 +96,22 @@
       "fallbackGeoJsonUrl": "/geo/barcelona/neighborhoods.geojson",
       "featureCount": 73,
       "sha256": "bb27a00685157357111574f908523c7c2b97b21a706acacb5d4a61033c297819",
+      "representative": false
+    },
+    {
+      "id": "benidorm",
+      "name": "Benidorm",
+      "center": [-0.1247995, 38.552282],
+      "bounds": {
+        "north": 38.580354,
+        "south": 38.52421,
+        "east": -0.081787,
+        "west": -0.167812
+      },
+      "geoJsonUrl": "/geo/benidorm/neighborhoods.a9b073aa36d6.geojson",
+      "fallbackGeoJsonUrl": "/geo/benidorm/neighborhoods.geojson",
+      "featureCount": 3,
+      "sha256": "a9b073aa36d6e1f04f026f9d7328b5e0072d355ca9edad296e000b8fd3dc3c0b",
       "representative": false
     },
     {
@@ -67,6 +147,38 @@
       "representative": false
     },
     {
+      "id": "calp",
+      "name": "Calpe",
+      "center": [0.047521499999999994, 38.655529],
+      "bounds": {
+        "north": 38.680539,
+        "south": 38.630519,
+        "east": 0.08478,
+        "west": 0.010263
+      },
+      "geoJsonUrl": "/geo/calp/neighborhoods.580fa383f36f.geojson",
+      "fallbackGeoJsonUrl": "/geo/calp/neighborhoods.geojson",
+      "featureCount": 8,
+      "sha256": "580fa383f36f77aa431e61f452c821845551db2f79a04fa51f7d0dbb90ea64a3",
+      "representative": false
+    },
+    {
+      "id": "calvia",
+      "name": "Calvià",
+      "center": [2.5152574999999997, 39.5285755],
+      "bounds": {
+        "north": 39.584158,
+        "south": 39.472993,
+        "east": 2.597736,
+        "west": 2.432779
+      },
+      "geoJsonUrl": "/geo/calvia/neighborhoods.bff997a356ce.geojson",
+      "fallbackGeoJsonUrl": "/geo/calvia/neighborhoods.geojson",
+      "featureCount": 18,
+      "sha256": "bff997a356ce649b7f7ed36f7cfc235b1b2f27621010ef26ad716445670b12ee",
+      "representative": false
+    },
+    {
       "id": "cordoba",
       "name": "Córdoba",
       "center": [-4.786144, 37.889298],
@@ -83,6 +195,22 @@
       "representative": false
     },
     {
+      "id": "denia",
+      "name": "Denia",
+      "center": [0.058036000000000004, 38.8387845],
+      "bounds": {
+        "north": 38.885226,
+        "south": 38.792343,
+        "east": 0.16039,
+        "west": -0.044318
+      },
+      "geoJsonUrl": "/geo/denia/neighborhoods.6db046db4dbe.geojson",
+      "fallbackGeoJsonUrl": "/geo/denia/neighborhoods.geojson",
+      "featureCount": 11,
+      "sha256": "6db046db4dbe70dc0222918d618b80915504a99e12305434cfd82eb8d4ec2a2a",
+      "representative": false
+    },
+    {
       "id": "donostia",
       "name": "San Sebastián",
       "center": [-1.9873315, 43.278041],
@@ -96,6 +224,22 @@
       "fallbackGeoJsonUrl": "/geo/donostia/neighborhoods.geojson",
       "featureCount": 19,
       "sha256": "0e4d27d6a9117c2452b76e74d97edfac239dcf21a717f1d537650052da2b30db",
+      "representative": false
+    },
+    {
+      "id": "girona",
+      "name": "Girona",
+      "center": [2.840275, 41.98455],
+      "bounds": {
+        "north": 42.029858,
+        "south": 41.939242,
+        "east": 2.897817,
+        "west": 2.782733
+      },
+      "geoJsonUrl": "/geo/girona/neighborhoods.41de1b0342bc.geojson",
+      "fallbackGeoJsonUrl": "/geo/girona/neighborhoods.geojson",
+      "featureCount": 31,
+      "sha256": "41de1b0342bcb8686452672c8b656bc60805aaf8f509c9ee34805b670f722803",
       "representative": false
     },
     {
@@ -163,6 +307,38 @@
       "representative": false
     },
     {
+      "id": "la-oliva",
+      "name": "La Oliva",
+      "center": [-13.927695499999999, 28.7134325],
+      "bounds": {
+        "north": 28.747046,
+        "south": 28.679819,
+        "east": -13.836905,
+        "west": -14.018486
+      },
+      "geoJsonUrl": "/geo/la-oliva/neighborhoods.abe1a324ac84.geojson",
+      "fallbackGeoJsonUrl": "/geo/la-oliva/neighborhoods.geojson",
+      "featureCount": 2,
+      "sha256": "abe1a324ac842617327233c7fd4de4e8f8baf1ce7b30bee68cf44fd9fa62ed66",
+      "representative": false
+    },
+    {
+      "id": "las-palmas-de-gran-canaria",
+      "name": "Las Palmas de Gran Canaria",
+      "center": [-15.4611935, 28.1028965],
+      "bounds": {
+        "north": 28.181362,
+        "south": 28.024431,
+        "east": -15.395138,
+        "west": -15.527249
+      },
+      "geoJsonUrl": "/geo/las-palmas-de-gran-canaria/neighborhoods.25b6d402cdf8.geojson",
+      "fallbackGeoJsonUrl": "/geo/las-palmas-de-gran-canaria/neighborhoods.geojson",
+      "featureCount": 122,
+      "sha256": "25b6d402cdf8fde51996d6255e64a1bcad9391b3e932bf4f7c05de6634a0c33f",
+      "representative": false
+    },
+    {
       "id": "madrid",
       "name": "Madrid",
       "center": [-3.7034979999999997, 40.477755],
@@ -211,6 +387,22 @@
       "representative": false
     },
     {
+      "id": "mogan",
+      "name": "Mogán",
+      "center": [-15.7205285, 27.7927775],
+      "bounds": {
+        "north": 27.830429,
+        "south": 27.755126,
+        "east": -15.673611,
+        "west": -15.767446
+      },
+      "geoJsonUrl": "/geo/mogan/neighborhoods.64596bc849f5.geojson",
+      "fallbackGeoJsonUrl": "/geo/mogan/neighborhoods.geojson",
+      "featureCount": 6,
+      "sha256": "64596bc849f5bd821b727da2c77f8fdad614be0797b861c7632e62abe7178b4d",
+      "representative": false
+    },
+    {
       "id": "palma",
       "name": "Palma",
       "center": [2.705458, 39.58103],
@@ -243,6 +435,38 @@
       "representative": false
     },
     {
+      "id": "san-bartolome-de-tirajana",
+      "name": "San Bartolomé de Tirajana",
+      "center": [-15.5647395, 27.761556],
+      "bounds": {
+        "north": 27.788526,
+        "south": 27.734586,
+        "east": -15.502471,
+        "west": -15.627008
+      },
+      "geoJsonUrl": "/geo/san-bartolome-de-tirajana/neighborhoods.283167c64861.geojson",
+      "fallbackGeoJsonUrl": "/geo/san-bartolome-de-tirajana/neighborhoods.geojson",
+      "featureCount": 7,
+      "sha256": "283167c6486113836389964362bc047f3f5d7fbc695c303a529bd1181770cc68",
+      "representative": false
+    },
+    {
+      "id": "santa-cruz-de-tenerife",
+      "name": "Santa Cruz de Tenerife",
+      "center": [-16.232612500000002, 28.4991865],
+      "bounds": {
+        "north": 28.588637,
+        "south": 28.409736,
+        "east": -16.119421,
+        "west": -16.345804
+      },
+      "geoJsonUrl": "/geo/santa-cruz-de-tenerife/neighborhoods.850ca3472107.geojson",
+      "fallbackGeoJsonUrl": "/geo/santa-cruz-de-tenerife/neighborhoods.geojson",
+      "featureCount": 80,
+      "sha256": "850ca3472107d5848439c8bb96def454cbec83cb53a38ef5ab40e363aff27383",
+      "representative": false
+    },
+    {
       "id": "sevilla",
       "name": "Sevilla",
       "center": [-5.9259125, 37.376697],
@@ -259,6 +483,54 @@
       "representative": false
     },
     {
+      "id": "tarragona",
+      "name": "Tarragona",
+      "center": [1.2810145, 41.122772499999996],
+      "bounds": {
+        "north": 41.166881,
+        "south": 41.078664,
+        "east": 1.375216,
+        "west": 1.186813
+      },
+      "geoJsonUrl": "/geo/tarragona/neighborhoods.0a71c1dbe9ba.geojson",
+      "fallbackGeoJsonUrl": "/geo/tarragona/neighborhoods.geojson",
+      "featureCount": 124,
+      "sha256": "0a71c1dbe9ba9f0e206af89c62876b00befe3ddbfbb8a5db188a442e3627d7c2",
+      "representative": false
+    },
+    {
+      "id": "tias",
+      "name": "Tías",
+      "center": [-13.648031, 28.9310935],
+      "bounds": {
+        "north": 28.943495,
+        "south": 28.918692,
+        "east": -13.614832,
+        "west": -13.68123
+      },
+      "geoJsonUrl": "/geo/tias/neighborhoods.71558b13bf9d.geojson",
+      "fallbackGeoJsonUrl": "/geo/tias/neighborhoods.geojson",
+      "featureCount": 3,
+      "sha256": "71558b13bf9d7a0a5b8412feede9643df6962ae70b78785fc15b1060d6d9fcfd",
+      "representative": false
+    },
+    {
+      "id": "torrevieja",
+      "name": "Torrevieja",
+      "center": [-0.6965785, 37.9868475],
+      "bounds": {
+        "north": 38.030697,
+        "south": 37.942998,
+        "east": -0.647627,
+        "west": -0.74553
+      },
+      "geoJsonUrl": "/geo/torrevieja/neighborhoods.1020fc468c57.geojson",
+      "fallbackGeoJsonUrl": "/geo/torrevieja/neighborhoods.geojson",
+      "featureCount": 7,
+      "sha256": "1020fc468c57e72e7fbb056e523b9cd89835c8d8ff1b3d6457913207e904e221",
+      "representative": false
+    },
+    {
       "id": "valencia",
       "name": "Valencia",
       "center": [-0.3539515, 39.4227605],
@@ -272,6 +544,22 @@
       "fallbackGeoJsonUrl": "/geo/valencia/neighborhoods.geojson",
       "featureCount": 88,
       "sha256": "ee9f22040ba5cc57db99c16df003bff426e42c3ae606e736989cc907e4410d35",
+      "representative": false
+    },
+    {
+      "id": "yaiza",
+      "name": "Yaiza",
+      "center": [-13.7886805, 28.890058500000002],
+      "bounds": {
+        "north": 28.925595,
+        "south": 28.854522,
+        "east": -13.699828,
+        "west": -13.877533
+      },
+      "geoJsonUrl": "/geo/yaiza/neighborhoods.8eb34a283733.geojson",
+      "fallbackGeoJsonUrl": "/geo/yaiza/neighborhoods.geojson",
+      "featureCount": 4,
+      "sha256": "8eb34a283733c71c2cc7af908e8990a0861d1f17347a30d3f505d187ccdccc48",
       "representative": false
     }
   ]
