@@ -294,6 +294,13 @@ export const SHARED_CSS = `
   .src-toggles button[aria-pressed="false"]{background:transparent;color:#77837d;border-color:rgba(30,43,39,.18);text-decoration:line-through}
   .src-card [data-source-detail][hidden]{display:none}
   .src-card .credit{margin:10px 0 0}
+  .sub-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:rgba(49,93,76,.09);border:1px solid rgba(49,93,76,.25);border-radius:12px;padding:10px 14px;margin:14px 0 4px;font-size:.9rem}
+  .sub-strip p{margin:0;flex:1;min-width:200px;color:#24463a}
+  .sub-strip a{flex-shrink:0;display:inline-block;background:#315d4c;color:#fff;text-decoration:none;font-weight:700;padding:9px 16px;border-radius:999px;font-size:.85rem}
+  .sub-box{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:rgba(49,93,76,.09);border:1px solid rgba(49,93,76,.25);border-radius:14px;padding:16px 20px;margin:26px 0 0}
+  .sub-box h2{margin:0 0 4px;font-size:1.1rem}
+  .sub-box p{margin:0;font-size:.9rem;max-width:52ch}
+  .sub-box a{flex-shrink:0;display:inline-block;background:#315d4c;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px}
   .embed-row{display:flex;gap:10px;align-items:center;margin:10px 0}
   .embed-row code{flex:1;min-width:0;display:block;background:#fff;border:1px solid rgba(30,43,39,.14);border-radius:10px;padding:9px 12px;font-size:.72rem;overflow-x:auto;white-space:nowrap}
   .embed-row button{flex-shrink:0;font:inherit;font-size:.86rem;font-weight:700;color:#fff;background:#315d4c;border:0;border-radius:999px;padding:9px 16px;cursor:pointer}
@@ -618,15 +625,30 @@ export function renderCityPage(
     ? `scope=${encodeURIComponent(city.id)}&fuente=ambas`
     : `scope=${encodeURIComponent(city.id)}`;
   const covered = ALL_CITY_IDS.includes(city.id);
+  const subscribeStrip = covered
+    ? `
+    <div class="sub-strip">
+      <p><strong>El Recuento</strong>: recibe en tu correo cada subida o bajada del registro
+      de ${escapeHtml(name)} — semanal o mensual, y solo si hay cambios.</p>
+      <a href="/boletin">Suscribirse gratis</a>
+    </div>`
+    : '';
+  const subscribeBox = covered
+    ? `
+    <div class="sub-box">
+      <div>
+        <h2>El Recuento: estas cifras, en tu correo</h2>
+        <p>
+          Cada semana o cada mes, las variaciones de ${escapeHtml(name)} y de las zonas que
+          elijas — y solo si hay cambios. También hay feeds RSS por ciudad.
+        </p>
+      </div>
+      <a href="/boletin">Suscribirse gratis</a>
+    </div>`
+    : '';
   const followSection = covered
     ? `
     <h2>Sigue los datos de ${escapeHtml(name)}</h2>
-    <p>
-      <strong>El Recuento</strong>, el boletín de datos del proyecto, avisa por correo cuando el
-      registro oficial de ${escapeHtml(name)} suma o retira viviendas turísticas: cada semana o
-      cada mes, y solo si hay cambios.
-      <a href="/boletin">Suscríbete y elige tus zonas</a>.
-    </p>
     <p>
       Para redacciones, asociaciones y lectores RSS existe un
       <a href="/feeds/${escapeHtml(city.id)}.xml">feed RSS de ${escapeHtml(name)}</a> con cada
@@ -645,6 +667,7 @@ export function renderCityPage(
   const body = `
     <h1>Viviendas perdidas en ${escapeHtml(name)}</h1>
     ${updatedLine}
+    ${subscribeStrip}
     ${communitySection}
     ${officialSection}
     ${official ? officialEvolutionSection(history) : ''}
@@ -670,7 +693,8 @@ export function renderCityPage(
       ¿Conoces una vivienda convertida en apartamento turístico en ${escapeHtml(name)}?
       <a href="/?scope=${escapeHtml(encodeURIComponent(city.id))}">Regístrala en el mapa</a> —
       no hace falta cuenta y no se guarda ningún dato personal.
-    </div>`;
+    </div>
+    ${subscribeBox}`;
   return pageShell({
     title,
     description,
