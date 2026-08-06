@@ -297,7 +297,7 @@ export const SHARED_CSS = `
   .src-card [data-source-detail][hidden]{display:none}
   .src-card .credit{margin:10px 0 0}
   .barrios-scroll{max-height:660px;overflow-y:auto;background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px}
-  .barrios-scroll table{border:0;border-radius:0}
+  .barrios-scroll table{border:0;border-radius:0;border-collapse:separate;border-spacing:0;overflow:visible}
   .barrios-scroll thead th{position:sticky;top:0;background:#eef3f0;z-index:1}
   .sub-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:rgba(49,93,76,.09);border:1px solid rgba(49,93,76,.25);border-radius:12px;padding:10px 14px;margin:14px 0 4px;font-size:.9rem}
   .sub-strip p{margin:0;flex:1;min-width:200px;color:#24463a}
