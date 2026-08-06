@@ -471,7 +471,7 @@ export function renderCityPage(
       : `Datos colaborativos de viviendas convertidas en alojamiento turístico en ${name}.`;
   const updatedAt = city.updatedAt ?? official?.updatedAt ?? null;
   const updatedLine = updatedAt
-    ? `<p class="updated">Actualizado el ${escapeHtml(dateFormatter.format(updatedAt))} · ${n(city.listingsCount)} ${city.listingsCount === 1 ? 'registro vecinal' : 'registros vecinales'}${official ? ` · registro oficial de turismo` : ''}</p>`
+    ? `<p class="updated">Actualizado el ${escapeHtml(dateFormatter.format(updatedAt))}</p>`
     : '';
 
   const communityGrid = `
