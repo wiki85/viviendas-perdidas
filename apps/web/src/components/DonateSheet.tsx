@@ -23,6 +23,23 @@ const AMOUNTS = [
   { value: 10, label: '10 €' },
 ] as const;
 
+// Enlaces de pago de Stripe por importe: puntual y mensual. Son URLs
+// públicas de checkout; el importe elegido arriba decide a cuál se va.
+const STRIPE_LINKS: Record<number, { once: string; monthly: string }> = {
+  2: {
+    once: 'https://coffe.aquiviviamos.com/b/9B69ATc0idBSbyGgR6grS00',
+    monthly: 'https://coffe.aquiviviamos.com/b/7sYcN50hA55m9qycAQgrS01',
+  },
+  5: {
+    once: 'https://coffe.aquiviviamos.com/b/eVqfZh7K21TadGO9oEgrS02',
+    monthly: 'https://coffe.aquiviviamos.com/b/3cIaEX9Sa8hycCK8kAgrS03',
+  },
+  10: {
+    once: 'https://coffe.aquiviviamos.com/b/28E6oH9Sa55mauC0S8grS04',
+    monthly: 'https://coffe.aquiviviamos.com/b/dRmdR9ggy8hyfOW58ogrS05',
+  },
+};
+
 function formatEuros(value: number) {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
@@ -39,7 +56,8 @@ export function DonateSheet({ onClose }: Props) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const [amount, setAmount] = useState<number>(COFFEE_PRICE_EUR);
   const [copied, setCopied] = useState(false);
-  const { bizumPhone, cardUrl, recurringUrl } = appConfig.donation;
+  const { bizumPhone } = appConfig.donation;
+  const links = STRIPE_LINKS[amount] ?? STRIPE_LINKS[COFFEE_PRICE_EUR];
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -136,36 +154,37 @@ export function DonateSheet({ onClose }: Props) {
               </div>
             </div>
           )}
-          {cardUrl && (
-            <div className="donate-method">
-              <h3>
-                <CreditCard size={17} /> Con tarjeta o Apple Pay
-              </h3>
-              <p>El pago se procesa de forma segura en una página externa.</p>
-              <a className="button button--primary" href={cardUrl} target="_blank" rel="noreferrer">
-                Donar {formatEuros(amount)} con tarjeta <ExternalLink size={16} />
-              </a>
-            </div>
-          )}
-          {recurringUrl && (
-            <div className="donate-method">
-              <h3>
-                <HeartHandshake size={17} /> Hazte mecenas
-              </h3>
-              <p>
-                Un café <strong>cada mes</strong>, automático y cancelable cuando quieras: la forma
-                más útil de sostener los costes fijos del proyecto.
-              </p>
-              <a
-                className="button button--secondary"
-                href={recurringUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Apoyar cada mes <ExternalLink size={16} />
-              </a>
-            </div>
-          )}
+          <div className="donate-method">
+            <h3>
+              <CreditCard size={17} /> Con tarjeta o Apple Pay
+            </h3>
+            <p>El pago se procesa de forma segura en una página externa.</p>
+            <a
+              className="button button--primary"
+              href={links.once}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Donar {formatEuros(amount)} con tarjeta <ExternalLink size={16} />
+            </a>
+          </div>
+          <div className="donate-method">
+            <h3>
+              <HeartHandshake size={17} /> Hazte mecenas
+            </h3>
+            <p>
+              El mismo importe <strong>cada mes</strong>, automático y cancelable cuando quieras: la
+              forma más útil de sostener los costes fijos del proyecto.
+            </p>
+            <a
+              className="button button--secondary"
+              href={links.monthly}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Apoyar con {formatEuros(amount)} al mes <ExternalLink size={16} />
+            </a>
+          </div>
           <p className="donate-footnote">
             Las donaciones son voluntarias y no dan acceso a funciones adicionales: la aplicación es
             igual para todo el mundo.

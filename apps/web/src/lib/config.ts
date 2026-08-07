@@ -35,10 +35,8 @@ export const appConfig = {
   publicExportUrl: env.VITE_PUBLIC_EXPORT_URL?.trim() || null,
   donation: {
     bizumPhone: env.VITE_DONATION_BIZUM_PHONE?.trim() || null,
-    // External checkout (Stripe/Ko-fi/BMC) that accepts cards and Apple Pay.
-    cardUrl: env.VITE_DONATION_CARD_URL?.trim() || null,
-    // Recurring (monthly) Stripe payment link, for patrons.
-    recurringUrl: env.VITE_DONATION_RECURRING_URL?.trim() || null,
+    // Los enlaces de pago con tarjeta (Stripe, por importe) viven en
+    // DonateSheet: son URLs públicas de checkout, no configuración.
   },
 } as const;
 
