@@ -35,6 +35,8 @@ type Tab = 'photos' | 'listings' | 'errors' | 'messages' | 'boletin';
 
 type SubSortKey = 'email' | 'zonas' | 'frecuencia' | 'estado' | 'alta';
 
+type ListSortKey = 'direccion' | 'tipo' | 'unidades' | 'estado' | 'confirmaciones' | 'reportes';
+
 function frequencyLabel(entry: { weekly: boolean; monthly: boolean }): string {
   const parts = [entry.weekly ? 'semanal' : null, entry.monthly ? 'mensual' : null].filter(Boolean);
   return parts.join(' + ') || '—';
@@ -101,7 +103,10 @@ export function AdminPage({ service, onClose }: Props) {
     Record<string, { type: ListingType; dwellings: number; locales: number }>
   >({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
+  const [listSort, setListSort] = useState<{ key: ListSortKey; direction: 'asc' | 'desc' }>({
+    key: 'direccion',
+    direction: 'asc',
+  });
   const [showAcked, setShowAcked] = useState(false);
   const photoTarget = useRef<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -263,6 +268,39 @@ export function AdminPage({ service, onClose }: Props) {
     }
   };
 
+  const toggleListSort = (key: ListSortKey) => {
+    setExpandedId(null);
+    setListSort((current) =>
+      current.key === key
+        ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: key === 'confirmaciones' || key === 'reportes' ? 'desc' : 'asc' },
+    );
+  };
+
+  const listSortHeader = (key: ListSortKey, label: string, numeric = false) => (
+    <th
+      className={numeric ? 'num' : undefined}
+      aria-sort={
+        listSort.key === key
+          ? listSort.direction === 'asc'
+            ? 'ascending'
+            : 'descending'
+          : undefined
+      }
+    >
+      <button
+        type="button"
+        className={`stats-sort ${listSort.key === key ? 'is-active' : ''}`}
+        onClick={() => toggleListSort(key)}
+      >
+        {label}
+        <span aria-hidden="true" className="stats-sort__arrow">
+          {listSort.key === key ? (listSort.direction === 'asc' ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
+  );
+
   const deleteMessage = async (id: string) => {
     setBusyId(id);
     try {
@@ -293,9 +331,14 @@ export function AdminPage({ service, onClose }: Props) {
   ]);
 
   useEffect(() => {
-    setPage(0);
     setExpandedId(null);
   }, [filter, cityFilter, onlyOfficialMatches, onlyReported]);
+
+  useEffect(() => {
+    // Con el filtro de reportadas activo, lo natural es ver las más señaladas
+    // primero; el orden sigue siendo cambiable a mano.
+    if (onlyReported) setListSort({ key: 'reportes', direction: 'desc' });
+  }, [onlyReported]);
 
   useEffect(() => {
     if (!photos) return;
@@ -502,31 +545,51 @@ export function AdminPage({ service, onClose }: Props) {
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], 'es'));
 
-  const filteredListings = (listings ?? [])
-    .filter((listing) => {
-      if (cityFilter && (listing.cityId || listing.address.locality) !== cityFilter) return false;
-      if (onlyOfficialMatches && listing.officialMatch?.reviewStatus !== 'pending') return false;
-      if (onlyReported && listing.reports === 0) return false;
-      const needle = filter.trim().toLocaleLowerCase('es');
-      if (!needle) return true;
-      return (
-        listing.address.formatted.toLocaleLowerCase('es').includes(needle) ||
-        listing.address.postalCode.startsWith(needle)
-      );
-    })
-    // Con el filtro de reportadas activo, las más señaladas van primero.
-    .sort((a, b) => (onlyReported ? b.reports - a.reports : 0));
+  const filteredListings = (listings ?? []).filter((listing) => {
+    if (cityFilter && (listing.cityId || listing.address.locality) !== cityFilter) return false;
+    if (onlyOfficialMatches && listing.officialMatch?.reviewStatus !== 'pending') return false;
+    if (onlyReported && listing.reports === 0) return false;
+    const needle = filter.trim().toLocaleLowerCase('es');
+    if (!needle) return true;
+    return (
+      listing.address.formatted.toLocaleLowerCase('es').includes(needle) ||
+      listing.address.postalCode.startsWith(needle)
+    );
+  });
   const pendingOfficialCount = (listings ?? []).filter(
     (listing) => listing.officialMatch?.reviewStatus === 'pending',
   ).length;
   const reportedCount = (listings ?? []).filter((listing) => listing.reports > 0).length;
-  const PAGE_SIZE = 50;
-  const pageCount = Math.max(1, Math.ceil(filteredListings.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount - 1);
-  const pageListings = filteredListings.slice(
-    currentPage * PAGE_SIZE,
-    currentPage * PAGE_SIZE + PAGE_SIZE,
-  );
+  const listingUnits = (listing: Listing): number =>
+    listing.type === 'commercial'
+      ? Math.max(1, listing.commercialUnitsCount ?? 1)
+      : listing.dwellingsCount;
+  const listingStatusLabel = (listing: Listing): string =>
+    listing.status === 'removed'
+      ? 'Eliminado'
+      : listing.status === 'flagged'
+        ? 'En revisión'
+        : 'Activo';
+  const sortedListings = [...filteredListings].sort((a, b) => {
+    const factor = listSort.direction === 'asc' ? 1 : -1;
+    const compared = (() => {
+      switch (listSort.key) {
+        case 'tipo':
+          return typeLabel(a.type).localeCompare(typeLabel(b.type), 'es');
+        case 'unidades':
+          return listingUnits(a) - listingUnits(b);
+        case 'estado':
+          return listingStatusLabel(a).localeCompare(listingStatusLabel(b), 'es');
+        case 'confirmaciones':
+          return a.confirmations - b.confirmations;
+        case 'reportes':
+          return a.reports - b.reports;
+        default:
+          return a.address.formatted.localeCompare(b.address.formatted, 'es');
+      }
+    })();
+    return factor * compared || a.address.formatted.localeCompare(b.address.formatted, 'es');
+  });
   const pendingErrors = (errors ?? []).filter((entry) => !entry.acknowledged);
   const visibleErrors = showAcked ? (errors ?? []) : pendingErrors;
 
@@ -810,20 +873,20 @@ export function AdminPage({ service, onClose }: Props) {
                 <p className="admin-page__empty">Sin registros que coincidan.</p>
               )}
               {filteredListings.length > 0 && (
-                <div className="stats-table-wrap">
+                <div className="stats-table-wrap admin-table-scroll">
                   <table className="stats-table admin-table">
                     <thead>
                       <tr>
-                        <th>Dirección</th>
-                        <th>Tipo</th>
-                        <th className="num">Uds.</th>
-                        <th>Estado</th>
-                        <th className="num">✓</th>
-                        <th className="num">⚑</th>
+                        {listSortHeader('direccion', 'Dirección')}
+                        {listSortHeader('tipo', 'Tipo')}
+                        {listSortHeader('unidades', 'Uds.', true)}
+                        {listSortHeader('estado', 'Estado')}
+                        {listSortHeader('confirmaciones', '✓', true)}
+                        {listSortHeader('reportes', '⚑', true)}
                       </tr>
                     </thead>
                     <tbody>
-                      {pageListings.map((listing) => {
+                      {sortedListings.map((listing) => {
                         const draft = draftFor(listing);
                         const removed = listing.status === 'removed';
                         const busy = busyId === listing.id;
@@ -1025,40 +1088,6 @@ export function AdminPage({ service, onClose }: Props) {
                       })}
                     </tbody>
                   </table>
-                </div>
-              )}
-              {pageCount > 1 && (
-                <div className="admin-pager">
-                  <button
-                    className="button button--ghost"
-                    type="button"
-                    disabled={currentPage === 0}
-                    onClick={() => {
-                      setPage(currentPage - 1);
-                      setExpandedId(null);
-                    }}
-                  >
-                    ← Anteriores
-                  </button>
-                  <span>
-                    {(currentPage * PAGE_SIZE + 1).toLocaleString('es-ES')}–
-                    {Math.min(
-                      filteredListings.length,
-                      (currentPage + 1) * PAGE_SIZE,
-                    ).toLocaleString('es-ES')}{' '}
-                    de {filteredListings.length.toLocaleString('es-ES')}
-                  </span>
-                  <button
-                    className="button button--ghost"
-                    type="button"
-                    disabled={currentPage >= pageCount - 1}
-                    onClick={() => {
-                      setPage(currentPage + 1);
-                      setExpandedId(null);
-                    }}
-                  >
-                    Siguientes →
-                  </button>
                 </div>
               )}
             </>
