@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { escapeHtml } from './html.js';
 import { renderSourcesPage, RUBRIC, SOURCES, sourceTotal } from './render-sources.js';
 
 describe('rúbrica de fuentes', () => {
@@ -17,9 +18,25 @@ describe('rúbrica de fuentes', () => {
     }
   });
 
-  it('cubre las siete fuentes sincronizadas', () => {
+  it('cubre las quince fuentes sincronizadas', () => {
     expect(SOURCES.map((source) => source.id).sort()).toEqual(
-      ['caib', 'can', 'cat', 'eus', 'gva', 'mad', 'nav', 'rta'].sort(),
+      [
+        'caib',
+        'can',
+        'cat',
+        'eus',
+        'gva',
+        'mad',
+        'nav',
+        'rta',
+        'mur',
+        'men',
+        'gal',
+        'cyl',
+        'ara',
+        'clm',
+        'ext',
+      ].sort(),
     );
   });
 });
@@ -31,7 +48,8 @@ describe('renderSourcesPage', () => {
     for (const source of SOURCES) {
       expect(html).toContain(source.ccaa);
       expect(html).toContain(`${sourceTotal(source)}/100`);
-      for (const link of source.links) expect(html).toContain(link.url);
+      // Las URL con parámetros aparecen con el ampersand escapado.
+      for (const link of source.links) expect(html).toContain(escapeHtml(link.url));
     }
   });
 

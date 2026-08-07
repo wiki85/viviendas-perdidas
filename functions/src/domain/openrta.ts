@@ -43,6 +43,16 @@ export function normalizeLicenseKey(value: string): string {
     .join('/');
 }
 
+/**
+ * Algunos titulares rellenan el nombre comercial con su email personal
+ * («NOMBRE.APELLIDO@PROVEEDOR.COM»): eso no se espeja nunca. Los nombres con
+ * arroba decorativa («DUPLEX@MERCADO CENTRAL») sí pasan.
+ */
+export function sanitizePublicName(value: string): string {
+  const trimmed = value.trim();
+  return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/iu.test(trimmed) ? '' : trimmed;
+}
+
 /** Extracts the street number from 'CALLE Manzanares Nº 8 Plta/Piso 9 …'. */
 export function extractStreetNumber(addressText: string): string {
   const match = /N[ºo°]?\s*\.?\s*(\d+)/iu.exec(addressText);
@@ -115,6 +125,43 @@ export const MUNICIPALITY_CENTERS: Record<
   YAIZA: { latitude: 28.91, longitude: -13.8, radiusKm: 16 },
   TÍAS: { latitude: 28.94, longitude: -13.65, radiusKm: 11 },
   'SANTA CRUZ DE TENERIFE': { latitude: 28.4636, longitude: -16.2518, radiusKm: 18 },
+  CARTAGENA: { latitude: 37.6257, longitude: -0.9966, radiusKm: 30 },
+  'SAN JAVIER': { latitude: 37.8063, longitude: -0.8371, radiusKm: 16 },
+  'TORRE-PACHECO': { latitude: 37.7434, longitude: -0.9548, radiusKm: 12 },
+  MURCIA: { latitude: 37.9922, longitude: -1.1307, radiusKm: 30 },
+  MAZARRÓN: { latitude: 37.599, longitude: -1.313, radiusKm: 18 },
+  'LOS ALCÁZARES': { latitude: 37.7442, longitude: -0.8497, radiusKm: 8 },
+  'SAN PEDRO DEL PINATAR': { latitude: 37.8362, longitude: -0.7917, radiusKm: 8 },
+  ÁGUILAS: { latitude: 37.4063, longitude: -1.5828, radiusKm: 18 },
+  CIUTADELLA: { latitude: 40.0022, longitude: 3.8378, radiusKm: 15 },
+  'SANT LLUÍS': { latitude: 39.849, longitude: 4.2586, radiusKm: 10 },
+  'ES MERCADAL': { latitude: 39.9905, longitude: 4.0946, radiusKm: 15 },
+  ALAIOR: { latitude: 39.9333, longitude: 4.14, radiusKm: 14 },
+  MAÓ: { latitude: 39.8885, longitude: 4.2658, radiusKm: 12 },
+  VIGO: { latitude: 42.2406, longitude: -8.7207, radiusKm: 18 },
+  'A CORUÑA': { latitude: 43.3623, longitude: -8.4115, radiusKm: 12 },
+  'SANTIAGO DE COMPOSTELA': { latitude: 42.8782, longitude: -8.5449, radiusKm: 15 },
+  SANXENXO: { latitude: 42.3999, longitude: -8.8069, radiusKm: 10 },
+  'O GROVE': { latitude: 42.4934, longitude: -8.8642, radiusKm: 8 },
+  LEÓN: { latitude: 42.5987, longitude: -5.5671, radiusKm: 12 },
+  BURGOS: { latitude: 42.3439, longitude: -3.6969, radiusKm: 15 },
+  SALAMANCA: { latitude: 40.9701, longitude: -5.6635, radiusKm: 12 },
+  VALLADOLID: { latitude: 41.6523, longitude: -4.7245, radiusKm: 15 },
+  ZAMORA: { latitude: 41.5036, longitude: -5.7448, radiusKm: 12 },
+  ÁVILA: { latitude: 40.6565, longitude: -4.6818, radiusKm: 15 },
+  SORIA: { latitude: 41.7636, longitude: -2.4649, radiusKm: 12 },
+  ZARAGOZA: { latitude: 41.6488, longitude: -0.8891, radiusKm: 30 },
+  BENASQUE: { latitude: 42.6062, longitude: 0.5232, radiusKm: 12 },
+  JACA: { latitude: 42.5701, longitude: -0.5498, radiusKm: 20 },
+  'SALLENT DE GÁLLEGO': { latitude: 42.7702, longitude: -0.3327, radiusKm: 12 },
+  PANTICOSA: { latitude: 42.7223, longitude: -0.2831, radiusKm: 10 },
+  TERUEL: { latitude: 40.3457, longitude: -1.1065, radiusKm: 18 },
+  TOLEDO: { latitude: 39.8628, longitude: -4.0273, radiusKm: 15 },
+  CUENCA: { latitude: 40.0704, longitude: -2.1374, radiusKm: 25 },
+  ALBACETE: { latitude: 38.9943, longitude: -1.8585, radiusKm: 20 },
+  CÁCERES: { latitude: 39.4753, longitude: -6.3724, radiusKm: 25 },
+  MÉRIDA: { latitude: 38.9161, longitude: -6.3437, radiusKm: 15 },
+  BADAJOZ: { latitude: 38.8794, longitude: -6.9707, radiusKm: 20 },
 };
 
 /** True when the point is inside the municipality's plausible radius (or the

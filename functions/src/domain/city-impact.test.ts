@@ -34,7 +34,7 @@ describe('computeCityImpact', () => {
 
   it('returns null ratios for cities without census data', () => {
     const impact = computeCityImpact({
-      cityId: 'zaragoza',
+      cityId: 'villarriba',
       households: 10,
       inhabitants: 25,
       officialTotal: 5,
@@ -44,13 +44,13 @@ describe('computeCityImpact', () => {
     expect(impact.placesPer100).toBeNull();
   });
 
-  it('covers the thirty-five mirrored municipalities in the census table', () => {
-    expect(Object.keys(CITY_CENSUS)).toHaveLength(35);
-    // Floors sized for the smallest mirrored towns (Alcúdia: ~8k dwellings,
-    // ~22k inhabitants) — a typo of one order of magnitude still fails.
+  it('covers the seventy-two mirrored municipalities in the census table', () => {
+    expect(Object.keys(CITY_CENSUS)).toHaveLength(72);
+    // Floors sized for the smallest mirrored towns (Panticosa: 380 hogares,
+    // 910 habitantes) — a typo of one order of magnitude still fails.
     for (const census of Object.values(CITY_CENSUS)) {
-      expect(census.mainDwellings).toBeGreaterThan(5_000);
-      expect(census.population).toBeGreaterThan(15_000);
+      expect(census.mainDwellings).toBeGreaterThan(300);
+      expect(census.population).toBeGreaterThan(800);
       expect(census.population).toBeGreaterThan(census.mainDwellings);
     }
   });

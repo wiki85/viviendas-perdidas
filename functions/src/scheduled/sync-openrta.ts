@@ -186,12 +186,165 @@ export const syncCanarias = onSchedule(
   },
 );
 
+/** Weekly mirror of the Región de Murcia register (ITREM). Staggered two
+ * hours after the Andalusian job: the shared lock frees in between. */
+export const syncMurcia = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every monday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'mur',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Murcia sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Menorca insular register (Consell de Menorca). */
+export const syncMenorca = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every tuesday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'men',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Menorca sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Galician REAT directory. */
+export const syncGalicia = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    // ~32k filas de directorio en memoria al preparar la descarga completa.
+    memory: '1GiB',
+    schedule: 'every wednesday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'gal',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Galicia sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Castilla y León tourism register. */
+export const syncCastillaLeon = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every thursday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'cyl',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Castilla y León sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Aragonese VUT export. */
+export const syncAragon = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every saturday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'ara',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Aragón sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Castilla-La Mancha listing (semi-annual upstream,
+ * the weekly pass keeps geocoding the backlog). */
+export const syncCastillaLaMancha = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every sunday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'clm',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Castilla-La Mancha sync finished', summary);
+  },
+);
+
+/** Weekly mirror of the Extremaduran listing (frozen upstream since
+ * March 2025; the weekly pass keeps geocoding the backlog). */
+export const syncExtremadura = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '512MiB',
+    schedule: 'every sunday 07:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'ext',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Extremadura sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget. */
 export const adminSyncOfficialData = onCall(
   {
     region: REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    // Quince registros en secuencia: los volcados grandes (Canarias,
+    // Galicia, Murcia) desbordarían los 512MiB.
+    memory: '1GiB',
     enforceAppCheck: true,
     maxInstances: 1,
     secrets: [googleMapsServerApiKey],

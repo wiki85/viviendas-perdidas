@@ -29,6 +29,13 @@ export {
   syncEuskadi,
   syncMadrid,
   syncCanarias,
+  syncMurcia,
+  syncMenorca,
+  syncGalicia,
+  syncCastillaLeon,
+  syncAragon,
+  syncCastillaLaMancha,
+  syncExtremadura,
   adminSyncOfficialData,
 } from './scheduled/sync-openrta.js';
 export {

@@ -357,6 +357,273 @@ export const SOURCES: SourceEntry[] = [
       licencia: 7,
     },
   },
+  {
+    id: 'mur',
+    ccaa: 'Región de Murcia',
+    registro:
+      'Registro de empresas y actividades turísticas — Instituto de Turismo de la Región de Murcia (ITREM)',
+    cities:
+      'Cartagena, San Javier, Torre Pacheco, Murcia, Mazarrón, Los Alcázares, San Pedro del Pinatar y Águilas',
+    links: [
+      {
+        label: 'Listado público de viviendas vacacionales (turismoregiondemurcia.es)',
+        url: 'https://www.turismoregiondemurcia.es/es/etudoc.parser/?vtip=6&documento=xls',
+      },
+    ],
+    datos: [
+      'Número de registro estable (VV.MU.####), nombre comercial, dirección, localidad con pedanía, código postal, plazas en el 100% de filas y — la joya — referencia catastral en el ~72%. Toda vivienda vacacional murciana se cede completa.',
+    ],
+    posicionamiento:
+      'Resolvemos la referencia catastral contra la Sede del Catastro (centroide de parcela, precisión de portal, sin coste); el resto se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas.',
+    problemas: [
+      'El «Excel» descargable es en realidad una tabla HTML con extensión .xls en codificación ISO-8859-1: hay que parsearla a mano.',
+      'El listado publica el teléfono y el email del titular: los descartamos en la ingesta y no se espejan nunca.',
+      'El portal de datos abiertos regional lleva sin actualizarse desde 2021; el listado vivo está fuera de él, sin licencia de datos abiertos explícita.',
+    ],
+    mejoras: [
+      'Publicar el listado como CSV en el portal de datos abiertos regional con licencia CC BY.',
+      'Completar la referencia catastral del ~28% de altas que no la declara.',
+      'Retirar los datos de contacto personales del export público.',
+    ],
+    frecuencia:
+      'Registro en vivo (el export refleja el estado actual); nosotros sincronizamos cada lunes.',
+    licencia:
+      'Sin licencia explícita: reutilización de información del sector público (Ley 37/2007).',
+    score: {
+      ubicacion: 14,
+      identificador: 15,
+      riqueza: 15,
+      frecuencia: 20,
+      acceso: 4,
+      licencia: 4,
+    },
+  },
+  {
+    id: 'men',
+    ccaa: 'Islas Baleares (Menorca)',
+    registro:
+      'Registro de estancias y viviendas turísticas de vacaciones de Menorca — Consell Insular de Menorca',
+    cities: 'Ciudadela, Mahón, San Luis, Es Mercadal y Alayor',
+    links: [
+      {
+        label: 'GeoJSON del catálogo CAIB',
+        url: 'https://intranet.caib.es/opendatacataleg/ca/dataset/estades-i-habitatges-turistics-vacacionals-de-menorca',
+      },
+    ],
+    datos: [
+      'Número de registro, tipo (estancias turísticas o vivienda turística de vacaciones — ambas la vivienda completa), nombre, dirección, población, plazas, habitaciones y coordenadas WGS84 en el 100% de los puntos.',
+    ],
+    posicionamiento:
+      'Usamos directamente las coordenadas publicadas por el Consell, validadas contra un radio municipal de plausibilidad: Menorca entra en el mapa completamente ubicada desde la primera sincronización.',
+    problemas: [
+      'El número de registro se repite entre viviendas de una misma finca: derivamos una clave con la dirección para no perder registros.',
+      'Hay valores con espacios finales y el esquema no coincide con el del registro hermano de Mallorca pese a compartir catálogo.',
+      'El GeoJSON publica el teléfono del titular: lo descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Emitir un identificador único por vivienda (registro + sufijo).',
+      'Unificar el esquema con el dataset de Mallorca para que los reutilizadores no dupliquen trabajo.',
+    ],
+    frecuencia: 'Catálogo con refresco periódico; nosotros sincronizamos cada martes.',
+    licencia: 'CC BY',
+    score: {
+      ubicacion: 25,
+      identificador: 12,
+      riqueza: 16,
+      frecuencia: 10,
+      acceso: 9,
+      licencia: 10,
+    },
+  },
+  {
+    id: 'gal',
+    ccaa: 'Galicia',
+    registro: 'Directorio de alojamientos del REAT — Xunta de Galicia',
+    cities: 'Vigo, La Coruña, Santiago de Compostela, Sangenjo y El Grove',
+    links: [
+      {
+        label: 'Dataset del directorio (abertos.xunta.gal)',
+        url: 'https://abertos.xunta.gal/catalogo/cultura-ocio-turismo/-/dataset/0401/directorio-alojamientos-turisticos',
+      },
+    ],
+    datos: [
+      'Número de registro estable (VUT-CO-003589), denominación, tipo separable (viviendas de uso turístico y viviendas turísticas), habitaciones, plazas en el ~99%, dirección con parroquia y lugar, código postal y municipio.',
+    ],
+    posicionamiento:
+      'El directorio apenas trae coordenadas (unas 200 de 28.000 viviendas): geocodificamos cada dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas, de modo que el mapa gallego se completa a lo largo de varias semanas.',
+    problemas: [
+      'Sin coordenadas ni referencia catastral en la práctica: toda la ubicación corre de nuestra cuenta.',
+      'El CSV abre con líneas de título antes de la cabecera real, algo que rompe los parsers estándar.',
+      'Publica el teléfono y el correo del anuncio: los descartamos en la ingesta.',
+      'Las fichas rurales llegan sin calle, solo con parroquia y lugar: la precisión de esas queda a nivel de núcleo.',
+    ],
+    mejoras: [
+      'Añadir coordenadas o referencia catastral a cada alta (el REAT las conoce por el procedimiento).',
+      'Servir el CSV con la cabecera en la primera línea.',
+    ],
+    frecuencia: 'Volcado mensual; nosotros sincronizamos cada miércoles.',
+    licencia: 'CC BY-SA 4.0',
+    score: {
+      ubicacion: 3,
+      identificador: 15,
+      riqueza: 16,
+      frecuencia: 10,
+      acceso: 7,
+      licencia: 9,
+    },
+  },
+  {
+    id: 'cyl',
+    ccaa: 'Castilla y León',
+    registro: 'Registro de Turismo de Castilla y León — Junta de Castilla y León',
+    cities: 'León, Burgos, Salamanca, Valladolid, Zamora, Ávila y Soria',
+    links: [
+      {
+        label: 'Dataset Opendatasoft (analisis.datosabiertos.jcyl.es)',
+        url: 'https://analisis.datosabiertos.jcyl.es/explore/dataset/registro-de-turismo-de-castilla-y-leon/',
+      },
+    ],
+    datos: [
+      'Número de registro estable (PP/NNNNNN), nombre, dirección, código postal, municipio, plazas y GPS en ~28% de filas. El registro completo mezcla todos los tipos de establecimiento: filtramos «Vivienda turística».',
+    ],
+    posicionamiento:
+      'Usamos el GPS del propio registro cuando existe y es plausible (validado contra un radio municipal); el ~72% restante se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial.',
+    problemas: [
+      'Algunas coordenadas llegan corruptas (formato «-,0066667»): validamos formato y rango antes de aceptarlas.',
+      'Sin referencia catastral.',
+      'El dataset publica hasta tres teléfonos y el email del titular: los descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Georreferenciar el 100% de las altas y depurar las coordenadas corruptas.',
+      'Añadir la referencia catastral.',
+    ],
+    frecuencia: 'Actualización diaria del portal; nosotros sincronizamos cada jueves.',
+    licencia: 'CC BY 4.0',
+    score: {
+      ubicacion: 7,
+      identificador: 15,
+      riqueza: 15,
+      frecuencia: 20,
+      acceso: 10,
+      licencia: 10,
+    },
+  },
+  {
+    id: 'ara',
+    ccaa: 'Aragón',
+    registro: 'Registro de Turismo de Aragón (buscador público de VUT) — Gobierno de Aragón',
+    cities: 'Zaragoza, Jaca, Benasque, Sallent de Gállego (con Formigal), Panticosa y Teruel',
+    links: [
+      {
+        label: 'Export XLSX del buscador público (aplicaciones.aragon.es)',
+        url: 'https://aplicaciones.aragon.es/wturpub/informes/exportarActividadesTuristicasExcel?tipoExportacion=exportarVUT',
+      },
+    ],
+    datos: [
+      'Número de registro estable (VU-HU-22-100), nombre de la vivienda, dirección, localidad (a nivel de núcleo: Formigal aparece separado de Sallent de Gállego) y código postal. Sin plazas, sin coordenadas y sin referencia catastral.',
+    ],
+    posicionamiento:
+      'Sin ubicación en origen: geocodificamos cada dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas. La capacidad (plazas) no puede mostrarse porque la fuente no la publica.',
+    problemas: [
+      'El export no trae plazas: Aragón queda fuera de las métricas de capacidad turística.',
+      'Un 4-5% de filas llega sin localidad y con direcciones sin número: quedan sin asignar o con precisión de núcleo.',
+      'El portal de datos abiertos autonómico solo publica agregados; el listado real vive en una aplicación sin licencia de datos abiertos.',
+      'El servidor rechaza a veces conexiones TLS modernas.',
+      'Un 22% de filas publica el teléfono o el email personal del titular: los descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Publicar el listado (con plazas y coordenadas) como dataset con licencia abierta en opendata.aragon.es.',
+      'Añadir el municipio INE además de la localidad/núcleo.',
+    ],
+    frecuencia:
+      'Registro en vivo (el export refleja el estado actual); nosotros sincronizamos cada sábado.',
+    licencia:
+      'Sin licencia explícita: reutilización de información del sector público (Ley 37/2007).',
+    score: {
+      ubicacion: 2,
+      identificador: 15,
+      riqueza: 6,
+      frecuencia: 20,
+      acceso: 4,
+      licencia: 4,
+    },
+  },
+  {
+    id: 'clm',
+    ccaa: 'Castilla-La Mancha',
+    registro:
+      'Apartamentos turísticos y viviendas de uso turístico — Junta de Comunidades de Castilla-La Mancha',
+    cities: 'Toledo, Cuenca y Albacete',
+    links: [
+      {
+        label: 'Dataset (datosabiertos.castillalamancha.es)',
+        url: 'https://datosabiertos.castillalamancha.es/dataset/apartamentos-tur%C3%ADsticos-y-viviendas-de-uso-tur%C3%ADstico-en-castilla-la-mancha',
+      },
+    ],
+    datos: [
+      'Nombre, subepígrafe separable (V.U.T., apartamento turístico y vivienda vacacional), dirección, municipio, código postal, plazas y año de alta. Sin número de registro público, sin coordenadas y sin referencia catastral.',
+    ],
+    posicionamiento:
+      'Sin número de registro, derivamos una clave sintética estable de los campos de la ficha; la ubicación se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas.',
+    problemas: [
+      'Sin número de registro: cualquier corrección de nombre o dirección parece un alta más una baja.',
+      'Sin coordenadas ni referencia catastral.',
+      'El CSV publica el email y el teléfono del titular en el 100% de filas: los descartamos en la ingesta.',
+      'Refresco semestral: el mapa manchego puede ir hasta seis meses por detrás del registro real.',
+    ],
+    mejoras: [
+      'Publicar el número de registro de cada establecimiento.',
+      'Añadir coordenadas o referencia catastral y acelerar el refresco.',
+      'Retirar los datos de contacto personales del fichero público.',
+    ],
+    frecuencia: 'Volcado semestral (edición de mayo de 2026); nosotros sincronizamos cada domingo.',
+    licencia: 'CC BY-SA',
+    score: {
+      ubicacion: 2,
+      identificador: 0,
+      riqueza: 13,
+      frecuencia: 5,
+      acceso: 7,
+      licencia: 9,
+    },
+  },
+  {
+    id: 'ext',
+    ccaa: 'Extremadura',
+    registro: 'Listado de apartamentos turísticos — Junta de Extremadura',
+    cities: 'Cáceres, Mérida y Badajoz',
+    links: [
+      {
+        label: 'CSV de apartamentos turísticos (juntaex.es)',
+        url: 'https://www.juntaex.es/documents/77055/5801338/AptosTuristicos.csv',
+      },
+    ],
+    datos: [
+      'Nombre, categoría, fecha de apertura, dirección, municipio, código postal, unidades de alojamiento, dormitorios y plazas. Extremadura no publica una figura separada de vivienda de uso turístico: este listado de apartamentos turísticos es lo único descargable.',
+    ],
+    posicionamiento:
+      'Sin número de registro, derivamos una clave sintética estable de los campos de la ficha; la ubicación se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas.',
+    problemas: [
+      'El fichero está estancado desde marzo de 2025: el mapa extremeño refleja ese momento, no el presente.',
+      'Sin número de registro, sin coordenadas y sin referencia catastral.',
+      'Los códigos postales pacenses pierden el cero inicial («6207»): los reconstruimos al ingerir.',
+    ],
+    mejoras: [
+      'Retomar la publicación periódica del listado (o publicar el registro real de VUT, que existe administrativamente).',
+      'Añadir número de registro y coordenadas.',
+    ],
+    frecuencia:
+      'Estancada desde marzo de 2025; nosotros reintentamos cada domingo por si se actualiza.',
+    licencia: 'CC BY 4.0',
+    score: {
+      ubicacion: 2,
+      identificador: 0,
+      riqueza: 12,
+      frecuencia: 0,
+      acceso: 5,
+      licencia: 10,
+    },
+  },
 ];
 
 export function sourceTotal(entry: SourceEntry): number {
@@ -364,7 +631,7 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '4 de agosto de 2026';
+const LAST_REVIEW = '7 de agosto de 2026';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 

@@ -93,6 +93,64 @@ function officialCredit(source: string): string {
       coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'mur') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://www.turismoregiondemurcia.es/es/etudoc.parser/?vtip=6&amp;documento=xls" rel="noopener noreferrer">listado público de viviendas vacacionales del ITREM</a>
+      (Instituto de Turismo de la Región de Murcia), datos adaptados ·
+      reutilización de información del sector público (Ley 37/2007) ·
+      coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'men') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://intranet.caib.es/opendatacataleg/ca/dataset/estades-i-habitatges-turistics-vacacionals-de-menorca" rel="noopener noreferrer">Registro de estancias y viviendas turísticas de vacaciones de Menorca</a>
+      (Consell Insular de Menorca, Dades Obertes GOIB), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'gal') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://abertos.xunta.gal/catalogo/cultura-ocio-turismo/-/dataset/0401/directorio-alojamientos-turisticos" rel="noopener noreferrer">Directorio de alojamientos del REAT</a>
+      (Xunta de Galicia, Turismo de Galicia), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" rel="noopener noreferrer">CC BY-SA 4.0</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'cyl') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://analisis.datosabiertos.jcyl.es/explore/dataset/registro-de-turismo-de-castilla-y-leon/" rel="noopener noreferrer">Registro de Turismo de Castilla y León</a>
+      (Junta de Castilla y León), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'ara') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://aplicaciones.aragon.es/wturpub/informes/exportarActividadesTuristicasExcel?tipoExportacion=exportarVUT" rel="noopener noreferrer">listado público de viviendas de uso turístico del Registro de Turismo de Aragón</a>
+      (Gobierno de Aragón), datos adaptados ·
+      reutilización de información del sector público (Ley 37/2007). Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'clm') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://datosabiertos.castillalamancha.es/dataset/apartamentos-tur%C3%ADsticos-y-viviendas-de-uso-tur%C3%ADstico-en-castilla-la-mancha" rel="noopener noreferrer">Apartamentos turísticos y viviendas de uso turístico de Castilla-La Mancha</a>
+      (Junta de Comunidades de Castilla-La Mancha), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" rel="noopener noreferrer">CC BY-SA</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'ext') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://www.juntaex.es/documents/77055/5801338/AptosTuristicos.csv" rel="noopener noreferrer">listado de apartamentos turísticos de Extremadura</a>
+      (Junta de Extremadura), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>.
+      Extremadura no publica una figura separada de vivienda de uso turístico. Sin respaldo oficial.
+    </p>`;
+  }
   return `
     <p class="credit">
       Fuente: <a href="https://datos.gob.es/es/catalogo/a01002820-openrta" rel="noopener noreferrer">Registro de Turismo de Andalucía</a>

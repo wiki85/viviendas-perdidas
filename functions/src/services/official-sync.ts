@@ -26,10 +26,39 @@ import {
 } from '../domain/cartociudad.js';
 import { createMadridFetcher } from './madrid-source.js';
 import { NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
+import { createMurciaFetcher } from './murcia-source.js';
+import { MURCIA_MUNICIPALITIES } from '../domain/murcia.js';
+import { createMenorcaFetcher } from './menorca-source.js';
+import { MENORCA_MUNICIPALITIES } from '../domain/menorca.js';
+import { createGaliciaFetcher } from './galicia-source.js';
+import { GALICIA_MUNICIPALITIES } from '../domain/galicia.js';
+import { createCastillaLeonFetcher } from './castillaleon-source.js';
+import { CASTILLA_LEON_MUNICIPALITIES } from '../domain/castillaleon.js';
+import { createAragonFetcher } from './aragon-source.js';
+import { ARAGON_MUNICIPALITIES } from '../domain/aragon.js';
+import { createCastillaLaManchaFetcher } from './castillalamancha-source.js';
+import { CASTILLA_LA_MANCHA_MUNICIPALITIES } from '../domain/castillalamancha.js';
+import { createExtremaduraFetcher } from './extremadura-source.js';
+import { EXTREMADURA_MUNICIPALITIES } from '../domain/extremadura.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
-export type OfficialSourceId = 'rta' | 'cat' | 'gva' | 'caib' | 'nav' | 'eus' | 'mad' | 'can';
+export type OfficialSourceId =
+  | 'rta'
+  | 'cat'
+  | 'gva'
+  | 'caib'
+  | 'nav'
+  | 'eus'
+  | 'mad'
+  | 'can'
+  | 'mur'
+  | 'men'
+  | 'gal'
+  | 'cyl'
+  | 'ara'
+  | 'clm'
+  | 'ext';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -107,6 +136,43 @@ export const SYNCED_MAD_MUNICIPALITIES: readonly string[] = ['MADRID'];
 /** Municipios canarios espejados (nombre para mostrar; el fetcher traduce
  * desde la grafía del CSV). */
 export const SYNCED_CAN_MUNICIPALITIES: readonly string[] = CANARIAS_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios murcianos espejados (nombre para mostrar; el fetcher agrupa
+ * por la localidad base del listado del ITREM). */
+export const SYNCED_MUR_MUNICIPALITIES: readonly string[] = MURCIA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios menorquines espejados (grafía insular del GeoJSON). */
+export const SYNCED_MEN_MUNICIPALITIES: readonly string[] = MENORCA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios gallegos espejados (grafía oficial del directorio REAT). */
+export const SYNCED_GAL_MUNICIPALITIES: readonly string[] = GALICIA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios castellanoleoneses espejados. */
+export const SYNCED_CYL_MUNICIPALITIES: readonly string[] = CASTILLA_LEON_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios aragoneses espejados (la Localidad del export es núcleo:
+ * Formigal suma a Sallent de Gállego). */
+export const SYNCED_ARA_MUNICIPALITIES: readonly string[] = ARAGON_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios manchegos espejados. */
+export const SYNCED_CLM_MUNICIPALITIES: readonly string[] = CASTILLA_LA_MANCHA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios extremeños espejados. */
+export const SYNCED_EXT_MUNICIPALITIES: readonly string[] = EXTREMADURA_MUNICIPALITIES.map(
   (entry) => entry.name,
 );
 
@@ -240,6 +306,83 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       idPrefix: 'eus-',
       statsSource: 'eus',
       municipalities: SYNCED_EUS_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'mur') {
+    const fetcher = createMurciaFetcher();
+    return {
+      id,
+      idPrefix: 'mur-',
+      statsSource: 'mur',
+      municipalities: SYNCED_MUR_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'men') {
+    const fetcher = createMenorcaFetcher();
+    return {
+      id,
+      idPrefix: 'men-',
+      statsSource: 'men',
+      municipalities: SYNCED_MEN_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'gal') {
+    const fetcher = createGaliciaFetcher();
+    return {
+      id,
+      idPrefix: 'gal-',
+      statsSource: 'gal',
+      municipalities: SYNCED_GAL_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'cyl') {
+    const fetcher = createCastillaLeonFetcher();
+    return {
+      id,
+      idPrefix: 'cyl-',
+      statsSource: 'cyl',
+      municipalities: SYNCED_CYL_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'ara') {
+    const fetcher = createAragonFetcher();
+    return {
+      id,
+      idPrefix: 'ara-',
+      statsSource: 'ara',
+      municipalities: SYNCED_ARA_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'clm') {
+    const fetcher = createCastillaLaManchaFetcher();
+    return {
+      id,
+      idPrefix: 'clm-',
+      statsSource: 'clm',
+      municipalities: SYNCED_CLM_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'ext') {
+    const fetcher = createExtremaduraFetcher();
+    return {
+      id,
+      idPrefix: 'ext-',
+      statsSource: 'ext',
+      municipalities: SYNCED_EXT_MUNICIPALITIES,
       prepare: fetcher.prepare,
       fetchMunicipality: fetcher.fetchMunicipality,
     };
@@ -1172,7 +1315,23 @@ export async function runAllOfficialSyncs(
 ): Promise<OfficialSyncSummary[]> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
-  for (const sourceId of ['rta', 'cat', 'gva', 'caib', 'nav', 'eus', 'mad', 'can'] as const) {
+  for (const sourceId of [
+    'rta',
+    'cat',
+    'gva',
+    'caib',
+    'nav',
+    'eus',
+    'mad',
+    'can',
+    'mur',
+    'men',
+    'gal',
+    'cyl',
+    'ara',
+    'clm',
+    'ext',
+  ] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
     );
