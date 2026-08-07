@@ -3,12 +3,13 @@ import { adminEmails } from '../params.js';
 
 /**
  * Avisos por correo a las cuentas de moderación (mensajes de contacto
- * nuevos, fotos pendientes de validar). Salen por Brevo con el mismo
- * remitente que El Recuento y nunca rompen la petición que los origina:
- * si no hay clave o el envío falla, se registra y ya.
+ * nuevos, fotos pendientes de validar). Salen por Resend — canal separado
+ * a propósito: el cupo de Brevo queda reservado para El Recuento — y nunca
+ * rompen la petición que los origina: si no hay clave o el envío falla, se
+ * registra y ya.
  */
 
-const SENDER = { name: 'Viviendas Perdidas', email: 'boletin@aquiviviamos.com' };
+const SENDER = 'Viviendas Perdidas <avisos@aquiviviamos.com>';
 const SITE_URL = 'https://www.aquiviviamos.com';
 
 function escapeHtml(value: string): string {
@@ -49,17 +50,16 @@ export async function notifyModerators(
   fetchImplementation: typeof fetch = fetch,
 ): Promise<void> {
   try {
-    const apiKey = process.env.BREVO_API_KEY ?? '';
+    const apiKey = process.env.RESEND_API_KEY ?? '';
     if (apiKey.length === 0) {
-      logger.info('Aviso a moderación omitido (sin BREVO_API_KEY)', { subject: notice.subject });
+      logger.info('Aviso a moderación omitido (sin RESEND_API_KEY)', { subject: notice.subject });
       return;
     }
     const to = adminEmails
       .value()
       .split(',')
       .map((email) => email.trim())
-      .filter((email) => email.length > 0)
-      .map((email) => ({ email }));
+      .filter((email) => email.length > 0);
     if (to.length === 0) return;
     const body = notice.fields
       .map(
@@ -67,19 +67,19 @@ export async function notifyModerators(
           `<p style="margin:6px 0;font-size:14px"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(field.value).replace(/\n/gu, '<br>')}</p>`,
       )
       .join('');
-    const response = await fetchImplementation('https://api.brevo.com/v3/smtp/email', {
+    const response = await fetchImplementation('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'api-key': apiKey, 'content-type': 'application/json' },
+      headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        sender: SENDER,
+        from: SENDER,
         to,
         subject: notice.subject,
-        htmlContent: shell(notice.title, body),
+        html: shell(notice.title, body),
       }),
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) {
-      logger.error('Brevo rechazó el aviso a moderación', {
+      logger.error('Resend rechazó el aviso a moderación', {
         status: response.status,
         subject: notice.subject,
       });

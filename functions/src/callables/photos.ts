@@ -48,7 +48,7 @@ export const submitListingPhoto = onCall(
     timeoutSeconds: 30,
     memory: '512MiB',
     maxInstances: 10,
-    secrets: ['BREVO_API_KEY'],
+    secrets: ['RESEND_API_KEY'],
   },
   async (request) => {
     try {

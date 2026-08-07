@@ -29,7 +29,7 @@ export const submitContactMessage = onCall(
     enforceAppCheck: true,
     timeoutSeconds: 30,
     maxInstances: 10,
-    secrets: ['BREVO_API_KEY'],
+    secrets: ['RESEND_API_KEY'],
   },
   async (request): Promise<{ ok: true }> => {
     const parsed = submitContactSchema.safeParse(request.data as unknown);
