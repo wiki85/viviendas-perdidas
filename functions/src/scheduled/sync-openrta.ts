@@ -18,7 +18,7 @@ export const syncOpenRta = onSchedule(
     region: SCHEDULER_REGION,
     // Room for the paced Geocoding repair on top of the registry download.
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every monday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -40,7 +40,7 @@ export const syncCatalunya = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every tuesday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -86,7 +86,7 @@ export const syncMallorca = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every thursday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -107,7 +107,7 @@ export const syncNavarra = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every friday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -128,7 +128,7 @@ export const syncEuskadi = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every saturday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -149,7 +149,7 @@ export const syncMadrid = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every sunday 04:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -192,7 +192,7 @@ export const syncMurcia = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every monday 06:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -213,7 +213,7 @@ export const syncMenorca = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every tuesday 06:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -256,7 +256,7 @@ export const syncCastillaLeon = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every thursday 06:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -277,7 +277,7 @@ export const syncAragon = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every saturday 06:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -299,7 +299,7 @@ export const syncCastillaLaMancha = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every sunday 06:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
@@ -321,7 +321,7 @@ export const syncExtremadura = onSchedule(
   {
     region: SCHEDULER_REGION,
     timeoutSeconds: 1500,
-    memory: '512MiB',
+    memory: '1GiB',
     schedule: 'every sunday 07:30',
     timeZone: 'Europe/Madrid',
     secrets: [googleMapsServerApiKey],
