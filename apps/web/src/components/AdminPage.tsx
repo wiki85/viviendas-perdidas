@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Camera,
@@ -100,6 +100,9 @@ export function AdminPage({ service, onClose }: Props) {
   const [drafts, setDrafts] = useState<
     Record<string, { type: ListingType; dwellings: number; locales: number }>
   >({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [showAcked, setShowAcked] = useState(false);
   const photoTarget = useRef<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -232,6 +235,34 @@ export function AdminPage({ service, onClose }: Props) {
     </th>
   );
 
+  const acknowledgeError = async (id: string) => {
+    setBusyId(id);
+    try {
+      await service.adminAcknowledgeError({ id });
+      setErrors(
+        (current) =>
+          current?.map((entry) => (entry.id === id ? { ...entry, acknowledged: true } : entry)) ??
+          null,
+      );
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const acknowledgeAllErrors = async () => {
+    setBusyId('all-errors');
+    try {
+      await service.adminAcknowledgeError({ all: true });
+      setErrors((current) => current?.map((entry) => ({ ...entry, acknowledged: true })) ?? null);
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const deleteMessage = async (id: string) => {
     setBusyId(id);
     try {
@@ -260,6 +291,11 @@ export function AdminPage({ service, onClose }: Props) {
     refreshSubscribers,
     tab,
   ]);
+
+  useEffect(() => {
+    setPage(0);
+    setExpandedId(null);
+  }, [filter, cityFilter, onlyOfficialMatches, onlyReported]);
 
   useEffect(() => {
     if (!photos) return;
@@ -484,6 +520,15 @@ export function AdminPage({ service, onClose }: Props) {
     (listing) => listing.officialMatch?.reviewStatus === 'pending',
   ).length;
   const reportedCount = (listings ?? []).filter((listing) => listing.reports > 0).length;
+  const PAGE_SIZE = 50;
+  const pageCount = Math.max(1, Math.ceil(filteredListings.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageListings = filteredListings.slice(
+    currentPage * PAGE_SIZE,
+    currentPage * PAGE_SIZE + PAGE_SIZE,
+  );
+  const pendingErrors = (errors ?? []).filter((entry) => !entry.acknowledged);
+  const visibleErrors = showAcked ? (errors ?? []) : pendingErrors;
 
   return (
     <main className="admin-page">
@@ -549,7 +594,7 @@ export function AdminPage({ service, onClose }: Props) {
               className={tab === 'photos' ? 'is-active' : ''}
               onClick={() => setTab('photos')}
             >
-              Fotos pendientes {photos ? `(${photos.length})` : ''}
+              Fotos pendientes
             </button>
             <button
               type="button"
@@ -558,7 +603,7 @@ export function AdminPage({ service, onClose }: Props) {
               className={tab === 'listings' ? 'is-active' : ''}
               onClick={() => setTab('listings')}
             >
-              Registros {listings ? `(${listings.length})` : ''}
+              Registros
             </button>
             <button
               type="button"
@@ -567,7 +612,7 @@ export function AdminPage({ service, onClose }: Props) {
               className={tab === 'errors' ? 'is-active' : ''}
               onClick={() => setTab('errors')}
             >
-              Errores {errors ? `(${errors.length})` : ''}
+              Errores
             </button>
             <button
               type="button"
@@ -576,7 +621,7 @@ export function AdminPage({ service, onClose }: Props) {
               className={tab === 'messages' ? 'is-active' : ''}
               onClick={() => setTab('messages')}
             >
-              Mensajes {messages ? `(${messages.length})` : ''}
+              Mensajes
             </button>
             <button
               type="button"
@@ -585,7 +630,7 @@ export function AdminPage({ service, onClose }: Props) {
               className={tab === 'boletin' ? 'is-active' : ''}
               onClick={() => setTab('boletin')}
             >
-              Boletín {subscribers ? `(${subscribers.filter((s) => s.active).length})` : ''}
+              Boletín
             </button>
             <div className="admin-tabs__side">
               <span className="admin-page__email">{email}</span>
@@ -619,6 +664,13 @@ export function AdminPage({ service, onClose }: Props) {
 
           {tab === 'photos' && (
             <>
+              {photos && photos.length > 0 && (
+                <p className="admin-page__hint">
+                  {photos.length === 1
+                    ? '1 foto pendiente de validar.'
+                    : `${photos.length} fotos pendientes de validar.`}
+                </p>
+              )}
               {photos && photos.length === 0 && !loading && (
                 <p className="admin-page__empty">No hay fotos pendientes. Todo revisado ✔</p>
               )}
@@ -743,186 +795,281 @@ export function AdminPage({ service, onClose }: Props) {
                   event.target.value = '';
                 }}
               />
+              {listings && (
+                <p className="admin-page__hint">
+                  {filteredListings.length === listings.length
+                    ? `${listings.length.toLocaleString('es-ES')} registros vecinales`
+                    : `${filteredListings.length.toLocaleString('es-ES')} de ${listings.length.toLocaleString('es-ES')} registros`}
+                  {pendingOfficialCount > 0 &&
+                    ` · ${pendingOfficialCount} posibles duplicados oficiales`}
+                  {reportedCount > 0 && ` · ${reportedCount} reportados como erróneos`}
+                  {' · pulsa una fila para editarla'}
+                </p>
+              )}
               {listings && filteredListings.length === 0 && !loading && (
                 <p className="admin-page__empty">Sin registros que coincidan.</p>
               )}
-              <ul className="admin-page__list">
-                {filteredListings.map((listing) => {
-                  const draft = draftFor(listing);
-                  const removed = listing.status === 'removed';
-                  const busy = busyId === listing.id;
-                  return (
-                    <li
-                      key={listing.id}
-                      className={`admin-card admin-card--listing ${removed ? 'is-removed' : ''}`}
-                    >
-                      <div className="admin-card__body">
-                        <div className="admin-listing__head">
-                          {listing.photo?.url ? (
-                            <img
-                              className="admin-listing__thumb"
-                              src={listing.photo.url}
-                              alt=""
-                              loading="lazy"
-                            />
-                          ) : (
-                            <span className="admin-listing__thumb admin-listing__thumb--empty">
-                              <ImageOff size={17} />
-                            </span>
-                          )}
-                          <div>
-                            <strong>{listing.address.formatted}</strong>
-                            {listing.officialMatch?.reviewStatus === 'pending' && (
-                              <span className="admin-official-flag">
-                                <Landmark size={13} /> Posible duplicado oficial (
-                                {listing.officialMatch.registrationCode})
-                              </span>
-                            )}
-                            <small>
-                              {typeLabel(listing.type)} ·{' '}
-                              {listing.type === 'commercial'
-                                ? `${Math.max(1, listing.commercialUnitsCount ?? 1)} ${(listing.commercialUnitsCount ?? 1) > 1 ? 'locales' : 'local'}`
-                                : `${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'unidad' : 'viviendas'}`}{' '}
-                              ·{' '}
-                              {removed
-                                ? 'Eliminado'
-                                : listing.status === 'flagged'
-                                  ? 'En revisión'
-                                  : 'Activo'}{' '}
-                              · {listing.confirmations} ✓ / {listing.reports} ⚑
-                            </small>
-                          </div>
-                        </div>
-                        {!removed && (
-                          <>
-                            <div className="admin-listing__edit">
-                              <label>
-                                <span>Tipo</span>
-                                <select
-                                  value={draft.type}
-                                  disabled={busy}
-                                  onChange={(event) =>
-                                    setDraft(listing, {
-                                      type: event.target.value as ListingType,
-                                      ...(event.target.value !== 'building'
-                                        ? { dwellings: 1 }
-                                        : {}),
-                                      ...(event.target.value === 'commercial'
-                                        ? { locales: Math.max(1, draft.locales) }
-                                        : event.target.value === 'unit'
-                                          ? { locales: 0 }
-                                          : {}),
-                                    })
-                                  }
-                                >
-                                  <option value="unit">Apartamento</option>
-                                  <option value="building">Edificio completo/parcial</option>
-                                  <option value="commercial">Local comercial</option>
-                                </select>
-                              </label>
-                              <label>
-                                <span>Viviendas</span>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max="500"
-                                  value={draft.dwellings}
-                                  disabled={busy || draft.type !== 'building'}
-                                  onChange={(event) =>
-                                    setDraft(listing, {
-                                      dwellings: Math.max(1, Number(event.target.value) || 1),
-                                    })
-                                  }
-                                />
-                              </label>
-                              <label>
-                                <span>Locales</span>
-                                <input
-                                  type="number"
-                                  min={draft.type === 'commercial' ? 1 : 0}
-                                  max="50"
-                                  value={draft.locales}
-                                  disabled={busy || draft.type === 'unit'}
-                                  onChange={(event) =>
-                                    setDraft(listing, {
-                                      locales: Math.min(
-                                        50,
-                                        Math.max(
-                                          draft.type === 'commercial' ? 1 : 0,
-                                          Number(event.target.value) || 0,
-                                        ),
-                                      ),
-                                    })
-                                  }
-                                />
-                              </label>
-                              <button
-                                className="button button--confirm"
-                                type="button"
-                                disabled={busy || !draftChanged(listing)}
-                                onClick={() => void saveListing(listing)}
-                              >
-                                {busy ? (
-                                  <LoaderCircle className="spin" size={16} />
-                                ) : (
-                                  <Save size={16} />
+              {filteredListings.length > 0 && (
+                <div className="stats-table-wrap">
+                  <table className="stats-table admin-table">
+                    <thead>
+                      <tr>
+                        <th>Dirección</th>
+                        <th>Tipo</th>
+                        <th className="num">Uds.</th>
+                        <th>Estado</th>
+                        <th className="num">✓</th>
+                        <th className="num">⚑</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageListings.map((listing) => {
+                        const draft = draftFor(listing);
+                        const removed = listing.status === 'removed';
+                        const busy = busyId === listing.id;
+                        const expanded = expandedId === listing.id;
+                        return (
+                          <Fragment key={listing.id}>
+                            <tr
+                              className={`admin-table__row ${expanded ? 'is-expanded' : ''} ${removed ? 'is-removed' : ''}`}
+                              aria-expanded={expanded}
+                              onClick={() => setExpandedId(expanded ? null : listing.id)}
+                            >
+                              <td className="admin-table__address">
+                                {listing.officialMatch?.reviewStatus === 'pending' && (
+                                  <Landmark size={13} aria-label="Posible duplicado oficial" />
                                 )}
-                                Guardar
-                              </button>
-                            </div>
-                            <div className="admin-card__actions admin-card__actions--wrap">
-                              <button
-                                className="button button--ghost"
-                                type="button"
-                                disabled={busy}
-                                onClick={() => pickReplacementPhoto(listing)}
+                                {listing.address.formatted}
+                              </td>
+                              <td>{typeLabel(listing.type)}</td>
+                              <td className="num">
+                                {listing.type === 'commercial'
+                                  ? Math.max(1, listing.commercialUnitsCount ?? 1)
+                                  : listing.dwellingsCount}
+                              </td>
+                              <td>
+                                {removed
+                                  ? 'Eliminado'
+                                  : listing.status === 'flagged'
+                                    ? 'En revisión'
+                                    : 'Activo'}
+                              </td>
+                              <td className="num">{listing.confirmations}</td>
+                              <td
+                                className={`num ${listing.reports > 0 ? 'admin-table__reports' : ''}`}
                               >
-                                <Camera size={16} />
-                                {listing.photo?.url ? 'Reemplazar foto' : 'Añadir foto'}
-                              </button>
-                              {listing.photo?.url && (
-                                <button
-                                  className="button button--ghost"
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => void removePhoto(listing)}
-                                >
-                                  <ImageOff size={16} /> Quitar foto
-                                </button>
-                              )}
-                              {listing.officialMatch?.reviewStatus === 'pending' && (
-                                <button
-                                  className="button button--ghost"
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => void resolveOfficialMatch(listing)}
-                                >
-                                  <Check size={16} /> Marcar revisado
-                                </button>
-                              )}
-                              <button
-                                className="button button--report"
-                                type="button"
-                                disabled={busy}
-                                onClick={() => void deleteListing(listing)}
-                              >
-                                <Trash2 size={16} /> Eliminar
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                                {listing.reports}
+                              </td>
+                            </tr>
+                            {expanded && (
+                              <tr className="admin-table__detail">
+                                <td colSpan={6}>
+                                  <div className="admin-table__detail-inner">
+                                    <div className="admin-listing__head">
+                                      {listing.photo?.url ? (
+                                        <img
+                                          className="admin-listing__thumb"
+                                          src={listing.photo.url}
+                                          alt=""
+                                          loading="lazy"
+                                        />
+                                      ) : (
+                                        <span className="admin-listing__thumb admin-listing__thumb--empty">
+                                          <ImageOff size={17} />
+                                        </span>
+                                      )}
+                                      <div>
+                                        <strong>{listing.address.formatted}</strong>
+                                        {listing.officialMatch?.reviewStatus === 'pending' && (
+                                          <span className="admin-official-flag">
+                                            <Landmark size={13} /> Posible duplicado oficial (
+                                            {listing.officialMatch.registrationCode})
+                                          </span>
+                                        )}
+                                        <small>
+                                          {listing.confirmations} confirmaciones · {listing.reports}{' '}
+                                          reportes
+                                        </small>
+                                      </div>
+                                    </div>
+                                    {!removed && (
+                                      <>
+                                        <div className="admin-listing__edit">
+                                          <label>
+                                            <span>Tipo</span>
+                                            <select
+                                              value={draft.type}
+                                              disabled={busy}
+                                              onClick={(event) => event.stopPropagation()}
+                                              onChange={(event) =>
+                                                setDraft(listing, {
+                                                  type: event.target.value as ListingType,
+                                                  ...(event.target.value !== 'building'
+                                                    ? { dwellings: 1 }
+                                                    : {}),
+                                                  ...(event.target.value === 'commercial'
+                                                    ? { locales: Math.max(1, draft.locales) }
+                                                    : event.target.value === 'unit'
+                                                      ? { locales: 0 }
+                                                      : {}),
+                                                })
+                                              }
+                                            >
+                                              <option value="unit">Apartamento</option>
+                                              <option value="building">
+                                                Edificio completo/parcial
+                                              </option>
+                                              <option value="commercial">Local comercial</option>
+                                            </select>
+                                          </label>
+                                          <label>
+                                            <span>Viviendas</span>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              max="500"
+                                              value={draft.dwellings}
+                                              disabled={busy || draft.type !== 'building'}
+                                              onChange={(event) =>
+                                                setDraft(listing, {
+                                                  dwellings: Math.max(
+                                                    1,
+                                                    Number(event.target.value) || 1,
+                                                  ),
+                                                })
+                                              }
+                                            />
+                                          </label>
+                                          <label>
+                                            <span>Locales</span>
+                                            <input
+                                              type="number"
+                                              min={draft.type === 'commercial' ? 1 : 0}
+                                              max="50"
+                                              value={draft.locales}
+                                              disabled={busy || draft.type === 'unit'}
+                                              onChange={(event) =>
+                                                setDraft(listing, {
+                                                  locales: Math.min(
+                                                    50,
+                                                    Math.max(
+                                                      draft.type === 'commercial' ? 1 : 0,
+                                                      Number(event.target.value) || 0,
+                                                    ),
+                                                  ),
+                                                })
+                                              }
+                                            />
+                                          </label>
+                                          <button
+                                            className="button button--confirm"
+                                            type="button"
+                                            disabled={busy || !draftChanged(listing)}
+                                            onClick={() => void saveListing(listing)}
+                                          >
+                                            {busy ? (
+                                              <LoaderCircle className="spin" size={16} />
+                                            ) : (
+                                              <Save size={16} />
+                                            )}
+                                            Guardar
+                                          </button>
+                                        </div>
+                                        <div className="admin-card__actions admin-card__actions--wrap">
+                                          <button
+                                            className="button button--ghost"
+                                            type="button"
+                                            disabled={busy}
+                                            onClick={() => pickReplacementPhoto(listing)}
+                                          >
+                                            <Camera size={16} />
+                                            {listing.photo?.url ? 'Reemplazar foto' : 'Añadir foto'}
+                                          </button>
+                                          {listing.photo?.url && (
+                                            <button
+                                              className="button button--ghost"
+                                              type="button"
+                                              disabled={busy}
+                                              onClick={() => void removePhoto(listing)}
+                                            >
+                                              <ImageOff size={16} /> Quitar foto
+                                            </button>
+                                          )}
+                                          {listing.officialMatch?.reviewStatus === 'pending' && (
+                                            <button
+                                              className="button button--ghost"
+                                              type="button"
+                                              disabled={busy}
+                                              onClick={() => void resolveOfficialMatch(listing)}
+                                            >
+                                              <Check size={16} /> Marcar revisado
+                                            </button>
+                                          )}
+                                          <button
+                                            className="button button--report"
+                                            type="button"
+                                            disabled={busy}
+                                            onClick={() => void deleteListing(listing)}
+                                          >
+                                            <Trash2 size={16} /> Eliminar
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {pageCount > 1 && (
+                <div className="admin-pager">
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    disabled={currentPage === 0}
+                    onClick={() => {
+                      setPage(currentPage - 1);
+                      setExpandedId(null);
+                    }}
+                  >
+                    ← Anteriores
+                  </button>
+                  <span>
+                    {(currentPage * PAGE_SIZE + 1).toLocaleString('es-ES')}–
+                    {Math.min(
+                      filteredListings.length,
+                      (currentPage + 1) * PAGE_SIZE,
+                    ).toLocaleString('es-ES')}{' '}
+                    de {filteredListings.length.toLocaleString('es-ES')}
+                  </span>
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    disabled={currentPage >= pageCount - 1}
+                    onClick={() => {
+                      setPage(currentPage + 1);
+                      setExpandedId(null);
+                    }}
+                  >
+                    Siguientes →
+                  </button>
+                </div>
+              )}
             </>
           )}
 
           {tab === 'messages' && (
             <>
               <p className="admin-page__hint">
-                Mensajes del formulario de contacto. El correo solo es visible aquí.
+                Mensajes del formulario de contacto. El correo solo es visible aquí; cada mensaje
+                nuevo llega también avisado a tu correo.
+                {messages && messages.length > 0 && ` ${messages.length} en la bandeja.`}
               </p>
               {messages && messages.length === 0 && !loading && (
                 <p className="admin-page__empty">Sin mensajes pendientes ✔</p>
@@ -966,6 +1113,8 @@ export function AdminPage({ service, onClose }: Props) {
               <p className="admin-page__hint">
                 Suscriptores de El Recuento. La fuente de verdad es esta base de datos; Brevo solo
                 entrega los correos (pestaña Transaccional de Brevo para ver los envíos).
+                {subscribers &&
+                  ` ${subscribers.filter((s) => s.active).length} suscripciones activas de ${subscribers.length} registradas.`}
               </p>
               {subscribers && subscribers.length === 0 && !loading && (
                 <p className="admin-page__empty">Todavía no hay suscriptores.</p>
@@ -1077,13 +1226,44 @@ export function AdminPage({ service, onClose }: Props) {
               <p className="admin-page__hint">
                 Fallos del servidor de los últimos 30 días. Los usuarios solo ven mensajes
                 genéricos; el detalle completo queda aquí.
+                {errors && ` ${pendingErrors.length} sin leer de ${errors.length} registrados.`}
               </p>
-              {errors && errors.length === 0 && !loading && (
-                <p className="admin-page__empty">Sin errores registrados ✔</p>
+              <div className="admin-official-bar">
+                <label className="admin-official-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showAcked}
+                    onChange={(event) => setShowAcked(event.target.checked)}
+                  />
+                  Mostrar también los leídos
+                </label>
+                {pendingErrors.length > 0 && (
+                  <button
+                    className="button button--ghost"
+                    type="button"
+                    disabled={busyId !== null}
+                    onClick={() => void acknowledgeAllErrors()}
+                  >
+                    {busyId === 'all-errors' ? (
+                      <LoaderCircle className="spin" size={16} />
+                    ) : (
+                      <Check size={16} />
+                    )}
+                    Marcar todos como leídos
+                  </button>
+                )}
+              </div>
+              {errors && visibleErrors.length === 0 && !loading && (
+                <p className="admin-page__empty">
+                  {errors.length === 0 ? 'Sin errores registrados ✔' : 'Todo leído ✔'}
+                </p>
               )}
               <ul className="admin-page__list">
-                {(errors ?? []).map((entry) => (
-                  <li key={entry.id} className="admin-card">
+                {visibleErrors.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className={`admin-card ${entry.acknowledged ? 'is-removed' : ''}`}
+                  >
                     <div className="admin-card__body">
                       <div className="admin-error__meta">
                         <strong>{entry.action}</strong>
@@ -1094,6 +1274,21 @@ export function AdminPage({ service, onClose }: Props) {
                             timeStyle: 'medium',
                           })}
                         </small>
+                        {!entry.acknowledged && (
+                          <button
+                            className="button button--ghost admin-error__ack"
+                            type="button"
+                            disabled={busyId !== null}
+                            onClick={() => void acknowledgeError(entry.id)}
+                          >
+                            {busyId === entry.id ? (
+                              <LoaderCircle className="spin" size={15} />
+                            ) : (
+                              <Check size={15} />
+                            )}
+                            Marcar leído
+                          </button>
+                        )}
                       </div>
                       <pre className="admin-error__details">{prettyDetails(entry.details)}</pre>
                     </div>

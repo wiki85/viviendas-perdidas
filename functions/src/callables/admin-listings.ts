@@ -61,7 +61,7 @@ export const adminListErrors = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
   async (request) => {
     requireModerator(request);
-    const snapshot = await db.collection('errorLogs').orderBy('createdAt', 'desc').limit(50).get();
+    const snapshot = await db.collection('errorLogs').orderBy('createdAt', 'desc').limit(100).get();
     return {
       errors: snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -69,8 +69,43 @@ export const adminListErrors = onCall(
         kind: String(doc.get('kind') ?? ''),
         details: String(doc.get('details') ?? ''),
         createdAt: (doc.get('createdAt') as Timestamp).toDate().toISOString(),
+        acknowledged: doc.get('acknowledgedAt') instanceof Timestamp,
       })),
     };
+  },
+);
+
+/** Marca un error (o todos los pendientes) como leído: deja de mostrarse. */
+export const adminAcknowledgeError = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 30, maxInstances: 5 },
+  async (request) => {
+    const moderator = requireModerator(request);
+    const data = request.data as { id?: unknown; all?: unknown };
+    const stamp = Timestamp.now();
+    if (data?.all === true) {
+      const snapshot = await db
+        .collection('errorLogs')
+        .orderBy('createdAt', 'desc')
+        .limit(200)
+        .get();
+      const batch = db.batch();
+      let count = 0;
+      for (const doc of snapshot.docs) {
+        if (doc.get('acknowledgedAt') instanceof Timestamp) continue;
+        batch.update(doc.ref, { acknowledgedAt: stamp });
+        count += 1;
+      }
+      await batch.commit();
+      logger.info('Errors acknowledged (all)', { count, moderator });
+      return { acknowledged: count };
+    }
+    const id = typeof data?.id === 'string' ? data.id : '';
+    if (!/^[A-Za-z0-9_-]{1,128}$/u.test(id)) {
+      throw new HttpsError('invalid-argument', 'Identificador inválido.');
+    }
+    await db.collection('errorLogs').doc(id).update({ acknowledgedAt: stamp });
+    logger.info('Error acknowledged', { id, moderator });
+    return { acknowledged: 1 };
   },
 );
 

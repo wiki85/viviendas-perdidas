@@ -453,6 +453,8 @@ export class DemoListingsService implements ListingsService {
     return [];
   }
 
+  async adminAcknowledgeError(): Promise<void> {}
+
   private aggregateFor(scope: VisibleScope): Aggregate {
     const matching = this.listings.filter(
       (listing) => listing.status !== 'removed' && scopeMatches(listing, scope),

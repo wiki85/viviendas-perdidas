@@ -5,6 +5,7 @@ import { CONTACT_LIMIT_PER_HOUR, REGION } from '../config.js';
 import { db } from '../firebase.js';
 import { submitContactSchema } from '../schemas.js';
 import { enforceRateLimit, RateLimitExceededError } from '../services/rate-limit.js';
+import { notifyModerators } from '../services/moderation-notify.js';
 import { invalidPayload, requireAppCheckRateLimitSubject, requireModerator } from './common.js';
 
 /** Below this, the form was filled faster than any human reads it. */
@@ -26,8 +27,9 @@ export const submitContactMessage = onCall(
   {
     region: REGION,
     enforceAppCheck: true,
-    timeoutSeconds: 15,
+    timeoutSeconds: 30,
     maxInstances: 10,
+    secrets: ['BREVO_API_KEY'],
   },
   async (request): Promise<{ ok: true }> => {
     const parsed = submitContactSchema.safeParse(request.data as unknown);
@@ -56,13 +58,24 @@ export const submitContactMessage = onCall(
       });
       return { ok: true };
     }
+    const fullName = cleanText(input.fullName);
+    const message = cleanText(input.message);
     await db.collection('contactMessages').add({
-      fullName: cleanText(input.fullName),
+      fullName,
       email: input.email,
-      message: cleanText(input.message),
+      message,
       createdAt: Timestamp.now(),
     });
     logger.info('Contact message stored');
+    await notifyModerators({
+      subject: `Nuevo mensaje de ${fullName || 'contacto'} — Viviendas Perdidas`,
+      title: 'Nuevo mensaje de contacto',
+      fields: [
+        { label: 'De', value: fullName || '(sin nombre)' },
+        { label: 'Correo', value: input.email },
+        { label: 'Mensaje', value: message },
+      ],
+    });
     return { ok: true };
   },
 );

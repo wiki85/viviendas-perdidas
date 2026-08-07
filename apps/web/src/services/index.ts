@@ -160,6 +160,10 @@ class LazyFirebaseListingsService implements ListingsService {
   adminListErrors() {
     return this.load().then((service) => service.adminListErrors());
   }
+
+  adminAcknowledgeError(target: { id: string } | { all: true }) {
+    return this.load().then((service) => service.adminAcknowledgeError(target));
+  }
 }
 
 let singleton: ListingsService | null = null;

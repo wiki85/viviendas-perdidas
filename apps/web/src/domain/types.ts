@@ -311,6 +311,7 @@ export type ErrorLogEntry = {
   kind: string;
   details: string;
   createdAt: string;
+  acknowledged: boolean;
 };
 
 export interface ListingsService {
@@ -363,4 +364,5 @@ export interface ListingsService {
   adminDeleteListing(listingId: string): Promise<void>;
   adminSetListingPhoto(listingId: string, imageBase64: string | null): Promise<void>;
   adminListErrors(): Promise<ErrorLogEntry[]>;
+  adminAcknowledgeError(target: { id: string } | { all: true }): Promise<void>;
 }

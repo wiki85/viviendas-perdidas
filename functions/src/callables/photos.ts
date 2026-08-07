@@ -16,6 +16,7 @@ import {
   submitListingPhotoSchema,
 } from '../schemas.js';
 import { describeCaughtError, recordClientError } from '../services/error-log.js';
+import { notifyModerators } from '../services/moderation-notify.js';
 import { enforceRateLimit, RateLimitExceededError } from '../services/rate-limit.js';
 import type { ListingData, ListingPhotoData } from '../types.js';
 import { invalidPayload, requireAppCheckRateLimitSubject, requireModerator } from './common.js';
@@ -47,6 +48,7 @@ export const submitListingPhoto = onCall(
     timeoutSeconds: 30,
     memory: '512MiB',
     maxInstances: 10,
+    secrets: ['BREVO_API_KEY'],
   },
   async (request) => {
     try {
@@ -104,6 +106,18 @@ export const submitListingPhoto = onCall(
         publicPath: null,
       };
       await photoReference.create(photo);
+      await notifyModerators({
+        subject: 'Foto pendiente de validación — Viviendas Perdidas',
+        title: 'Nueva foto pendiente',
+        fields: [
+          {
+            label: 'Registro',
+            value:
+              (listingSnapshot.data() as ListingData).address?.formatted ??
+              'Dirección no disponible',
+          },
+        ],
+      });
       return { queued: true };
     } catch (error) {
       if (error instanceof RateLimitExceededError) {

@@ -681,6 +681,11 @@ export class FirebaseListingsService implements ListingsService {
     return response.data.errors;
   }
 
+  async adminAcknowledgeError(target: { id: string } | { all: true }): Promise<void> {
+    const callable = httpsCallable(this.functions, 'adminAcknowledgeError');
+    await callable(target);
+  }
+
   private requireAppCheck() {
     if (!appConfig.recaptchaSiteKey && !appConfig.useFirebaseEmulators) {
       throw new Error(

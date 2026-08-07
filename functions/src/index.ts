@@ -13,6 +13,7 @@ export {
 } from './callables/photos.js';
 export {
   adminDeleteListing,
+  adminAcknowledgeError,
   adminListErrors,
   adminListListings,
   adminSetListingPhoto,
