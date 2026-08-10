@@ -46,19 +46,24 @@ export const voteListing = onCall(
       const parsed = voteListingSchema.safeParse(request.data as unknown);
       if (!parsed.success) throw invalidPayload(parsed.error);
       const input = parsed.data;
-      const deviceHash = input.deviceFingerprintHash.toLowerCase();
+      // La identidad del votante es el hash del token de App Check (señal del
+      // servidor, verificada), NO el fingerprint del cliente: este último lo
+      // elige el atacante y variándolo esquivaba el límite y la unicidad del
+      // voto (VP-01). El fingerprint se ignora a efectos de seguridad.
       const appCheckSubject = requireAppCheckRateLimitSubject(request);
 
       await enforceRateLimit({
         action: 'voteListing',
-        // The raw token is never persisted: common.ts hashes it first and the
-        // bucket service hashes this combined, privacy-preserving subject again.
-        subject: `${appCheckSubject}:${deviceHash}`,
+        // El token en claro nunca se persiste: common.ts lo hashea y el
+        // servicio de cupos vuelve a hashear este sujeto.
+        subject: appCheckSubject,
         maximum: VOTE_LIMIT_PER_HOUR,
       });
 
       const listingReference = db.collection('listings').doc(input.listingId);
-      const voteReference = db.collection('votes').doc(makeVoteId(input.listingId, deviceHash));
+      const voteReference = db
+        .collection('votes')
+        .doc(makeVoteId(input.listingId, appCheckSubject));
       return await db.runTransaction(async (transaction) => {
         const listingSnapshot = await transaction.get(listingReference);
         const voteSnapshot = await transaction.get(voteReference);

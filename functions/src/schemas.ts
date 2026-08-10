@@ -122,10 +122,14 @@ const firestoreIdSchema = z
   .max(256)
   .refine((value) => !value.includes('/'), 'El id no es válido.');
 
+// Se sigue aceptando (clientes cacheados lo envían) pero es OPCIONAL y el
+// servidor lo IGNORA a efectos de seguridad: la identidad del votante se
+// deriva del token de App Check, no de este valor elegido por el cliente (VP-01).
 const deviceFingerprintHashSchema = z
   .string()
   .trim()
-  .regex(/^[a-fA-F0-9]{64}$/u, 'El hash de dispositivo debe ser SHA-256 hexadecimal.');
+  .regex(/^[a-fA-F0-9]{64}$/u, 'El hash de dispositivo debe ser SHA-256 hexadecimal.')
+  .optional();
 
 export const voteListingSchema = z
   .object({

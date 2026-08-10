@@ -58,7 +58,9 @@ export const submitListingPhoto = onCall(
       const appCheckSubject = requireAppCheckRateLimitSubject(request);
       await enforceRateLimit({
         action: 'submitPhoto',
-        subject: `${appCheckSubject}:${input.deviceFingerprintHash.toLowerCase()}`,
+        // Cupo por token de App Check (señal del servidor), no por el
+        // fingerprint del cliente que el atacante puede variar (VP-01/VP-08).
+        subject: appCheckSubject,
         maximum: PHOTO_SUBMIT_LIMIT_PER_HOUR,
       });
 
