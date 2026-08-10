@@ -327,7 +327,9 @@ export function RegisterWizard({
   const selectSearchPlace = (place: SearchPlace) => {
     setLocation({
       position: place.position,
-      label: `${place.primary}, ${place.secondary}`,
+      // `formatted` ya es la dirección completa; solo se combina primary +
+      // secondary cuando no hay dirección canónica (resultados locales).
+      label: place.formatted ?? `${place.primary}, ${place.secondary}`,
       placeId: place.placeId,
       source: 'search',
     });

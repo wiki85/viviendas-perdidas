@@ -156,6 +156,7 @@ export function SearchBar({ mapsEnabled, onSelect, placeholder, autoFocus }: Pro
         onSelect({
           ...place,
           secondary: selectedPlace.formattedAddress ?? place.secondary,
+          formatted: selectedPlace.formattedAddress ?? undefined,
           position: { lat: location.lat(), lng: location.lng() },
           bounds: googleBounds(selectedPlace.viewport),
           zoom: selectedPlace.types?.includes('locality') ? 12 : 16,

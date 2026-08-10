@@ -222,6 +222,9 @@ export type SearchPlace = {
   id: string;
   primary: string;
   secondary: string;
+  /** Dirección canónica completa de Google (ya incluye calle y número); se
+   * usa como etiqueta para no duplicar `primary` con `secondary`. */
+  formatted?: string;
   position: LatLng;
   bounds?: MapBounds;
   zoom: number;
