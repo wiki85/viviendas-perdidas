@@ -87,6 +87,30 @@ describe('renderCityPage', () => {
     expect(html).toContain('fuente=ambas');
   });
 
+  it('counts whole apartment buildings by their units, not by registration', () => {
+    // Sevilla con 21 AT que aportan 190 apartamentos: las inscripciones son
+    // 9578 pero las viviendas reales 9578 + (190 - 21) = 9747.
+    const official: OfficialCityStats = {
+      total: 9578,
+      entireHomes: 8876,
+      dwellings: 9747,
+      entireDwellings: 9045,
+      roomsOnly: 702,
+      roomsInhabitants: 1050,
+      places: 40000,
+      source: 'openrta',
+      updatedAt: new Date('2026-07-20T04:30:00Z'),
+    };
+    const html = renderCityPage(city({ id: 'sevilla', name: 'Sevilla' }), [], official);
+    // La etiqueta del toggle y la cifra oficial usan viviendas, no inscripciones.
+    expect(html).toContain('Registro oficial de turismo (9747)');
+    expect(html).toContain('data-oficial="9747"');
+    // Hogares oficiales = viviendas completas reales (entireDwellings).
+    expect(html).toContain('data-oficial="9045"');
+    // Combinada = 34 vecinales + 9747 oficiales.
+    expect(html).toContain('data-ambas="9781"');
+  });
+
   it('renders official-only cities without community records', () => {
     const official: OfficialCityStats = {
       total: 15754,

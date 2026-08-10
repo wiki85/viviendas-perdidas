@@ -20,8 +20,13 @@ export interface CityStats {
 
 /** Official registry figures for the city, when mirrored. */
 export interface OfficialCityStats {
+  /** Número de inscripciones en el registro. */
   total: number;
   entireHomes: number;
+  /** Viviendas reales (un edificio de apartamentos cuenta sus unidades). Sin
+   * este campo (datos antiguos) se cae a `total`/`entireHomes`. */
+  dwellings?: number;
+  entireDwellings?: number;
   roomsOnly: number;
   /** Displaced inhabitants from rooms-only rentals (≈1 per room). */
   roomsInhabitants: number;
@@ -511,19 +516,23 @@ export function renderCityPage(
   history: OfficialHistoryPoint[] = [],
 ): string {
   const name = city.name;
-  const officialEntire = official?.entireHomes ?? 0;
+  // Viviendas reales (units) en vez de inscripciones: un edificio de
+  // apartamentos turísticos cuenta sus pisos, no 1. Datos antiguos sin el
+  // campo se caen a entireHomes/total.
+  const officialEntire = official?.entireDwellings ?? official?.entireHomes ?? 0;
+  const officialDwellings = official?.dwellings ?? official?.total ?? 0;
   const households = city.lostFamilies + officialEntire;
   const inhabitants =
     city.lostInhabitants +
     (officialEntire > 0 ? inhabitantsForDwellings(officialEntire, city.id) : 0) +
     // Rooms-only rentals add inhabitants (≈1 per rented room), not households.
     (official?.roomsInhabitants ?? 0);
-  const totalDwellings = city.lostDwellings + (official?.total ?? 0);
+  const totalDwellings = city.lostDwellings + officialDwellings;
   const impact = computeCityImpact({
     cityId: city.id,
     households,
     inhabitants,
-    officialTotal: official?.total ?? 0,
+    officialTotal: officialDwellings,
     officialPlaces: official?.places ?? 0,
   });
 
@@ -558,11 +567,11 @@ export function renderCityPage(
     <h2>Viviendas dedicadas al turismo</h2>
     <div class="src-card">
       <div class="src-toggles" role="group" aria-label="Elegir las fuentes que suman">
-        <button type="button" data-toggle-source="oficial" aria-pressed="true">Registro oficial de turismo (${n(official.total)})</button>
+        <button type="button" data-toggle-source="oficial" aria-pressed="true">Registro oficial de turismo (${n(officialDwellings)})</button>
         <button type="button" data-toggle-source="vecinal" aria-pressed="true">Registros vecinales (${n(city.lostDwellings)})</button>
       </div>
       <div class="stats src-totals">
-        <div class="stat"><strong ${dyn(n(totalDwellings), n(official.total), n(city.lostDwellings))}>${n(totalDwellings)}</strong><span>viviendas en alquiler turístico</span></div>
+        <div class="stat"><strong ${dyn(n(totalDwellings), n(officialDwellings), n(city.lostDwellings))}>${n(totalDwellings)}</strong><span>viviendas en alquiler turístico</span></div>
         <div class="stat"><strong ${dyn(n(households), n(officialEntire), n(city.lostFamilies))}>${n(households)}</strong><span>hogares que ya no pueden vivir ahí</span></div>
         <div class="stat"><strong ${dyn(n(inhabitants), n(officialInhabitants), n(city.lostInhabitants))}>${n(inhabitants)}</strong><span>personas desplazadas</span></div>
         <div class="stat"><strong ${dyn(n(official.places), n(official.places), '—')}>${n(official.places)}</strong><span>plazas turísticas oficiales</span></div>

@@ -82,6 +82,10 @@ function officialFromDoc(data: FirebaseFirestore.DocumentData): OfficialCityStat
   return {
     total: integer(data.total),
     entireHomes: integer(data.entireHomes),
+    ...(typeof data.dwellings === 'number' ? { dwellings: integer(data.dwellings) } : {}),
+    ...(typeof data.entireDwellings === 'number'
+      ? { entireDwellings: integer(data.entireDwellings) }
+      : {}),
     roomsOnly: integer(data.roomsOnly),
     roomsInhabitants: integer(data.roomsInhabitants),
     places: integer(data.places),

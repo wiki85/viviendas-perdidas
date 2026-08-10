@@ -62,6 +62,20 @@ describe('buildOfficialCells', () => {
     expect(sevillaCell?.lng).toBeCloseTo((-5.99 + -5.991) / 2, 6);
   });
 
+  it('counts an apartment building by its units, not as one dwelling', () => {
+    // Un edificio de 54 apartamentos (un solo registro AT) cuenta como 54
+    // viviendas en la celda, pero el centroide sigue siendo su único punto.
+    const at = record({ rtaId: 9, latitude: 37.383, longitude: -6.006, entire: true, units: 54 });
+    const built = buildOfficialCells([at], geohashForLocation);
+    const cell = built.cells.find((c) => c.precision === 7);
+    expect(cell).toMatchObject({ count: 54, entireCount: 54 });
+    expect(cell?.lat).toBeCloseTo(37.383, 5);
+    const pinCell = built.pinCells.find((c) => c.pins.length > 0);
+    expect(pinCell?.count).toBe(54);
+    expect(pinCell?.pins).toHaveLength(1);
+    expect(pinCell?.pins[0]).toMatchObject({ units: 54 });
+  });
+
   it('estimates one displaced inhabitant per rented room (places ÷ 2, min 1)', () => {
     expect(roomsInhabitantsForPlaces(4)).toBe(2);
     expect(roomsInhabitantsForPlaces(1)).toBe(1);

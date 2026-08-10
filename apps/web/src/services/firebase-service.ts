@@ -445,6 +445,7 @@ export class FirebaseListingsService implements ListingsService {
             municipality: typeof pin.municipality === 'string' ? pin.municipality : '',
             entire: pin.entire === true,
             places: typeof pin.places === 'number' ? pin.places : 0,
+            ...(typeof pin.units === 'number' && pin.units > 1 ? { units: pin.units } : {}),
           });
         }
         cells.push({ id: document.id, location: { lat: data.lat, lng: data.lng }, pins });

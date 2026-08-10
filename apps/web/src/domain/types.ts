@@ -122,6 +122,9 @@ export type OfficialPin = {
   /** Whole-home rental (group 'Completa') vs rooms-only. */
   entire: boolean;
   places: number;
+  /** Viviendas que representa el pin: >1 en edificios de apartamentos
+   * turísticos (un portal con varios pisos). Ausente = 1. */
+  units?: number;
 };
 
 /** Precomputed geohash-cell aggregate of the official registry (bubble). */

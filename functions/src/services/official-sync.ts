@@ -1094,6 +1094,7 @@ async function loadAllRecordsForCells(): Promise<OfficialVutRecord[]> {
       'municipality',
       'entire',
       'places',
+      'units',
       'latitude',
       'longitude',
     )
@@ -1113,6 +1114,7 @@ async function loadAllRecordsForCells(): Promise<OfficialVutRecord[]> {
       cityId: '',
       entire: data.entire === true,
       places: typeof data.places === 'number' ? data.places : 0,
+      units: typeof data.units === 'number' ? data.units : 1,
       latitude: typeof data.latitude === 'number' ? data.latitude : null,
       longitude: typeof data.longitude === 'number' ? data.longitude : null,
     };
@@ -1256,6 +1258,11 @@ async function runSource(
           municipality,
           total: records.length,
           entireHomes: entire.length,
+          // Viviendas reales: un edificio de apartamentos aporta sus unidades,
+          // no 1 (solo los AT andaluces declaran units>1). `total`/`entireHomes`
+          // siguen siendo el número de inscripciones.
+          dwellings: records.reduce((sum, record) => sum + (record.units ?? 1), 0),
+          entireDwellings: entire.reduce((sum, record) => sum + (record.units ?? 1), 0),
           roomsOnly: records.length - entire.length,
           // Rooms-only rentals displace room tenants: ≈1 inhabitant per
           // room (rooms ≈ places ÷ 2, minimum 1 per dwelling).

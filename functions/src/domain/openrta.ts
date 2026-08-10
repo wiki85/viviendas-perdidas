@@ -25,6 +25,11 @@ export interface OfficialVutRecord {
   /** Cadastral reference (GVA rows): lets the sync resolve coordinates
    * against the Catastro instead of paying the Geocoding API. */
   cadastralRef?: string;
+  /** Viviendas que representa el registro. Casi siempre 1; los apartamentos
+   * turísticos andaluces (edificios/conjuntos enteros) declaran su número
+   * real de apartamentos en `tot_gen_ua`, así que un edificio de 54 pisos
+   * cuenta como 54 viviendas perdidas, no como una. Ausente = 1. */
+  units?: number;
   latitude: number | null;
   longitude: number | null;
 }
@@ -244,6 +249,12 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
     // `group` trae el tipo de inmueble (Edificio/Complejo, Conjunto).
     entire: raw.group === 'Completa' || raw.objects_type_id === 'Apartamento turístico',
     places: typeof raw.tot_gen_places === 'number' ? raw.tot_gen_places : 0,
+    // Solo los apartamentos turísticos (edificios enteros) cuentan sus
+    // apartamentos reales; las VUT siguen siendo 1 vivienda por inscripción,
+    // así que no llevan el campo (y su contentHash no cambia).
+    ...(raw.objects_type_id === 'Apartamento turístico'
+      ? { units: Math.max(1, Math.trunc(Number(raw.tot_gen_ua)) || 1) }
+      : {}),
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null,
   };

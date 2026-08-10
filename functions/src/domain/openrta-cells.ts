@@ -43,6 +43,8 @@ export interface OfficialEmbeddedPin {
   municipality: string;
   entire: boolean;
   places: number;
+  /** Viviendas que representa el pin (>1 en edificios de apartamentos). */
+  units: number;
 }
 
 export interface OfficialPinCellAggregate {
@@ -58,6 +60,9 @@ type GeohashFn = (location: [number, number], precision?: number) => string;
 interface CellAccumulator {
   sumLat: number;
   sumLng: number;
+  /** Puntos físicos (registros) del bucket; el centroide se divide por esto,
+   * no por `count`, que suma viviendas (un edificio aporta varias). */
+  points: number;
   count: number;
   entireCount: number;
   roomsInhabitants: number;
@@ -97,13 +102,24 @@ export function buildOfficialCells(
       const prefix = hash.slice(0, precision);
       let cell = bucket.get(prefix);
       if (cell === undefined) {
-        cell = { sumLat: 0, sumLng: 0, count: 0, entireCount: 0, roomsInhabitants: 0, pins: [] };
+        cell = {
+          sumLat: 0,
+          sumLng: 0,
+          points: 0,
+          count: 0,
+          entireCount: 0,
+          roomsInhabitants: 0,
+          pins: [],
+        };
         bucket.set(prefix, cell);
       }
+      // Un edificio de apartamentos cuenta sus viviendas reales, no 1.
+      const units = record.units ?? 1;
       cell.sumLat += lat;
       cell.sumLng += lng;
-      cell.count += 1;
-      if (record.entire) cell.entireCount += 1;
+      cell.points += 1;
+      cell.count += units;
+      if (record.entire) cell.entireCount += units;
       else cell.roomsInhabitants += roomsInhabitantsForPlaces(record.places);
       if (precision === PIN_CELL_PRECISION) {
         cell.pins.push({
@@ -117,11 +133,12 @@ export function buildOfficialCells(
           municipality: record.municipality,
           entire: record.entire,
           places: record.places,
+          units,
         });
       }
     }
     for (const [prefix, cell] of [...bucket.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      const centroid = { lat: cell.sumLat / cell.count, lng: cell.sumLng / cell.count };
+      const centroid = { lat: cell.sumLat / cell.points, lng: cell.sumLng / cell.points };
       cells.push({
         id: prefix,
         precision,

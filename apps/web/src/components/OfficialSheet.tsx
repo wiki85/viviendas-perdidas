@@ -28,7 +28,9 @@ function displayMunicipality(value: string): string {
 /** Detail card for a dwelling from a mirrored official registry. */
 export function OfficialSheet({ pin, onClose }: Props) {
   const closeButton = useRef<HTMLButtonElement>(null);
-  const impact = calculateImpact(pin.entire ? 1 : 0);
+  // Un edificio de apartamentos turísticos representa varias viviendas.
+  const units = pin.units && pin.units > 1 ? pin.units : 1;
+  const impact = calculateImpact(pin.entire ? units : 0);
   const source = officialSourceForPinId(pin.id);
   const locality = [pin.postalCode, pin.municipality ? displayMunicipality(pin.municipality) : '']
     .filter((part) => part.length > 0)
@@ -72,7 +74,11 @@ export function OfficialSheet({ pin, onClose }: Props) {
             <Landmark size={15} /> Registro oficial de turismo
           </span>
           <h2 id="official-sheet-title">
-            {pin.entire ? 'Vivienda de uso turístico' : 'Vivienda turística por habitaciones'}
+            {units > 1
+              ? `Edificio de ${units} apartamentos turísticos`
+              : pin.entire
+                ? 'Vivienda de uso turístico'
+                : 'Vivienda turística por habitaciones'}
           </h2>
           <p className="listing-address">
             <MapPin size={17} />
@@ -105,7 +111,8 @@ export function OfficialSheet({ pin, onClose }: Props) {
               <dd>
                 {pin.entire ? (
                   <>
-                    1 vivienda · <strong>≈{impact.lostInhabitants} habitantes</strong>
+                    {units > 1 ? `${units} viviendas` : '1 vivienda'} ·{' '}
+                    <strong>≈{impact.lostInhabitants} habitantes</strong>
                   </>
                 ) : (
                   <>

@@ -98,21 +98,28 @@ describe('parseRtaRecord', () => {
     expect(parseRtaRecord({ ...base, ind_pub_open_rta: 'N' })).toBeNull();
   });
 
-  it('treats apartamentos turísticos as entire homes despite their group', () => {
-    // Fila real: los AT traen el tipo de inmueble en `group`, no la modalidad.
+  it('treats apartamentos turísticos as entire homes and counts their units', () => {
+    // Fila real: los AT traen el tipo de inmueble en `group`, no la modalidad,
+    // y su número real de apartamentos en `tot_gen_ua` (edificio de 54 pisos).
     const record = parseRtaRecord({
       ...base,
-      registration_code: 'A/SE/00302',
-      name: 'APARTAMENTOS SIERPES',
+      registration_code: 'A/SE/00662',
+      name: 'LIBERE SEVILLE TRIANA',
       objects_type_id: 'Apartamento turístico',
       group: 'Edificio/Complejo',
-      tot_gen_places: 20,
+      tot_gen_ua: 54,
+      tot_gen_places: 170,
     });
     expect(record).toMatchObject({
-      registrationCode: 'A/SE/00302',
+      registrationCode: 'A/SE/00662',
       entire: true,
-      places: 20,
+      places: 170,
+      units: 54,
     });
+  });
+
+  it('leaves ordinary VUT without a units field (1 dwelling per registration)', () => {
+    expect(parseRtaRecord({ ...base, tot_gen_ua: 3 })?.units).toBeUndefined();
   });
 
   it('keeps a record without usable coordinates but no location', () => {
