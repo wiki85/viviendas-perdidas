@@ -1,9 +1,10 @@
 import { MAX_PHOTO_BYTES } from '../config.js';
 
 /**
- * Returns the reason a decoded photo must be rejected, or null when valid.
- * Only baseline JPEG is accepted: the client always re-encodes through a
- * canvas, which also strips EXIF metadata (GPS, device identifiers).
+ * Cheap pre-filter: reason a decoded photo must be rejected, or null when
+ * valid. Only baseline JPEG passes. This is a fast guard BEFORE the
+ * authoritative server-side reprocess (`services/image.ts`), which is what
+ * actually strips EXIF/GPS and neutralizes polyglots — not the client canvas.
  */
 export function photoRejectionReason(bytes: Uint8Array): string | null {
   if (bytes.length === 0) return 'empty';

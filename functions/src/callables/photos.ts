@@ -16,6 +16,7 @@ import {
   submitListingPhotoSchema,
 } from '../schemas.js';
 import { describeCaughtError, recordClientError } from '../services/error-log.js';
+import { sanitizeJpeg } from '../services/image.js';
 import { notifyModerators } from '../services/moderation-notify.js';
 import { enforceRateLimit, RateLimitExceededError } from '../services/rate-limit.js';
 import type { ListingData, ListingPhotoData } from '../types.js';
@@ -72,6 +73,17 @@ export const submitListingPhoto = onCall(
           PHOTO_REJECTION_MESSAGES[rejection] ?? 'La imagen no es válida.',
         );
       }
+      // Reproceso en servidor: elimina EXIF/GPS y neutraliza polyglots (VP-03).
+      // No delegamos la privacidad en el canvas del cliente.
+      let sanitizedBytes: Buffer;
+      try {
+        sanitizedBytes = await sanitizeJpeg(bytes);
+      } catch {
+        throw new HttpsError(
+          'invalid-argument',
+          PHOTO_REJECTION_MESSAGES.not_jpeg ?? 'La imagen no es válida.',
+        );
+      }
 
       const listingSnapshot = await db.collection('listings').doc(input.listingId).get();
       if (!listingSnapshot.exists) throw new HttpsError('not-found', 'El registro no existe.');
@@ -94,7 +106,7 @@ export const submitListingPhoto = onCall(
 
       const photoReference = db.collection('listingPhotos').doc();
       const storagePath = `pending/${input.listingId}/${photoReference.id}.jpg`;
-      await storageBucket.file(storagePath).save(bytes, {
+      await storageBucket.file(storagePath).save(sanitizedBytes, {
         contentType: 'image/jpeg',
         resumable: false,
         metadata: { cacheControl: 'private, max-age=0' },
