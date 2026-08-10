@@ -88,23 +88,28 @@ export const SOURCES: SourceEntry[] = [
     ],
     datos: [
       'Número de registro estable, modalidad (vivienda completa o por habitaciones), plazas, dirección postal completa y coordenadas para la mayoría de altas.',
+      'Desde agosto de 2026 espejamos también los «apartamentos turísticos» (los edificios y conjuntos de la placa azul AT), con unidades y plazas; cada conjunto cuenta como una ficha aunque agrupe varias unidades.',
     ],
     posicionamiento:
       'La mayoría de viviendas llegan con coordenadas de la propia Junta (validadas contra un radio municipal de plausibilidad); los huecos se resuelven con CartoCiudad (IGN) y, como último recurso, geocodificación comercial.',
     problemas: [
+      'GRAVE: OpenRTA solo publica los establecimientos con consentimiento de publicación. La figura de apartamentos turísticos apenas aparece (21 en toda Sevilla, 24 en Málaga, 5 en Granada) pese a que las calles están llenas de placas AT: hemos verificado edificios enteros inscritos y con placa oficial (Alameda de Hércules 91 y 97, Jesús del Gran Poder 100, en Sevilla) que no existen en el dato abierto en NINGUNA figura. Los edificios completos convertidos en alojamiento — lo más lesivo para la vivienda — son justo lo que menos se publica.',
       'Un pequeño porcentaje de coordenadas cae fuera del municipio declarado y hay que descartarlas y re-geocodificarlas.',
       'El volcado completo es pesado y ocasionalmente devuelve errores transitorios que obligan a reintentar.',
     ],
     mejoras: [
+      'Publicar TODOS los establecimientos inscritos, no solo los que consienten aparecer: un registro público que oculta parte de sus asientos no cumple su función de transparencia.',
       'Publicar la referencia catastral junto a cada alta cerraría el hueco de coordenadas sin coste.',
       'Documentar un campo de fecha de última modificación por registro facilitaría sincronizaciones incrementales.',
     ],
     frecuencia: 'Continua (el registro se consulta en vivo); nosotros sincronizamos cada lunes.',
     licencia: 'CC BY 4.0',
+    // riqueza rebajada de 17 a 15 (10 ago 2026) al verificar que la figura
+    // de apartamentos turísticos apenas se publica.
     score: {
       ubicacion: 20,
       identificador: 15,
-      riqueza: 17,
+      riqueza: 15,
       frecuencia: 20,
       acceso: 9,
       licencia: 10,
@@ -631,7 +636,7 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '7 de agosto de 2026';
+const LAST_REVIEW = '10 de agosto de 2026';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 

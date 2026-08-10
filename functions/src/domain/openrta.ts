@@ -239,7 +239,10 @@ export function parseRtaRecord(raw: Record<string, unknown>): OfficialVutRecord 
     postalCode: typeof raw.postal_code === 'string' ? raw.postal_code : '',
     municipality,
     cityId: slugifyCity(municipality),
-    entire: raw.group === 'Completa',
+    // Las VUT declaran modalidad («Completa» / por habitaciones); los
+    // apartamentos turísticos son siempre unidades completas — su campo
+    // `group` trae el tipo de inmueble (Edificio/Complejo, Conjunto).
+    entire: raw.group === 'Completa' || raw.objects_type_id === 'Apartamento turístico',
     places: typeof raw.tot_gen_places === 'number' ? raw.tot_gen_places : 0,
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null,

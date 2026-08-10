@@ -178,13 +178,14 @@ export const SYNCED_EXT_MUNICIPALITIES: readonly string[] = EXTREMADURA_MUNICIPA
 
 async function fetchRtaPage(
   municipality: string,
+  objectType: string,
   mode: 'ASC' | 'DESC',
   fetchImplementation: typeof fetch,
 ): Promise<{ totalHits: number; results: Record<string, unknown>[] }> {
   const url = new URL(RTA_SEARCH_URL);
   const params: Record<string, string> = {
     id: '-',
-    object_type: 'Vivienda de uso turístico',
+    object_type: objectType,
     category: '-',
     group: '-',
     modality: '-',
@@ -206,21 +207,31 @@ async function fetchRtaPage(
   return { totalHits: payload.total_hits ?? 0, results: payload.results ?? [] };
 }
 
+/** Figuras andaluzas de vivienda que se espejan: las VUT sueltas y los
+ * apartamentos turísticos (edificios y conjuntos enteros explotados como
+ * alojamiento — los de la placa azul «AT»). OJO: OpenRTA solo publica los
+ * establecimientos con consentimiento de publicación; hay edificios AT con
+ * placa que el dato abierto oculta (documentado en /fuentes). */
+const RTA_OBJECT_TYPES = ['Vivienda de uso turístico', 'Apartamento turístico'] as const;
+
 async function fetchRtaMunicipality(
   municipality: string,
   fetchImplementation: typeof fetch,
 ): Promise<OfficialVutRecord[]> {
-  const ascending = await fetchRtaPage(municipality, 'ASC', fetchImplementation);
   const rows = new Map<unknown, Record<string, unknown>>();
-  for (const row of ascending.results) rows.set(row.id, row);
-  if (ascending.totalHits > RTA_PAGE_SIZE) {
-    const descending = await fetchRtaPage(municipality, 'DESC', fetchImplementation);
-    for (const row of descending.results) rows.set(row.id, row);
-    if (ascending.totalHits > RTA_PAGE_SIZE * 2) {
-      logger.warn('OpenRTA municipality exceeds double-pass coverage', {
-        municipality,
-        totalHits: ascending.totalHits,
-      });
+  for (const objectType of RTA_OBJECT_TYPES) {
+    const ascending = await fetchRtaPage(municipality, objectType, 'ASC', fetchImplementation);
+    for (const row of ascending.results) rows.set(row.id, row);
+    if (ascending.totalHits > RTA_PAGE_SIZE) {
+      const descending = await fetchRtaPage(municipality, objectType, 'DESC', fetchImplementation);
+      for (const row of descending.results) rows.set(row.id, row);
+      if (ascending.totalHits > RTA_PAGE_SIZE * 2) {
+        logger.warn('OpenRTA municipality exceeds double-pass coverage', {
+          municipality,
+          objectType,
+          totalHits: ascending.totalHits,
+        });
+      }
     }
   }
   const records: OfficialVutRecord[] = [];

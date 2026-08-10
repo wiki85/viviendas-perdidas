@@ -98,6 +98,23 @@ describe('parseRtaRecord', () => {
     expect(parseRtaRecord({ ...base, ind_pub_open_rta: 'N' })).toBeNull();
   });
 
+  it('treats apartamentos turísticos as entire homes despite their group', () => {
+    // Fila real: los AT traen el tipo de inmueble en `group`, no la modalidad.
+    const record = parseRtaRecord({
+      ...base,
+      registration_code: 'A/SE/00302',
+      name: 'APARTAMENTOS SIERPES',
+      objects_type_id: 'Apartamento turístico',
+      group: 'Edificio/Complejo',
+      tot_gen_places: 20,
+    });
+    expect(record).toMatchObject({
+      registrationCode: 'A/SE/00302',
+      entire: true,
+      places: 20,
+    });
+  });
+
   it('keeps a record without usable coordinates but no location', () => {
     const record = parseRtaRecord({ ...base, srid: '', coord_x: null, coord_y: null });
     expect(record).toMatchObject({ cityId: 'sevilla', latitude: null });
