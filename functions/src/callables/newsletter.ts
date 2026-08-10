@@ -38,7 +38,8 @@ function requireUser(
   if (typeof uid !== 'string' || typeof email !== 'string' || email.length === 0) {
     throw new HttpsError('unauthenticated', 'Inicia sesión para gestionar tu suscripción.');
   }
-  if (auth?.token?.email_verified === false) {
+  // Igual que requireModerator: un claim ausente NO cuenta como verificado.
+  if (auth?.token?.email_verified !== true) {
     throw new HttpsError('failed-precondition', 'Tu correo aún no está verificado.');
   }
   return { uid, email: email.toLocaleLowerCase('es') };

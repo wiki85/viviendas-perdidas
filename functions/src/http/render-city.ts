@@ -840,8 +840,9 @@ export function renderPressPage(): string {
     <p>
       <strong>Viviendas Perdidas</strong> (aquiviviamos.com) documenta la conversión de viviendas
       en alojamientos turísticos en España combinando los registros oficiales de turismo
-      autonómicos —más de 80.000 viviendas georreferenciadas en 19 ciudades— con aportaciones
-      vecinales verificables. Todo lo que hay aquí se puede citar, enlazar y reutilizar.
+      autonómicos —más de 175.000 viviendas georreferenciadas en 72 ciudades de 15 comunidades
+      autónomas— con aportaciones vecinales verificables. Todo lo que hay aquí se puede citar,
+      enlazar y reutilizar.
     </p>
 
     <h2>El Recuento: un feed RSS por ciudad</h2>
@@ -907,8 +908,19 @@ export function renderPressPage(): string {
     <p>
       La <a href="/estadisticas">página de estadísticas</a> muestra la evolución del recuento
       oficial con filtros por ciudad y comunidad; cada <a href="/ciudades">página de ciudad</a>
-      incluye sus cifras y su gráfica; y los registros vecinales se pueden
-      <a href="/datos">descargar en JSON</a>.
+      incluye sus cifras y su gráfica; y todos los registros vecinales activos se pueden
+      <a href="/datos">descargar en bloque como JSON</a>.
+    </p>
+    <p>
+      Ese volcado es <strong>dato abierto por decisión del proyecto</strong>, bajo licencia
+      <a href="https://creativecommons.org/licenses/by/4.0/deed.es" rel="noopener noreferrer">CC BY 4.0</a>:
+      reutilízalo citando la fuente. Incluye, por cada vivienda vecinal, la dirección, las
+      <strong>coordenadas exactas</strong>, la nota de contexto y los contadores de confirmaciones
+      y avisos. Publicamos la ubicación precisa a propósito —el sentido del proyecto es señalar
+      calle a calle dónde se pierde vivienda habitable—; quien registra una aportación acepta que
+      se publique así. Solo se exportan registros activos: los retirados nunca aparecen, ni en el
+      volcado ni en el mapa. Los datos oficiales de los registros autonómicos se consultan en sus
+      fuentes originales (enlaces y licencias en <a href="/fuentes">/fuentes</a>).
     </p>
 
     <h2>Cómo citarnos</h2>
