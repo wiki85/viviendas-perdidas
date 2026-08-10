@@ -203,6 +203,13 @@ async function fetchRtaPage(
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       const response = await fetchImplementation(url, { signal: AbortSignal.timeout(120_000) });
+      // La API responde 400 cuando el filtro no casa con NINGÚN
+      // establecimiento (Huelva, Jaén y Almería no tienen apartamentos
+      // turísticos publicados): para la figura secundaria eso es un
+      // resultado vacío legítimo, no un error que deba abortar la pasada.
+      if (response.status === 400 && objectType !== 'Vivienda de uso turístico') {
+        return { totalHits: 0, results: [] };
+      }
       if (!response.ok) {
         throw new Error(`OpenRTA devolvió HTTP ${response.status} para ${municipality}`);
       }
