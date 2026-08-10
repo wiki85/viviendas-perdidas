@@ -196,15 +196,35 @@ async function fetchRtaPage(
     size: String(RTA_PAGE_SIZE),
   };
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const response = await fetchImplementation(url, { signal: AbortSignal.timeout(120_000) });
-  if (!response.ok) {
-    throw new Error(`OpenRTA devolvió HTTP ${response.status} para ${municipality}`);
+  // La API del RTA sufre cortes transitorios a mitad de pasada (dos runs
+  // seguidos cayeron con «fetch failed» el 10-8-2026): tres intentos con
+  // respiro antes de rendirse y abortar la sincronización entera.
+  let lastFailure: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetchImplementation(url, { signal: AbortSignal.timeout(120_000) });
+      if (!response.ok) {
+        throw new Error(`OpenRTA devolvió HTTP ${response.status} para ${municipality}`);
+      }
+      const payload = (await response.json()) as {
+        total_hits?: number;
+        results?: Record<string, unknown>[];
+      };
+      return { totalHits: payload.total_hits ?? 0, results: payload.results ?? [] };
+    } catch (failure) {
+      lastFailure = failure;
+      logger.warn('OpenRTA fetch attempt failed', {
+        municipality,
+        objectType,
+        attempt: attempt + 1,
+        message: failure instanceof Error ? failure.message : String(failure),
+      });
+      await new Promise((resolve) => setTimeout(resolve, 5_000 * (attempt + 1)));
+    }
   }
-  const payload = (await response.json()) as {
-    total_hits?: number;
-    results?: Record<string, unknown>[];
-  };
-  return { totalHits: payload.total_hits ?? 0, results: payload.results ?? [] };
+  throw lastFailure instanceof Error
+    ? lastFailure
+    : new Error(`OpenRTA no respondió para ${municipality}`);
 }
 
 /** Figuras andaluzas de vivienda que se espejan: las VUT sueltas y los
