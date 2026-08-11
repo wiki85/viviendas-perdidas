@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildBarcelonaCityIndex,
   parseCatRecord,
+  CAT_APARTMENT_TYPE,
   CAT_ENTIRE_TYPE,
   CAT_SHARED_TYPE,
 } from './catalunya.js';
@@ -105,6 +106,21 @@ describe('parseCatRecord', () => {
     );
     expect(record?.entire).toBe(false);
     expect(record?.id).toBe('cat-LLB-000004');
+  });
+
+  it('counts an apartment building by estimated units from its capacity', () => {
+    // «Atenea Calabria», Apartaments Turístics con 160 plazas → ~46 apartamentos.
+    const record = parseCatRecord(
+      hutRow({
+        tipus_establiment: CAT_APARTMENT_TYPE,
+        n_mero_inscripci: 'ATB-000001',
+        total_places: '160',
+      }),
+      coordinates,
+    );
+    expect(record?.units).toBe(46);
+    expect(record?.entire).toBe(true);
+    expect(record?.id).toBe('cat-ATB-000001');
   });
 
   it('ignores establishment types we do not mirror', () => {

@@ -2,13 +2,17 @@ import { normalizeStreet, normalizeStreetNumber, slugifyCity } from './address.j
 import { parseCsv } from './csv.js';
 import {
   coordinatesPlausibleForMunicipality,
+  estimateApartmentUnits,
   normalizeLicenseKey,
   type OfficialVutRecord,
 } from './openrta.js';
 
-/** Socrata values in `tipus_establiment` for the two kinds we mirror. */
+/** Socrata values in `tipus_establiment` we mirror: viviendas completas,
+ * hogares compartidos y los edificios de apartamentos turísticos (separados
+ * de «Hotels» en el registro). */
 export const CAT_ENTIRE_TYPE = "Habitatges d'ús turístic";
 export const CAT_SHARED_TYPE = 'Llars compartides';
+export const CAT_APARTMENT_TYPE = 'Apartaments Turístics';
 
 export interface CatCityEntry {
   latitude: number;
@@ -67,7 +71,9 @@ export function parseCatRecord(
   const municipality = asText(raw.municipi).toLocaleUpperCase('es');
   const type = asText(raw.tipus_establiment);
   if (registrationCode.length === 0 || municipality.length === 0) return null;
-  if (type !== CAT_ENTIRE_TYPE && type !== CAT_SHARED_TYPE) return null;
+  if (type !== CAT_ENTIRE_TYPE && type !== CAT_SHARED_TYPE && type !== CAT_APARTMENT_TYPE) {
+    return null;
+  }
   const roadType = asText(raw.tipus_de_via);
   const roadName = asText(raw.nom_de_la_via);
   const rawNumber = asText(raw.numero);
@@ -95,6 +101,7 @@ export function parseCatRecord(
     Number.isFinite(registryPlaces) && registryPlaces > 0
       ? registryPlaces
       : (cityEntry?.places ?? 0);
+  const isApartmentBuilding = type === CAT_APARTMENT_TYPE;
   return {
     id: `cat-${licenseKey}`,
     registrationCode,
@@ -106,8 +113,14 @@ export function parseCatRecord(
     postalCode: asText(raw.codi_postal),
     municipality,
     cityId: slugifyCity(municipality),
-    entire: type === CAT_ENTIRE_TYPE,
+    // Un edificio de apartamentos cede la vivienda completa (varias); solo el
+    // hogar compartido es por habitaciones.
+    entire: type !== CAT_SHARED_TYPE,
     places,
+    // El registro no publica el nº de apartamentos: se estima por capacidad.
+    ...(isApartmentBuilding && estimateApartmentUnits(places) > 1
+      ? { units: estimateApartmentUnits(places) }
+      : {}),
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null,
   };

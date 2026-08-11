@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import {
   buildBarcelonaCityIndex,
   parseCatRecord,
+  CAT_APARTMENT_TYPE,
   CAT_ENTIRE_TYPE,
   CAT_SHARED_TYPE,
   type CatCityEntry,
@@ -62,7 +63,7 @@ export function createCatalunyaFetcher(): CatalunyaFetcher {
       if (coordinates === null) throw new Error('prepare() no se ejecutó antes de la descarga.');
       const where =
         `municipi='${escapeSoql(municipality)}' AND estat='Alta' AND ` +
-        `tipus_establiment in('${escapeSoql(CAT_ENTIRE_TYPE)}','${escapeSoql(CAT_SHARED_TYPE)}')`;
+        `tipus_establiment in('${escapeSoql(CAT_ENTIRE_TYPE)}','${escapeSoql(CAT_SHARED_TYPE)}','${escapeSoql(CAT_APARTMENT_TYPE)}')`;
       const rows = new Map<string, OfficialVutRecord>();
       for (let offset = 0; ; offset += PAGE_SIZE) {
         const url = new URL(SOCRATA_URL);

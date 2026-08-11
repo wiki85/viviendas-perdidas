@@ -41,14 +41,23 @@ describe('parseNavarraRecord', () => {
 
   it('accepts viviendas turísticas and rejects every other lodging type', () => {
     expect(parseNavarraRecord(row({ MODALIDAD: 'Vivienda Turística' }), PAMPLONA)).not.toBeNull();
-    for (const modalidad of [
-      'Hotel',
-      'Pensión',
-      'Casa rural vivienda',
-      'Bloque apartamentos turísticos',
-    ]) {
+    for (const modalidad of ['Hotel', 'Hotel-apartamento', 'Pensión', 'Casa rural vivienda']) {
       expect(parseNavarraRecord(row({ MODALIDAD: modalidad }), PAMPLONA)).toBeNull();
     }
+  });
+
+  it('counts a bloque de apartamentos by estimated units from its capacity', () => {
+    // «Libere Pamplona», bloque de apartamentos con 114 plazas → ~33 apartamentos.
+    const record = parseNavarraRecord(
+      row({
+        MODALIDAD: 'Bloque apartamentos turísticos',
+        PLAZAS: '114',
+        NOMBRE: 'Libere Pamplona',
+      }),
+      PAMPLONA,
+    );
+    expect(record?.units).toBe(33);
+    expect(record?.entire).toBe(true);
   });
 
   it('filters by exact municipality value', () => {

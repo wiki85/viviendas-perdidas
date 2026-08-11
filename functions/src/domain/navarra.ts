@@ -1,13 +1,17 @@
 import { normalizeStreet, normalizeStreetNumber } from './address.js';
-import { normalizeLicenseKey, type OfficialVutRecord } from './openrta.js';
+import { estimateApartmentUnits, normalizeLicenseKey, type OfficialVutRecord } from './openrta.js';
 
 /**
- * Modalities of the Registro de Turismo de Navarra that are individual urban
- * dwellings ceded to tourists. Hotels, pensions, rural houses and the
- * «Bloque apartamentos turísticos» figure (whole managed buildings) stay out.
- * Both mirrored modalities are whole dwellings — no rooms-only bucket.
+ * Modalities of the Registro de Turismo de Navarra that are urban dwellings
+ * ceded to tourists: viviendas y apartamentos sueltos, más los «Bloque
+ * apartamentos turísticos» (edificios completos, distintos del
+ * «Hotel-apartamento» y demás figuras hoteleras, que quedan fuera). Todas
+ * ceden la vivienda completa — no hay modalidad por habitaciones.
  */
 const NAVARRA_DWELLING_MODALITIES = new Set(['Apartamento Turístico', 'Vivienda Turística']);
+/** Edificios de apartamentos: sin nº de apartamentos publicado, se estima
+ * por capacidad. */
+const NAVARRA_APARTMENT_MODALITY = 'Bloque apartamentos turísticos';
 
 export interface NavarraMunicipality {
   /** Exact MUNICIPIO value in the DataStore ('Pamplona / Iruña'). */
@@ -38,7 +42,9 @@ export function parseNavarraRecord(
 ): OfficialVutRecord | null {
   const code = asText(row.COD_INSCRIPCION);
   if (code.length === 0) return null;
-  if (!NAVARRA_DWELLING_MODALITIES.has(asText(row.MODALIDAD))) return null;
+  const modality = asText(row.MODALIDAD);
+  const isApartmentBuilding = modality === NAVARRA_APARTMENT_MODALITY;
+  if (!isApartmentBuilding && !NAVARRA_DWELLING_MODALITIES.has(modality)) return null;
   if (asText(row.MUNICIPIO) !== municipality.match) return null;
 
   // 'Julio Ruiz de Alda 6 1ºC' → street / number / floor-door detail.
@@ -51,6 +57,7 @@ export function parseNavarraRecord(
     `${street}${number.length > 0 ? `, ${number}` : ''}${detail.length > 0 ? ` (${detail})` : ''}`.trim();
 
   const places = Number(asText(row.PLAZAS));
+  const safePlaces = Number.isFinite(places) && places > 0 ? places : 0;
   return {
     id: `nav-${code.replace(/[^A-Za-z0-9_-]/gu, '-')}`,
     registrationCode: code,
@@ -63,7 +70,10 @@ export function parseNavarraRecord(
     municipality: municipality.name,
     cityId: municipality.cityId,
     entire: true,
-    places: Number.isFinite(places) && places > 0 ? places : 0,
+    places: safePlaces,
+    ...(isApartmentBuilding && estimateApartmentUnits(safePlaces) > 1
+      ? { units: estimateApartmentUnits(safePlaces) }
+      : {}),
     latitude: null,
     longitude: null,
   };
