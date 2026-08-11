@@ -1,6 +1,7 @@
 import { normalizeStreet, normalizeStreetNumber } from './address.js';
 import {
   coordinatesPlausibleForMunicipality,
+  estimateApartmentUnits,
   extractStreetNumber,
   normalizeLicenseKey,
   sanitizePublicName,
@@ -39,8 +40,14 @@ export const GALICIA_MUNICIPALITIES: readonly GaliciaMunicipality[] = [
 /** Figuras del REAT que son viviendas cedidas al turista (completas ambas). */
 const GALICIA_DWELLING_TYPES = new Set(['VIVIENDAS USO TURÍSTICO', 'VIVIENDAS TURÍSTICAS']);
 
+/** «APARTAMENTOS» son edificios/complejos completos de apartamentos
+ * turísticos (separados de HOTELES en el directorio). El nº de apartamentos
+ * no se publica; se estima por capacidad. */
+const GALICIA_APARTMENT_TYPE = 'APARTAMENTOS';
+
 export function isGaliciaDwellingType(tipo: string): boolean {
-  return GALICIA_DWELLING_TYPES.has(tipo.trim());
+  const value = tipo.trim();
+  return GALICIA_DWELLING_TYPES.has(value) || value === GALICIA_APARTMENT_TYPE;
 }
 
 /** «-8,07089» → -8.07089 (el CSV usa coma decimal); null si no es número. */
@@ -79,6 +86,8 @@ export function parseGaliciaRow(
     coordinatesPlausibleForMunicipality(municipality.name, latitude, longitude);
 
   const places = Number((row.plazas ?? '').trim());
+  const safePlaces = Number.isFinite(places) && places > 0 ? places : 0;
+  const isApartmentBuilding = (row.tipo ?? '').trim() === GALICIA_APARTMENT_TYPE;
   return {
     id: `gal-${signatura.replace(/[^A-Za-z0-9-]/gu, '-')}`,
     registrationCode: signatura,
@@ -94,7 +103,12 @@ export function parseGaliciaRow(
     municipality: municipality.name,
     cityId: municipality.cityId,
     entire: true,
-    places: Number.isFinite(places) && places > 0 ? places : 0,
+    places: safePlaces,
+    // Un complejo de apartamentos cuenta sus apartamentos, estimados por su
+    // capacidad; las viviendas sueltas siguen contando 1.
+    ...(isApartmentBuilding && estimateApartmentUnits(safePlaces) > 1
+      ? { units: estimateApartmentUnits(safePlaces) }
+      : {}),
     latitude: plausible ? latitude : null,
     longitude: plausible ? longitude : null,
   };

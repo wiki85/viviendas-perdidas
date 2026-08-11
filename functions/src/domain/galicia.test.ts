@@ -51,11 +51,22 @@ describe('parseGaliciaRow', () => {
     expect(record?.addressText).toBe('O BARREIRO, CABALAR (SANTA MARÍA)');
   });
 
-  it('only mirrors the dwelling figures of the REAT', () => {
+  it('mirrors the dwelling and apartment-building figures, not hotels', () => {
     expect(isGaliciaDwellingType('VIVIENDAS USO TURÍSTICO')).toBe(true);
     expect(isGaliciaDwellingType('VIVIENDAS TURÍSTICAS')).toBe(true);
+    expect(isGaliciaDwellingType('APARTAMENTOS')).toBe(true);
     expect(isGaliciaDwellingType('PENSIONES')).toBe(false);
     expect(parseGaliciaRow({ ...ROW, tipo: 'HOTELES' }, VIGO)).toBeNull();
+  });
+
+  it('counts an APARTAMENTOS complex by estimated units', () => {
+    // «APARTAMENTOS TURISTICOS SAMIL» en Vigo, 294 plazas → ~84 apartamentos.
+    const record = parseGaliciaRow(
+      { ...ROW, tipo: 'APARTAMENTOS', denominacion: 'APARTAMENTOS SAMIL', plazas: '294' },
+      VIGO,
+    );
+    expect(record?.units).toBe(84);
+    expect(record?.entire).toBe(true);
   });
 
   it('rejects rows without signatura', () => {
