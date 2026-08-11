@@ -637,7 +637,7 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '11 de agosto de 2026';
+const LAST_REVIEW = '11 de agosto de 2026 (edificios completos)';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 
@@ -733,14 +733,23 @@ export function renderSourcesPage(): string {
 
     <div class="note">
       <strong>Los edificios completos, comunidad a comunidad.</strong> Un edificio con decenas de
-      apartamentos turísticos es la mayor pérdida de vivienda de un barrio, pero solo cuenta bien
-      si el registro publica cuántos apartamentos tiene. Hoy solo <strong>Andalucía y
-      Extremadura</strong> lo publican, y ahí contamos cada edificio por sus viviendas reales.
-      Cataluña, Navarra, Galicia, Castilla y León, Aragón y Murcia sí tienen una figura de
-      «apartamentos turísticos», pero <strong>no publican el número de apartamentos por edificio</strong>
-      (solo plazas o habitaciones), así que ahí no se pueden contar. Es un hueco de transparencia:
-      pedimos a esas administraciones que publiquen las unidades de alojamiento de cada
-      establecimiento.
+      apartamentos turísticos es la mayor pérdida de vivienda de un barrio —casi siempre fue un
+      bloque de viviendas hasta que una empresa lo compró entero—, así que lo contamos por sus
+      apartamentos, no como una sola vivienda. En cada registro comprobamos que la figura sea de
+      apartamentos turísticos, nunca hoteles ni hostales. Cómo obtenemos el número de apartamentos:
+      <ul>
+        <li><strong>Dato exacto</strong> — Andalucía y Extremadura publican el número real de
+        apartamentos de cada edificio; usamos ese.</li>
+        <li><strong>Estimado por capacidad</strong> — Cataluña, Castilla y León, Galicia y Navarra
+        publican la figura y su capacidad total, pero no el número de apartamentos. Lo estimamos con
+        un ratio de <strong>~3,5 plazas por apartamento</strong>, medido sobre 817 apartamentos
+        turísticos reales de Extremadura que sí declaran ambos datos (y confirmado en Andalucía). Es
+        una estimación conservadora, no un dato exacto.</li>
+        <li><strong>Aún no contable</strong> — Aragón publica la figura pero ni el número de
+        apartamentos ni la capacidad, así que no hay con qué estimar.</li>
+      </ul>
+      Pedimos a todas las administraciones que publiquen las unidades de alojamiento de cada
+      establecimiento: es el dato que convierte una estimación en un recuento exacto.
     </div>
 
     <div class="note">
