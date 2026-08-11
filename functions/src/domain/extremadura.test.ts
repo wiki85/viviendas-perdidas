@@ -51,6 +51,21 @@ describe('parseExtremaduraRow', () => {
       parseExtremaduraRow({ ...ROW, ['Nombre establecimiento']: '', ['Dirección']: '' }, MERIDA),
     ).toBeNull();
   });
+
+  it('counts a whole apartment building by its units', () => {
+    // «LUSITANIA» en Mérida: 15 apartamentos en un solo registro.
+    const record = parseExtremaduraRow(
+      { ...ROW, ['Nombre establecimiento']: 'LUSITANIA', ['Unidades de Alojamiento']: '15' },
+      MERIDA,
+    );
+    expect(record?.units).toBe(15);
+  });
+
+  it('leaves single-unit apartments without a units field', () => {
+    expect(parseExtremaduraRow({ ...ROW, ['Unidades de Alojamiento']: '1' }, MERIDA)?.units).toBe(
+      undefined,
+    );
+  });
 });
 
 describe('normalizeExtremaduraMunicipality', () => {

@@ -88,7 +88,7 @@ export const SOURCES: SourceEntry[] = [
     ],
     datos: [
       'Número de registro estable, modalidad (vivienda completa o por habitaciones), plazas, dirección postal completa y coordenadas para la mayoría de altas.',
-      'Desde agosto de 2026 espejamos también los «apartamentos turísticos» (los edificios y conjuntos de la placa azul AT), con unidades y plazas; cada conjunto cuenta como una ficha aunque agrupe varias unidades.',
+      'Desde agosto de 2026 espejamos también los «apartamentos turísticos» (los edificios y conjuntos de la placa azul AT). El registro declara el número real de apartamentos de cada edificio (campo de unidades de alojamiento), así que un edificio de 54 pisos cuenta como 54 viviendas perdidas, no como una.',
     ],
     posicionamiento:
       'La mayoría de viviendas llegan con coordenadas de la propia Junta (validadas contra un radio municipal de plausibilidad); los huecos se resuelven con CartoCiudad (IGN) y, como último recurso, geocodificación comercial.',
@@ -605,6 +605,7 @@ export const SOURCES: SourceEntry[] = [
     ],
     datos: [
       'Nombre, categoría, fecha de apertura, dirección, municipio, código postal, unidades de alojamiento, dormitorios y plazas. Extremadura no publica una figura separada de vivienda de uso turístico: este listado de apartamentos turísticos es lo único descargable.',
+      'Cada apartamento turístico declara su número real de apartamentos (unidades de alojamiento), así que un edificio de 14 apartamentos cuenta como 14 viviendas, no como una — como en Andalucía. Es la segunda comunidad, junto a Andalucía, que permite contar los edificios completos por sus viviendas.',
     ],
     posicionamiento:
       'Sin número de registro, derivamos una clave sintética estable de los campos de la ficha; la ubicación se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas.',
@@ -636,7 +637,7 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '10 de agosto de 2026';
+const LAST_REVIEW = '11 de agosto de 2026';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 
@@ -729,6 +730,18 @@ export function renderSourcesPage(): string {
     </p>
 
     ${sections}
+
+    <div class="note">
+      <strong>Los edificios completos, comunidad a comunidad.</strong> Un edificio con decenas de
+      apartamentos turísticos es la mayor pérdida de vivienda de un barrio, pero solo cuenta bien
+      si el registro publica cuántos apartamentos tiene. Hoy solo <strong>Andalucía y
+      Extremadura</strong> lo publican, y ahí contamos cada edificio por sus viviendas reales.
+      Cataluña, Navarra, Galicia, Castilla y León, Aragón y Murcia sí tienen una figura de
+      «apartamentos turísticos», pero <strong>no publican el número de apartamentos por edificio</strong>
+      (solo plazas o habitaciones), así que ahí no se pueden contar. Es un hueco de transparencia:
+      pedimos a esas administraciones que publiquen las unidades de alojamiento de cada
+      establecimiento.
+    </div>
 
     <div class="note">
       ¿Trabajas en una de estas administraciones y quieres mejorar vuestra puntuación — o hemos

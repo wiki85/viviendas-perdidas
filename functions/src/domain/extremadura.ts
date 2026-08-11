@@ -47,6 +47,9 @@ export function parseExtremaduraRow(
   if (name.length === 0 && addressText.length === 0) return null;
   const places = Number((row['Total Nº Plazas'] ?? '').trim());
   const postal = (row['C. Postal'] ?? '').trim();
+  // Los apartamentos turísticos declaran su número real de unidades: un
+  // edificio de 17 apartamentos cuenta como 17 viviendas, no 1.
+  const units = Math.trunc(Number((row['Unidades de Alojamiento'] ?? '').trim()));
   return {
     id: `ext-${sha256(`${municipality.cityId}|${name}|${addressText}`.toLocaleLowerCase('es')).slice(0, 16)}`,
     registrationCode: '',
@@ -61,6 +64,7 @@ export function parseExtremaduraRow(
     cityId: municipality.cityId,
     entire: true,
     places: Number.isFinite(places) && places > 0 ? places : 0,
+    ...(Number.isFinite(units) && units > 1 ? { units } : {}),
     latitude: null,
     longitude: null,
   };
