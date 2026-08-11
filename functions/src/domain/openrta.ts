@@ -58,6 +58,20 @@ export function sanitizePublicName(value: string): string {
   return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/iu.test(trimmed) ? '' : trimmed;
 }
 
+/**
+ * Estima cuántos apartamentos tiene un edificio de apartamentos turísticos a
+ * partir de su capacidad total (plazas), cuando el registro publica la figura
+ * pero NO el número de unidades. El ratio ~3,5 plazas/apartamento se derivó de
+ * 817 apartamentos turísticos reales de Extremadura que sí declaran ambos
+ * datos (media 4,2; mediana 4; global 3,58) y se confirmó en Andalucía (~3,6).
+ * Es una estimación conservadora, no un dato exacto: donde el registro sí trae
+ * el número real de apartamentos (Andalucía, Extremadura) se usa ese, no esto.
+ */
+export const PLACES_PER_APARTMENT = 3.5;
+export function estimateApartmentUnits(places: number): number {
+  return places > 0 ? Math.max(1, Math.round(places / PLACES_PER_APARTMENT)) : 1;
+}
+
 /** Extracts the street number from 'CALLE Manzanares Nº 8 Plta/Piso 9 …'. */
 export function extractStreetNumber(addressText: string): string {
   const match = /N[ºo°]?\s*\.?\s*(\d+)/iu.exec(addressText);

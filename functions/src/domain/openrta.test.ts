@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cleanAddressForGeocoding,
   coordinatesPlausibleForMunicipality,
+  estimateApartmentUnits,
   extractStreetNumber,
   normalizeLicenseKey,
   parseRtaRecord,
@@ -136,6 +137,19 @@ describe('parseRtaRecord', () => {
       coord_y: '4807497,74',
     });
     expect(record).toMatchObject({ cityId: 'marbella', latitude: null, longitude: null });
+  });
+});
+
+describe('estimateApartmentUnits', () => {
+  it('estimates apartments from total capacity at ~3.5 places each', () => {
+    expect(estimateApartmentUnits(66)).toBe(19); // 66/3.5 = 18.9
+    expect(estimateApartmentUnits(30)).toBe(9); // 30/3.5 = 8.6
+    expect(estimateApartmentUnits(12)).toBe(3); // 12/3.5 = 3.4
+  });
+
+  it('never estimates below one apartment', () => {
+    expect(estimateApartmentUnits(4)).toBe(1);
+    expect(estimateApartmentUnits(0)).toBe(1);
   });
 });
 

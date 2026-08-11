@@ -3,10 +3,12 @@ import { parseCsvRecords } from '../domain/csv.js';
 import { CASTILLA_LEON_MUNICIPALITIES, parseCastillaLeonRow } from '../domain/castillaleon.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
 
-/** Export diario del Registro de Turismo de Castilla y León filtrado a
- * viviendas turísticas (Opendatasoft, CC BY 4.0). */
+/** Export diario del Registro de Turismo de Castilla y León (Opendatasoft,
+ * CC BY 4.0), filtrado a las viviendas turísticas Y a los apartamentos
+ * turísticos (edificios completos). Ambas figuras son alojamiento residencial
+ * convertido en turístico; los hoteles y albergues quedan fuera del filtro. */
 const CASTILLA_LEON_CSV_URL =
-  'https://analisis.datosabiertos.jcyl.es/api/explore/v2.1/catalog/datasets/registro-de-turismo-de-castilla-y-leon/exports/csv?where=establecimiento%3D%22Vivienda%20tur%C3%ADstica%22&limit=-1';
+  'https://analisis.datosabiertos.jcyl.es/api/explore/v2.1/catalog/datasets/registro-de-turismo-de-castilla-y-leon/exports/csv?where=establecimiento%3D%22Vivienda%20tur%C3%ADstica%22%20OR%20establecimiento%3D%22Apartamentos%20Tur%C3%ADsticos%22&limit=-1';
 
 /** El filtro de viviendas ronda las 5,6k filas; muchas menos delatan una
  * descarga truncada. */

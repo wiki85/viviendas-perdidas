@@ -1,6 +1,7 @@
 import { normalizeStreet, normalizeStreetNumber } from './address.js';
 import {
   coordinatesPlausibleForMunicipality,
+  estimateApartmentUnits,
   extractStreetNumber,
   normalizeLicenseKey,
   sanitizePublicName,
@@ -63,8 +64,14 @@ export function parseCastillaLeonRow(
     coordinatesPlausibleForMunicipality(municipality.name, latitude, longitude);
 
   const places = Number((row.plazas ?? '').trim());
+  const safePlaces = Number.isFinite(places) && places > 0 ? places : 0;
+  // «Apartamentos Turísticos» son edificios completos (separados de hoteles y
+  // albergues en el registro). No traen el nº de apartamentos, así que se
+  // estima por la capacidad; su nº de registro vive en otro espacio que el de
+  // las viviendas, de ahí el prefijo distinto en el id para no colisionar.
+  const isApartmentBuilding = (row.establecimiento ?? '').trim() === 'Apartamentos Turísticos';
   return {
-    id: `cyl-${registro.replace(/[^A-Za-z0-9-]/gu, '-')}`,
+    id: `cyl-${isApartmentBuilding ? 'at-' : ''}${registro.replace(/[^A-Za-z0-9-]/gu, '-')}`,
     registrationCode: registro,
     licenseKey: normalizeLicenseKey(registro),
     name: sanitizePublicName(row.nombre ?? ''),
@@ -75,7 +82,10 @@ export function parseCastillaLeonRow(
     municipality: municipality.name,
     cityId: municipality.cityId,
     entire: true,
-    places: Number.isFinite(places) && places > 0 ? places : 0,
+    places: safePlaces,
+    ...(isApartmentBuilding && estimateApartmentUnits(safePlaces) > 1
+      ? { units: estimateApartmentUnits(safePlaces) }
+      : {}),
     latitude: plausible ? latitude : null,
     longitude: plausible ? longitude : null,
   };

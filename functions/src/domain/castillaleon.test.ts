@@ -61,4 +61,29 @@ describe('parseCastillaLeonRow', () => {
   it('rejects rows without registry number', () => {
     expect(parseCastillaLeonRow({ ...ROW, n_registro: '' }, LEON)).toBeNull();
   });
+
+  it('counts an apartment building by estimated units and prefixes its id', () => {
+    // «AL-BEREKA», apartamentos turísticos con 66 plazas → ~19 apartamentos.
+    const record = parseCastillaLeonRow(
+      {
+        ...ROW,
+        establecimiento: 'Apartamentos Turísticos',
+        n_registro: '24/000321',
+        nombre: 'AL-BEREKA',
+        plazas: '66',
+      },
+      LEON,
+    );
+    expect(record?.units).toBe(19);
+    // Prefijo distinto para no colisionar con una vivienda del mismo número.
+    expect(record?.id).toBe('cyl-at-24-000321');
+  });
+
+  it('leaves a small single apartment building without a units field', () => {
+    const record = parseCastillaLeonRow(
+      { ...ROW, establecimiento: 'Apartamentos Turísticos', plazas: '4' },
+      LEON,
+    );
+    expect(record?.units).toBeUndefined();
+  });
 });
