@@ -6,6 +6,7 @@ import {
   parseExtremaduraRow,
 } from '../domain/extremadura.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedBytes } from './bounded-body.js';
 
 /** Listado de apartamentos turísticos de la Junta de Extremadura (CC BY 4.0,
  * Windows-1252, sin actualizar desde marzo de 2025). */
@@ -35,7 +36,7 @@ export function createExtremaduraFetcher(): ExtremaduraFetcher {
       if (!response.ok) {
         throw new Error(`El listado de Extremadura devolvió HTTP ${response.status}`);
       }
-      const text = new TextDecoder('windows-1252').decode(await response.arrayBuffer());
+      const text = new TextDecoder('windows-1252').decode(await readBoundedBytes(response));
       const rows = parseCsvRecords(text, ',');
       if (rows.length < MIN_EXPECTED_EXTREMADURA_ROWS) {
         throw new Error(

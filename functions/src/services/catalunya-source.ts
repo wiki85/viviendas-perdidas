@@ -8,6 +8,7 @@ import {
   type CatCityEntry,
 } from '../domain/catalunya.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedJson, readBoundedText } from './bounded-body.js';
 
 const SOCRATA_URL = 'https://analisi.transparenciacatalunya.cat/resource/t2h3-cgys.json';
 const PAGE_SIZE = 25_000;
@@ -49,7 +50,7 @@ export function createCatalunyaFetcher(): CatalunyaFetcher {
           `El dataset de coordenadas del Ajuntament devolvió HTTP ${response.status}`,
         );
       }
-      const parsed = buildBarcelonaCityIndex(await response.text());
+      const parsed = buildBarcelonaCityIndex(await readBoundedText(response));
       if (parsed.size < MIN_EXPECTED_BARCELONA_COORDS) {
         throw new Error(
           `El dataset de coordenadas del Ajuntament trajo solo ${parsed.size} filas; sincronización abortada.`,
@@ -81,7 +82,7 @@ export function createCatalunyaFetcher(): CatalunyaFetcher {
             `El Registre de Turisme devolvió HTTP ${response.status} para ${municipality}`,
           );
         }
-        const page = (await response.json()) as Array<Record<string, unknown>>;
+        const page = (await readBoundedJson(response)) as Array<Record<string, unknown>>;
         for (const raw of page) {
           const record = parseCatRecord(raw, coordinates);
           if (record !== null) rows.set(record.id, record);

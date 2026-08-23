@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { parseCsvRecords } from '../domain/csv.js';
 import { CASTILLA_LEON_MUNICIPALITIES, parseCastillaLeonRow } from '../domain/castillaleon.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedText } from './bounded-body.js';
 
 /** Export diario del Registro de Turismo de Castilla y León (Opendatasoft,
  * CC BY 4.0), filtrado a las viviendas turísticas Y a los apartamentos
@@ -34,7 +35,7 @@ export function createCastillaLeonFetcher(): CastillaLeonFetcher {
       if (!response.ok) {
         throw new Error(`El registro de Castilla y León devolvió HTTP ${response.status}`);
       }
-      const rows = parseCsvRecords(await response.text(), ';');
+      const rows = parseCsvRecords(await readBoundedText(response), ';');
       if (rows.length < MIN_EXPECTED_CASTILLA_LEON_ROWS) {
         throw new Error(
           `El registro de Castilla y León trajo solo ${rows.length} filas; sincronización abortada.`,

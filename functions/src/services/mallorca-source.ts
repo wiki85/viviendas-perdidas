@@ -1,6 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { parseMallorcaFeature } from '../domain/mallorca.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedJson } from './bounded-body.js';
 
 /** GeoJSON of the Mallorca insular register (Consell de Mallorca, CC BY),
  * published in the Govern de les Illes Balears open-data catalog. */
@@ -32,7 +33,9 @@ export function createMallorcaFetcher(): MallorcaFetcher {
       if (!response.ok) {
         throw new Error(`El registro de Mallorca devolvió HTTP ${response.status}`);
       }
-      const payload = (await response.json()) as { features?: Array<Record<string, unknown>> };
+      const payload = (await readBoundedJson(response)) as {
+        features?: Array<Record<string, unknown>>;
+      };
       const parsed = Array.isArray(payload.features) ? payload.features : [];
       if (parsed.length < MIN_EXPECTED_MALLORCA_FEATURES) {
         throw new Error(

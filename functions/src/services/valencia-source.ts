@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { parseCsvRecords } from '../domain/csv.js';
 import { parseGvaRow, GVA_MUNICIPALITIES } from '../domain/gva.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedText } from './bounded-body.js';
 
 /** Daily dump of the Registre de Turisme de la Comunitat Valenciana (GVA,
  * CC BY 4.0). Full download — the portal offers no query API. */
@@ -32,7 +33,7 @@ export function createValenciaFetcher(): ValenciaFetcher {
       if (!response.ok) {
         throw new Error(`El registro de la GVA devolvió HTTP ${response.status}`);
       }
-      const rows = parseCsvRecords(await response.text(), ';');
+      const rows = parseCsvRecords(await readBoundedText(response), ';');
       if (rows.length < MIN_EXPECTED_GVA_ROWS) {
         throw new Error(
           `El registro de la GVA trajo solo ${rows.length} filas; sincronización abortada.`,

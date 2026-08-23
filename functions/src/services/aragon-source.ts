@@ -6,6 +6,7 @@ import {
 } from '../domain/aragon.js';
 import { parseXlsxRows } from '../domain/xlsx.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedBytes } from './bounded-body.js';
 
 /** Export XLSX del buscador público de VUT del Gobierno de Aragón. */
 const ARAGON_XLSX_URL =
@@ -35,7 +36,7 @@ export function createAragonFetcher(): AragonFetcher {
       if (!response.ok) {
         throw new Error(`El registro de Aragón devolvió HTTP ${response.status}`);
       }
-      const rows = parseXlsxRows(Buffer.from(await response.arrayBuffer()));
+      const rows = parseXlsxRows(await readBoundedBytes(response));
       const header = rows[0] ?? [];
       const column = (title: string): number => header.indexOf(title);
       if (column('Signatura') === -1 || column('Localidad') === -1) {

@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { parseCsvRecords } from '../domain/csv.js';
 import { CANARIAS_MUNICIPALITIES, parseCanariasRow } from '../domain/canarias.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedText } from './bounded-body.js';
 
 /** Volcado diario del Registro General Turístico de Canarias (viviendas
  * vacacionales, Gobierno de Canarias). Descarga completa (~14 MB). */
@@ -32,7 +33,7 @@ export function createCanariasFetcher(): CanariasFetcher {
       if (!response.ok) {
         throw new Error(`El registro de Canarias devolvió HTTP ${response.status}`);
       }
-      const rows = parseCsvRecords(await response.text(), ';');
+      const rows = parseCsvRecords(await readBoundedText(response), ';');
       if (rows.length < MIN_EXPECTED_CANARIAS_ROWS) {
         throw new Error(
           `El registro de Canarias trajo solo ${rows.length} filas; sincronización abortada.`,

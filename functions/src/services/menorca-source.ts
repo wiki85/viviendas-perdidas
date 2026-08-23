@@ -1,6 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { MENORCA_MUNICIPALITIES, parseMenorcaFeature } from '../domain/menorca.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedJson } from './bounded-body.js';
 
 /** GeoJSON del registro turístico insular de Menorca (Consell Insular de
  * Menorca, CC BY), publicado en el catálogo de datos abiertos del Govern. */
@@ -31,7 +32,9 @@ export function createMenorcaFetcher(): MenorcaFetcher {
       if (!response.ok) {
         throw new Error(`El registro de Menorca devolvió HTTP ${response.status}`);
       }
-      const payload = (await response.json()) as { features?: Array<Record<string, unknown>> };
+      const payload = (await readBoundedJson(response)) as {
+        features?: Array<Record<string, unknown>>;
+      };
       const parsed = Array.isArray(payload.features) ? payload.features : [];
       if (parsed.length < MIN_EXPECTED_MENORCA_FEATURES) {
         throw new Error(

@@ -85,23 +85,12 @@ export const submitListingPhoto = onCall(
         );
       }
 
+      // Descarte barato antes de subir bytes a Storage; la comprobación que
+      // vale es la transaccional de abajo.
       const listingSnapshot = await db.collection('listings').doc(input.listingId).get();
       if (!listingSnapshot.exists) throw new HttpsError('not-found', 'El registro no existe.');
       if ((listingSnapshot.data() as ListingData).status === 'removed') {
         throw new HttpsError('failed-precondition', 'El registro ya no admite fotos.');
-      }
-
-      const pendingCount = await db
-        .collection('listingPhotos')
-        .where('listingId', '==', input.listingId)
-        .where('status', '==', 'pending')
-        .count()
-        .get();
-      if (pendingCount.data().count >= MAX_PENDING_PHOTOS_PER_LISTING) {
-        throw new HttpsError(
-          'resource-exhausted',
-          'Este registro ya tiene fotos pendientes de revisión. Inténtalo más adelante.',
-        );
       }
 
       const photoReference = db.collection('listingPhotos').doc();
@@ -111,15 +100,46 @@ export const submitListingPhoto = onCall(
         resumable: false,
         metadata: { cacheControl: 'private, max-age=0' },
       });
-      const photo: ListingPhotoData = {
-        listingId: input.listingId,
-        storagePath,
-        status: 'pending',
-        createdAt: Timestamp.now(),
-        reviewedAt: null,
-        publicPath: null,
-      };
-      await photoReference.create(photo);
+      try {
+        // Conteo y alta en la MISMA transacción (VP-08): dos subidas
+        // simultáneas ya no pueden colarse ambas bajo el límite — Firestore
+        // reintenta la transacción si el conteo cambió entre lectura y commit.
+        await db.runTransaction(async (transaction) => {
+          const current = await transaction.get(db.collection('listings').doc(input.listingId));
+          if (!current.exists || (current.data() as ListingData).status === 'removed') {
+            throw new HttpsError('failed-precondition', 'El registro ya no admite fotos.');
+          }
+          const pendingCount = await transaction.get(
+            db
+              .collection('listingPhotos')
+              .where('listingId', '==', input.listingId)
+              .where('status', '==', 'pending')
+              .count(),
+          );
+          if (pendingCount.data().count >= MAX_PENDING_PHOTOS_PER_LISTING) {
+            throw new HttpsError(
+              'resource-exhausted',
+              'Este registro ya tiene fotos pendientes de revisión. Inténtalo más adelante.',
+            );
+          }
+          const photo: ListingPhotoData = {
+            listingId: input.listingId,
+            storagePath,
+            status: 'pending',
+            createdAt: Timestamp.now(),
+            reviewedAt: null,
+            publicPath: null,
+          };
+          transaction.create(photoReference, photo);
+        });
+      } catch (error) {
+        // La foto ya subida no debe quedar huérfana en pending/.
+        await storageBucket
+          .file(storagePath)
+          .delete()
+          .catch(() => undefined);
+        throw error;
+      }
       await notifyModerators({
         subject: 'Foto pendiente de validación — Viviendas Perdidas',
         title: 'Nueva foto pendiente',

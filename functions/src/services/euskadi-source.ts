@@ -1,6 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { parseEuskadiRecord, EUSKADI_MUNICIPALITIES } from '../domain/euskadi.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedText } from './bounded-body.js';
 
 /**
  * «Viviendas y habitaciones de vivienda particular para uso turístico en
@@ -33,7 +34,7 @@ async function fetchJsonWithBom(
     throw new Error(`Open Data Euskadi devolvió HTTP ${response.status} para ${url}`);
   }
   // The files ship with a UTF-8 BOM that response.json() rejects.
-  const payload: unknown = JSON.parse((await response.text()).replace(/^\uFEFF/u, ''));
+  const payload: unknown = JSON.parse((await readBoundedText(response)).replace(/^\uFEFF/u, ''));
   return Array.isArray(payload) ? (payload as Array<Record<string, unknown>>) : [];
 }
 

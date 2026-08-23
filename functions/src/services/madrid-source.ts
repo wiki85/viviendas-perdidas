@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { parseCsvRecords } from '../domain/csv.js';
 import { parseMadridRow } from '../domain/madrid.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedBytes } from './bounded-body.js';
 
 /**
  * «Declaraciones responsables de actividad de viviendas de uso turístico»
@@ -49,7 +50,7 @@ export function createMadridFetcher(): MadridFetcher {
       if (!response.ok) {
         throw new Error(`La Comunidad de Madrid devolvió HTTP ${response.status}`);
       }
-      const text = decodeCsv(new Uint8Array(await response.arrayBuffer()));
+      const text = decodeCsv(await readBoundedBytes(response));
       const parsed = new Map<string, OfficialVutRecord>();
       let rows = 0;
       for (const row of parseCsvRecords(text, ';')) {

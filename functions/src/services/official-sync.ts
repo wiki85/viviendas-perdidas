@@ -40,6 +40,7 @@ import { createCastillaLaManchaFetcher } from './castillalamancha-source.js';
 import { CASTILLA_LA_MANCHA_MUNICIPALITIES } from '../domain/castillalamancha.js';
 import { createExtremaduraFetcher } from './extremadura-source.js';
 import { EXTREMADURA_MUNICIPALITIES } from '../domain/extremadura.js';
+import { readBoundedJson, readBoundedText } from './bounded-body.js';
 
 /* ------------------------------- Sources ---------------------------------- */
 
@@ -213,7 +214,7 @@ async function fetchRtaPage(
       if (!response.ok) {
         throw new Error(`OpenRTA devolvió HTTP ${response.status} para ${municipality}`);
       }
-      const payload = (await response.json()) as {
+      const payload = (await readBoundedJson(response)) as {
         total_hits?: number;
         results?: Record<string, unknown>[];
       };
@@ -648,7 +649,7 @@ async function geocodeOfficialAddress(
   url.searchParams.set('key', apiKey);
   const response = await fetchImplementation(url, { signal: AbortSignal.timeout(8_000) });
   if (!response.ok) return { located: null, failure: `http_${response.status}` };
-  const payload = (await response.json()) as {
+  const payload = (await readBoundedJson(response)) as {
     status?: unknown;
     results?: Array<{
       types?: unknown;
@@ -843,7 +844,7 @@ async function repairViaCatastro(
       url.searchParams.set('RC', (record.cadastralRef ?? '').slice(0, 14));
       const response = await fetchImplementation(url, { signal: AbortSignal.timeout(10_000) });
       if (response.ok) {
-        located = parseCatastroCoordinates(await response.text());
+        located = parseCatastroCoordinates(await readBoundedText(response));
         // A well-formed answer without coordinates is a bad reference:
         // definitive, cache it so it is never paid again.
         permanentFailure = located === null;
@@ -1000,7 +1001,7 @@ async function repairViaCartoCiudad(
       if (!response.ok) {
         transient = true;
       } else {
-        const parsed = parseCartoCiudadResponse(await response.text());
+        const parsed = parseCartoCiudadResponse(await readBoundedText(response));
         if (parsed !== null && !cartoCiudadMuniMatches(parsed.muni, record.municipality)) {
           // Portal found… in another municipality: a Madrid-sized radius
           // would let it through, so the geocoder's own muni is the judge.

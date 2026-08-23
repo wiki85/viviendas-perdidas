@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { parseCsvRecords } from '../domain/csv.js';
 import { GALICIA_MUNICIPALITIES, parseGaliciaRow } from '../domain/galicia.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedText } from './bounded-body.js';
 
 /** Directorio mensual de alojamientos del REAT (Xunta de Galicia, CC BY-SA
  * 4.0). Descarga completa (~6 MB) con todas las figuras de alojamiento. */
@@ -32,7 +33,7 @@ export function createGaliciaFetcher(): GaliciaFetcher {
       if (!response.ok) {
         throw new Error(`El directorio del REAT devolvió HTTP ${response.status}`);
       }
-      const raw = await response.text();
+      const raw = await readBoundedText(response);
       // El fichero abre con unas líneas de título y fecha antes de la
       // cabecera real; se salta hasta la fila de columnas.
       const headerIndex = raw.indexOf('"signatura"');

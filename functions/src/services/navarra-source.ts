@@ -1,6 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { parseNavarraRecord, NAVARRA_MUNICIPALITIES } from '../domain/navarra.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedJson } from './bounded-body.js';
 
 /** CKAN DataStore of the Registro de Turismo de Navarra (Gobierno de
  * Navarra, CC BY 4.0), updated daily. */
@@ -37,7 +38,7 @@ export function createNavarraFetcher(): NavarraFetcher {
         if (!response.ok) {
           throw new Error(`El registro de Navarra devolvió HTTP ${response.status}`);
         }
-        const payload = (await response.json()) as {
+        const payload = (await readBoundedJson(response)) as {
           result?: { records?: Array<Record<string, unknown>> };
         };
         const page = payload.result?.records ?? [];

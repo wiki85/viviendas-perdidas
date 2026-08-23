@@ -5,6 +5,7 @@ import {
   parseCastillaLaManchaRow,
 } from '../domain/castillalamancha.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedBytes } from './bounded-body.js';
 
 /** CSV semestral de apartamentos turísticos y VUT de Castilla-La Mancha
  * (datosabiertos.castillalamancha.es, CC BY-SA, ISO-8859-1). */
@@ -35,7 +36,7 @@ export function createCastillaLaManchaFetcher(): CastillaLaManchaFetcher {
       if (!response.ok) {
         throw new Error(`El listado de Castilla-La Mancha devolvió HTTP ${response.status}`);
       }
-      const text = new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
+      const text = new TextDecoder('iso-8859-1').decode(await readBoundedBytes(response));
       const rows = parseCsvRecords(text, ';');
       if (rows.length < MIN_EXPECTED_CLM_ROWS) {
         throw new Error(

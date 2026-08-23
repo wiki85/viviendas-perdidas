@@ -1,6 +1,7 @@
 import * as logger from 'firebase-functions/logger';
 import { MURCIA_MUNICIPALITIES, murciaBaseLocality, parseMurciaRow } from '../domain/murcia.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
+import { readBoundedBytes } from './bounded-body.js';
 
 /** Listado público de viviendas vacacionales del ITREM (Región de Murcia).
  * Tabla HTML servida como .xls, ISO-8859-1, ~12k filas. */
@@ -115,7 +116,7 @@ export function createMurciaFetcher(): MurciaFetcher {
         if (!response.ok) {
           throw new Error(`El registro de Murcia devolvió HTTP ${response.status}`);
         }
-        return new TextDecoder('iso-8859-1').decode(await response.arrayBuffer());
+        return new TextDecoder('iso-8859-1').decode(await readBoundedBytes(response));
       };
       const bySourceName = new Map(MURCIA_MUNICIPALITIES.map((entry) => [entry.sourceName, entry]));
       const grouped: MurciaBuckets = new Map();
