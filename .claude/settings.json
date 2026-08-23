@@ -1,0 +1,78 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(npm ls *)",
+      "Bash(npm audit*)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(npx tsx *)",
+      "Bash(npx firebase *)",
+      "Bash(node scripts/*)",
+      "Bash(node -e *)",
+      "Bash(python3 -c *)",
+      "Bash(python3 -m json.tool*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(git push *)",
+      "Bash(curl *)",
+      "WebFetch(domain:www.aquiviviamos.com)",
+      "WebFetch(domain:datos.juntadeandalucia.es)",
+      "WebFetch(domain:analisi.transparenciacatalunya.cat)",
+      "WebFetch(domain:dadesobertes.gva.es)",
+      "WebFetch(domain:intranet.caib.es)",
+      "WebFetch(domain:datosabiertos.navarra.es)",
+      "WebFetch(domain:opendata.euskadi.eus)",
+      "WebFetch(domain:datos.comunidad.madrid)",
+      "WebFetch(domain:turismoregiondemurcia.es)",
+      "WebFetch(domain:www.turismoregiondemurcia.es)",
+      "WebFetch(domain:datosabiertos.jcyl.es)",
+      "WebFetch(domain:datos.gob.es)",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:developers.google.com)"
+    ],
+    "ask": [
+      "Bash(firebase deploy*)",
+      "Bash(npx firebase deploy*)",
+      "Bash(npm run deploy*)",
+      "Edit(firestore.rules)",
+      "Edit(storage.rules)",
+      "Edit(firebase.json)",
+      "Edit(firestore.indexes.json)",
+      "Write(firestore.rules)",
+      "Write(storage.rules)",
+      "Write(firebase.json)",
+      "Write(firestore.indexes.json)",
+      "Read(**/.env.local)",
+      "Read(**/.secret.local)"
+    ],
+    "deny": [
+      "Bash(curl * -X *)",
+      "Bash(curl * -X*)",
+      "Bash(curl * --request *)",
+      "Bash(curl * -d *)",
+      "Bash(curl * --data*)",
+      "Bash(curl * -F *)",
+      "Bash(curl * --form *)",
+      "Bash(curl * -T *)",
+      "Bash(curl * --upload-file *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/check-format.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

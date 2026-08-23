@@ -38,6 +38,7 @@ test-results/
 
 # Machine-local Claude Code permissions and Firebase project alias
 .claude/settings.local.json
+.claude/worktrees/
 .firebaserc
 
 # Evaluación de seguridad privada de Julian: SOLO local, jamás al repositorio
