@@ -7,7 +7,7 @@ import {
   escapeHtml,
   integer,
   jsonForInlineScript,
-  requestOrigin,
+  PUBLIC_ORIGIN,
   titleCaseSpanish,
 } from './html.js';
 
@@ -97,7 +97,10 @@ export const shareScope = onRequest(
       }
       const title = `${name} ha perdido ${formatter.format(families)} familias`;
       const description = `${formatter.format(dwellings)} viviendas y unos ${formatter.format(inhabitants)} habitantes desplazados.${sourceNote.length > 0 ? ` ${sourceNote}` : ''}`;
-      const origin = requestOrigin(request);
+      // Origen canónico fijo, nunca el x-forwarded-host de la petición: así
+      // ni el OG ni la redirección pueden apuntar a un dominio inyectado por
+      // cabecera si el borde cacheara una respuesta envenenada (VP-09).
+      const origin = PUBLIC_ORIGIN;
       const mapParams = new URLSearchParams({ scope: scopeId });
       const latitude = queryNumber(request.query.lat);
       const longitude = queryNumber(request.query.lng);

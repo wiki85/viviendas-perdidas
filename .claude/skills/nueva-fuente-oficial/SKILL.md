@@ -29,12 +29,14 @@ Integrar un registro oficial nuevo sigue siempre el mismo patrón de 15 fuentes 
 ## 4. Registro en el runner
 
 En `functions/src/services/official-sync.ts`:
+
 - añade el id a `OfficialSourceId`;
 - crea la entrada `OfficialSource` con `idPrefix` **único** (delimita la purga de fantasmas: jamás reutilizar uno existente), `statsSource` (lo que verán las páginas de ciudad) y su lista `SYNCED_<REGION>_MUNICIPALITIES`.
 
 ## 5. Job programado
 
 En `functions/src/scheduled/sync-openrta.ts`:
+
 - crea `sync<Region>` con `onSchedule`: `region: SCHEDULER_REGION` (`europe-west1`, Cloud Scheduler no existe en `europe-southwest1`), `timeoutSeconds: 1500`, `memory: '1GiB'`, `timeZone: 'Europe/Madrid'`, `secrets: [googleMapsServerApiKey]`;
 - elige un **hueco libre** mirando los `schedule:` existentes (están escalonados en tandas de 04:30, 05:30 y 06:30 para no contender por el lock de sincronización);
 - exporta la función en `functions/src/index.ts`;
@@ -43,6 +45,7 @@ En `functions/src/scheduled/sync-openrta.ts`:
 ## 6. Atribución y documentación (OBLIGATORIO por licencia)
 
 Las licencias CC BY y equivalentes exigen crédito y lista de modificaciones. Actualiza **los cuatro sitios**:
+
 1. `README.md`: fila en la tabla de fuentes, párrafo de atribución, lista de modificaciones (qué se filtra, cómo se obtienen coordenadas), sincronización (día/hora del job, descarga inicial con recuento aproximado) y mención en «Sin respaldo oficial».
 2. `functions/src/http/render-sources.ts` (página pública `/fuentes`): entrada con licencia y puntuación por criterios; actualiza `render-sources.test.ts`.
 3. `apps/web/src/lib/official-sources.ts`: nuevo `OfficialSourceInfo` (añade el id a la unión) con `registerName`, `registerUrl`, `publisher`, licencia y `coordinatesCredit` si las coordenadas vienen de un tercero (Catastro, CartoCiudad, ayuntamiento).
