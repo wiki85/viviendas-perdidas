@@ -28,7 +28,12 @@ const BROWSER_USER_AGENT =
 const MIN_EXPECTED_RIOJA_LISTINGS = 900;
 
 /** Ancla del PDF dentro de la página del trámite. */
-const LISTADO_ANCHOR_PATTERN = /<a\s+href="([^"]+)"[^>]*>\s*Listado de Viviendas autorizadas/iu;
+const LISTADO_ANCHOR_PATTERN = /<a\s[^>]*href="([^"]+)"[^>]*>\s*Listado de Viviendas autorizadas/iu;
+
+/** Plan B: el servlet `cex.sistemas.cmu.ImgServletSis` solo sirve este PDF
+ * dentro de la página del trámite; si el ancla cambia de texto o de
+ * atributos, el href del servlet sigue delatándolo. */
+const LISTADO_SERVLET_PATTERN = /href="([^"]*cex\.sistemas\.cmu\.ImgServletSis[^"]*)"/iu;
 
 export interface RiojaFetcher {
   prepare: (fetchImplementation: typeof fetch) => Promise<void>;
@@ -41,8 +46,7 @@ export interface RiojaFetcher {
 /** href del ancla (con las entidades del atributo decodificadas) → URL
  * absoluta del PDF. Exportado para su test. */
 export function discoverListadoUrl(html: string): string | null {
-  const match = LISTADO_ANCHOR_PATTERN.exec(html);
-  const href = match?.[1];
+  const href = LISTADO_ANCHOR_PATTERN.exec(html)?.[1] ?? LISTADO_SERVLET_PATTERN.exec(html)?.[1];
   if (href === undefined) return null;
   const decoded = href.replace(/&amp;/gu, '&');
   try {
@@ -96,10 +100,14 @@ export function createRiojaFetcher(): RiojaFetcher {
       if (!tramite.ok) {
         throw new Error(`La página del trámite de La Rioja devolvió HTTP ${tramite.status}`);
       }
-      const pdfUrl = discoverListadoUrl(await tramite.text());
+      const html = await tramite.text();
+      const pdfUrl = discoverListadoUrl(html);
       if (pdfUrl === null) {
+        // El arranque del HTML delata si el WAF sirvió un desafío en vez de
+        // la página real (visto en la primera pasada de producción).
+        const snippet = html.slice(0, 200).replace(/\s+/gu, ' ').trim();
         throw new Error(
-          'La página del trámite de La Rioja ya no enlaza el «Listado de Viviendas autorizadas».',
+          `La página del trámite de La Rioja no enlaza el «Listado de Viviendas autorizadas» (HTTP ${tramite.status}, ${html.length} bytes, empieza: «${snippet}»).`,
         );
       }
       const response = await fetchImplementation(pdfUrl, {

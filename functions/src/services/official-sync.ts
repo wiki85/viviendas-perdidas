@@ -1449,13 +1449,24 @@ export async function runOfficialSync(
 
 /** Sync every registry sequentially (admin panel), sharing one geocoding
  * budget so the manual run stays within the function timeout. */
+export interface OfficialSyncFailure {
+  source: OfficialSourceId;
+  message: string;
+}
+
+export interface AllOfficialSyncsResult {
+  summaries: OfficialSyncSummary[];
+  failures: OfficialSyncFailure[];
+}
+
 export async function runAllOfficialSyncs(
   fetchImplementation: typeof fetch,
   geohashFor: GeohashFn,
   geocodeApiKey = '',
-): Promise<OfficialSyncSummary[]> {
+): Promise<AllOfficialSyncsResult> {
   const geocodeState = createGeocodeState(geocodeApiKey);
   const summaries: OfficialSyncSummary[] = [];
+  const failures: OfficialSyncFailure[] = [];
   for (const sourceId of [
     'rta',
     'cat',
@@ -1478,9 +1489,26 @@ export async function runAllOfficialSyncs(
     'gij',
     'avi',
   ] as const) {
-    summaries.push(
-      await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState, false),
-    );
+    // Una fuente rota no debe tumbar las diecinueve restantes ni dejar las
+    // celdas sin reconstruir (aprendido el 24-8-2026, cuando el fallo de La
+    // Rioja dejó a Gijón y Avilés sin su primera ingesta): se registra el
+    // error y la pasada continúa. Los jobs semanales por fuente sí fallan
+    // ruidosamente, que para eso son suyos.
+    try {
+      summaries.push(
+        await runSource(
+          buildSource(sourceId),
+          fetchImplementation,
+          geohashFor,
+          geocodeState,
+          false,
+        ),
+      );
+    } catch (failure) {
+      const message = failure instanceof Error ? failure.message : String(failure);
+      failures.push({ source: sourceId, message });
+      logger.error('Official source failed during the manual pass', { source: sourceId, message });
+    }
   }
   // Una única reconstrucción de celdas para toda la pasada, bajo el mismo
   // candado que usan las fuentes. Si otro sync lo ha tomado justo ahora, su
@@ -1497,5 +1525,5 @@ export async function runAllOfficialSyncs(
       message: failure instanceof Error ? failure.message : String(failure),
     });
   }
-  return summaries;
+  return { summaries, failures };
 }

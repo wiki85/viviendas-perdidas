@@ -459,16 +459,17 @@ export const adminSyncOfficialData = onCall(
   },
   async (request) => {
     const moderator = requireModerator(request);
-    const summaries = await runAllOfficialSyncs(
+    const { summaries, failures } = await runAllOfficialSyncs(
       fetch,
       geohashForLocation,
       googleMapsServerApiKey.value(),
     );
-    logger.info('Official sync (manual) finished', { summaries, moderator });
+    logger.info('Official sync (manual) finished', { summaries, failures, moderator });
     return {
       municipalities: summaries.reduce((sum, summary) => sum + summary.municipalities, 0),
       records: summaries.reduce((sum, summary) => sum + summary.records, 0),
       sources: summaries,
+      failures,
     };
   },
 );
