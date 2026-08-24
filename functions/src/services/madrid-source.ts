@@ -8,9 +8,9 @@ import { readBoundedBytes } from './bounded-body.js';
  * «Declaraciones responsables de actividad de viviendas de uso turístico»
  * (Comunidad de Madrid, CC BY 4.0). El CSV corriente es una instantánea del
  * listado VIGENTE (~1.200 viviendas en Madrid capital) que el portal
- * refresca semanalmente: las altas aparecen y las bajas desaparecen, así
- * que la purga de fantasmas del runner mantiene el espejo fiel sin ningún
- * histórico adicional.
+ * refresca aproximadamente cada mes: las altas aparecen y las bajas
+ * desaparecen, así que la purga de fantasmas del runner mantiene el espejo
+ * fiel sin ningún histórico adicional.
  */
 const CURRENT_CSV_URL =
   'https://datos.comunidad.madrid/dataset/914c95d2-455e-4797-893f-97b1e2b2426e/resource/41072914-3b76-46b2-bfff-4afdd48ed3cc/download/declaraciones_actividad_viviendas_uso_turistico.csv';

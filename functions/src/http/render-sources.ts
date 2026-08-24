@@ -93,7 +93,7 @@ export const SOURCES: SourceEntry[] = [
     posicionamiento:
       'La mayoría de viviendas llegan con coordenadas de la propia Junta (validadas contra un radio municipal de plausibilidad); los huecos se resuelven con CartoCiudad (IGN) y, como último recurso, geocodificación comercial.',
     problemas: [
-      'GRAVE: OpenRTA solo publica los establecimientos con consentimiento de publicación. La figura de apartamentos turísticos apenas aparece (21 en toda Sevilla, 24 en Málaga, 5 en Granada) pese a que las calles están llenas de placas AT: hemos verificado edificios enteros inscritos y con placa oficial (Alameda de Hércules 91 y 97, Jesús del Gran Poder 100, en Sevilla) que no existen en el dato abierto en NINGUNA figura. Los edificios completos convertidos en alojamiento — lo más lesivo para la vivienda — son justo lo que menos se publica.',
+      'GRAVE: OpenRTA solo publica los establecimientos con consentimiento de publicación. La figura de apartamentos turísticos apenas aparece (28 en toda Sevilla, 32 en Málaga, 5 en Granada) pese a que las calles están llenas de placas AT: hemos verificado edificios enteros inscritos y con placa oficial (Alameda de Hércules 91 y 97, Jesús del Gran Poder 100, en Sevilla) que no existen en el dato abierto en NINGUNA figura. Los edificios completos convertidos en alojamiento — lo más lesivo para la vivienda — son justo lo que menos se publica.',
       'Un pequeño porcentaje de coordenadas cae fuera del municipio declarado y hay que descartarlas y re-geocodificarlas.',
       'El volcado completo es pesado y ocasionalmente devuelve errores transitorios que obligan a reintentar.',
     ],
@@ -161,30 +161,36 @@ export const SOURCES: SourceEntry[] = [
       },
       {
         label: 'Coordenadas del Ajuntament de Barcelona (Open Data BCN)',
-        url: 'https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic',
+        url: 'https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatges-us-turistic',
       },
     ],
     datos: [
-      'Número de inscripción estable, modalidad separable (vivienda de uso turístico frente a hogar compartido), dirección con piso y puerta, código postal y plazas en la mayoría de filas.',
+      'Número de inscripción estable, modalidad separable (vivienda de uso turístico, hogar compartido y apartamentos turísticos), dirección con piso y puerta y código postal. La capacidad (plazas) solo consta en una minoría de filas (~24%) y, desde 2026, hay referencia catastral en torno a una de cada cinco altas.',
     ],
     posicionamiento:
-      'En Barcelona cruzamos por número de registro con el dataset municipal del Ajuntament, que sí publica coordenadas (100% ubicadas). En Girona y Tarragona el registro no trae coordenadas y geocodificamos por dirección con CartoCiudad y geocodificación comercial en varias pasadas.',
+      'En Barcelona cruzamos por número de registro con el dataset municipal del Ajuntament, que sí publica coordenadas (prácticamente el 100% ubicado). En Girona y Tarragona el registro no trae coordenadas y geocodificamos por dirección con CartoCiudad y geocodificación comercial en varias pasadas.',
     problemas: [
-      'El registro autonómico no publica coordenadas ni referencia catastral: fuera de Barcelona toda la ubicación corre de nuestra cuenta.',
-      'Una parte de las altas no declara la capacidad (plazas), pese a ser un dato del registro.',
+      'El registro autonómico no publica coordenadas, y la referencia catastral que empezó a asomar en 2026 solo cubre en torno al 19% de las altas: fuera de Barcelona casi toda la ubicación corre de nuestra cuenta.',
+      'La mayoría de las altas no declara la capacidad (plazas), pese a ser un dato del registro.',
+      'El dataset ha pasado de actualizarse a diario a declararse mensual (última actualización de datos: 31 de julio de 2026).',
+      'El dataset municipal de coordenadas de Barcelona declara frecuencia semanal, pero lleva desde mayo de 2026 sin regenerarse: las altas posteriores pueden quedar sin ubicar hasta que se refresque.',
     ],
     mejoras: [
-      'Publicar coordenadas o referencia catastral para toda Cataluña, como ya hace el Ajuntament de Barcelona con su término municipal.',
+      'Publicar coordenadas o completar la referencia catastral para toda Cataluña, como ya hace el Ajuntament de Barcelona con su término municipal.',
       'Completar el campo de plazas en todas las altas.',
+      'Recuperar la cadencia diaria de actualización que el dataset tenía.',
     ],
-    frecuencia: 'Dataset actualizado a diario; nosotros sincronizamos cada martes.',
+    frecuencia:
+      'El portal declara ahora frecuencia mensual (antes diaria); nosotros sincronizamos cada martes.',
     licencia:
       'Licencia abierta de uso de información – Cataluña (equivalente a CC BY); coordenadas municipales CC BY 4.0.',
+    // frecuencia rebajada de 20 a 10 (24 ago 2026): el portal declara cadencia
+    // mensual y la última actualización de datos fue el 31 de julio de 2026.
     score: {
       ubicacion: 10,
       identificador: 15,
       riqueza: 16,
-      frecuencia: 20,
+      frecuencia: 10,
       acceso: 9,
       licencia: 9,
     },
@@ -208,14 +214,16 @@ export const SOURCES: SourceEntry[] = [
     problemas: [
       'Solo la mitad de las fichas traen geometría; el resto depende de direcciones a veces incompletas.',
       'El mismo catálogo mezcla operadores comerciales («comercialitzadors») con viviendas: hay que filtrar por grupo para no inflar el recuento.',
+      'El catálogo declara refresco diario automático, pero el fichero pasa temporadas sin regenerarse (más de dos semanas observadas en agosto de 2026).',
     ],
     mejoras: [
       'Georreferenciar el 100% de las fichas (el propio Consell ya lo hace con la mitad).',
       'Separar en datasets distintos las viviendas de los operadores comerciales.',
+      'Cumplir el refresco diario que el catálogo declara.',
     ],
     frecuencia:
-      'Catálogo con refresco frecuente (declarado diario); nosotros sincronizamos cada jueves.',
-    licencia: 'CC BY 4.0',
+      'Declarado diario y automático, aunque con temporadas sin regenerarse; nosotros sincronizamos cada jueves.',
+    licencia: 'CC BY (el portal no declara versión)',
     score: {
       ubicacion: 14,
       identificador: 15,
@@ -237,7 +245,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Número de registro, modalidad (apartamento turístico, vivienda turística y variantes rurales, separables), dirección, municipio y plazas.',
+      'Número de registro, modalidad separable (apartamento turístico, vivienda turística, bloques de apartamentos turísticos y variantes rurales), dirección, municipio y plazas.',
     ],
     posicionamiento:
       'El dataset no publica coordenadas: geocodificamos cada dirección con CartoCiudad (IGN) y verificación de municipio, con geocodificación comercial de respaldo.',
@@ -280,13 +288,16 @@ export const SOURCES: SourceEntry[] = [
     mejoras: [
       'Incorporar las VUT al dataset georreferenciado de alojamientos, o añadir coordenadas al dataset específico.',
     ],
-    frecuencia: 'Actualización periódica (aprox. semanal); nosotros sincronizamos cada sábado.',
+    frecuencia:
+      'El portal declara actualización diaria, pero el fichero cambia aproximadamente cada semana (observado); nosotros sincronizamos cada sábado.',
     licencia: 'CC BY 4.0',
+    // frecuencia ajustada de 13 a 15 (24 ago 2026): el refresco real observado
+    // es semanal, el tramo «semanal» de la rúbrica.
     score: {
       ubicacion: 5,
       identificador: 15,
       riqueza: 17,
-      frecuencia: 13,
+      frecuencia: 15,
       acceso: 8,
       licencia: 10,
     },
@@ -377,11 +388,12 @@ export const SOURCES: SourceEntry[] = [
     ],
     datos: [
       'Número de registro estable (VV.MU.####), nombre comercial, dirección, localidad con pedanía, código postal, plazas en el 100% de filas y — la joya — referencia catastral en el ~72%. Toda vivienda vacacional murciana se cede completa.',
+      'Espejamos también el listado hermano de apartamentos turísticos: el ITREM inscribe cada apartamento como fila propia (signatura A.MU.###-n), así que los edificios completos se cuentan apartamento a apartamento, sin estimar. Ese listado se cae a menudo y lo tratamos como best-effort para que su caída no arrastre a las viviendas.',
     ],
     posicionamiento:
       'Resolvemos la referencia catastral contra la Sede del Catastro (centroide de parcela, precisión de portal, sin coste); el resto se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas.',
     problemas: [
-      'El «Excel» descargable es en realidad una tabla HTML con extensión .xls en codificación ISO-8859-1: hay que parsearla a mano.',
+      'El «Excel» descargable es en realidad una tabla HTML con extensión .xls en codificación ISO-8859-1, que además sirve alguna cabecera como entidad HTML: hay que parsearla a mano y con cuidado.',
       'El listado publica el teléfono y el email del titular: los descartamos en la ingesta y no se espejan nunca.',
       'El portal de datos abiertos regional lleva sin actualizarse desde 2021; el listado vivo está fuera de él, sin licencia de datos abiertos explícita.',
     ],
@@ -448,11 +460,11 @@ export const SOURCES: SourceEntry[] = [
     links: [
       {
         label: 'Dataset del directorio (abertos.xunta.gal)',
-        url: 'https://abertos.xunta.gal/catalogo/cultura-ocio-turismo/-/dataset/0401/directorio-alojamientos-turisticos',
+        url: 'https://abertos.xunta.gal/catalogo/cultura-ocio-deporte/-/dataset/0401/directorio-alojamientos-turisticos',
       },
     ],
     datos: [
-      'Número de registro estable (VUT-CO-003589), denominación, tipo separable (viviendas de uso turístico y viviendas turísticas), habitaciones, plazas en el ~99%, dirección con parroquia y lugar, código postal y municipio.',
+      'Número de registro estable (VUT-CO-003589), denominación, tipo separable (viviendas de uso turístico, viviendas turísticas y complejos de «APARTAMENTOS», estos últimos contados por sus apartamentos estimados por capacidad), habitaciones, plazas en el ~99%, dirección con parroquia y lugar, código postal y municipio.',
     ],
     posicionamiento:
       'El directorio apenas trae coordenadas (unas 200 de 28.000 viviendas): geocodificamos cada dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas, de modo que el mapa gallego se completa a lo largo de varias semanas.',
@@ -489,7 +501,7 @@ export const SOURCES: SourceEntry[] = [
       },
     ],
     datos: [
-      'Número de registro estable (PP/NNNNNN), nombre, dirección, código postal, municipio, plazas y GPS en ~28% de filas. El registro completo mezcla todos los tipos de establecimiento: filtramos «Vivienda turística».',
+      'Número de registro estable (PP/NNNNNN), nombre, dirección, código postal, municipio, plazas y GPS en ~28% de filas. El registro completo mezcla todos los tipos de establecimiento: filtramos «Vivienda turística» y «Apartamentos Turísticos» (los edificios completos, contados por sus apartamentos estimados por capacidad).',
     ],
     posicionamiento:
       'Usamos el GPS del propio registro cuando existe y es plausible (validado contra un radio municipal); el ~72% restante se geocodifica por dirección con CartoCiudad (IGN) y respaldo comercial.',
@@ -637,7 +649,7 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '11 de agosto de 2026 (edificios completos)';
+const LAST_REVIEW = '24 de agosto de 2026 (revisión integral de las 15 fuentes)';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 
@@ -679,26 +691,29 @@ export function renderSourcesPage(): string {
         .join('');
       return `
     <section id="fuente-${entry.id}" class="fuente">
-      <h2>${escapeHtml(entry.ccaa)}
+      <header class="fuente-head">
+        <h2>${escapeHtml(entry.ccaa)}</h2>
         <span class="fuente-score" style="background:${scoreColor(total)}">${total}/100</span>
-      </h2>
-      <p><strong>${escapeHtml(entry.registro)}</strong> · Ciudades en el mapa: ${escapeHtml(entry.cities)}.</p>
-      <h3>De dónde salen los datos</h3>
-      <ul>${links}</ul>
-      <h3>Qué datos sirve la fuente</h3>
-      <ul>${list(entry.datos)}</ul>
-      <h3>Cómo posicionamos cada vivienda</h3>
-      <p>${escapeHtml(entry.posicionamiento)}</p>
-      <h3>Problemas que hemos encontrado</h3>
-      <ul>${list(entry.problemas)}</ul>
-      <h3>Qué podría mejorar la administración</h3>
-      <ul>${list(entry.mejoras)}</ul>
-      <p class="fuente-meta"><strong>Frecuencia:</strong> ${escapeHtml(entry.frecuencia)}<br>
-      <strong>Licencia:</strong> ${escapeHtml(entry.licencia)}</p>
-      <details>
-        <summary>Desglose de la puntuación</summary>
-        <table>${breakdown}</table>
-      </details>
+      </header>
+      <div class="fuente-body">
+        <p><strong>${escapeHtml(entry.registro)}</strong> · Ciudades en el mapa: ${escapeHtml(entry.cities)}.</p>
+        <h3>De dónde salen los datos</h3>
+        <ul>${links}</ul>
+        <h3>Qué datos sirve la fuente</h3>
+        <ul>${list(entry.datos)}</ul>
+        <h3>Cómo posicionamos cada vivienda</h3>
+        <p>${escapeHtml(entry.posicionamiento)}</p>
+        <h3>Problemas que hemos encontrado</h3>
+        <ul>${list(entry.problemas)}</ul>
+        <h3>Qué podría mejorar la administración</h3>
+        <ul>${list(entry.mejoras)}</ul>
+        <p class="fuente-meta"><strong>Frecuencia:</strong> ${escapeHtml(entry.frecuencia)}<br>
+        <strong>Licencia:</strong> ${escapeHtml(entry.licencia)}</p>
+        <details>
+          <summary>Desglose de la puntuación</summary>
+          <table>${breakdown}</table>
+        </details>
+      </div>
     </section>`;
     })
     .join('');
@@ -719,7 +734,7 @@ export function renderSourcesPage(): string {
       publicado y su refresco, no la política turística de nadie:
     </p>
     <ul>${rubricItems}</ul>
-    <table>
+    <table class="ranking">
       <thead><tr><th>#</th><th>Comunidad</th><th class="num">Puntuación</th><th style="width:38%"></th></tr></thead>
       <tbody>${rankingRows}</tbody>
     </table>
@@ -739,7 +754,9 @@ export function renderSourcesPage(): string {
       apartamentos turísticos, nunca hoteles ni hostales. Cómo obtenemos el número de apartamentos:
       <ul>
         <li><strong>Dato exacto</strong> — Andalucía y Extremadura publican el número real de
-        apartamentos de cada edificio; usamos ese.</li>
+        apartamentos de cada edificio; usamos ese. En la Región de Murcia el propio registro
+        inscribe cada apartamento como asiento independiente (A.MU.###-n), así que el recuento
+        también es exacto.</li>
         <li><strong>Estimado por capacidad</strong> — Cataluña, Castilla y León, Galicia y Navarra
         publican la figura y su capacidad total, pero no el número de apartamentos. Lo estimamos con
         un ratio de <strong>~3,5 plazas por apartamento</strong>, medido sobre 817 apartamentos

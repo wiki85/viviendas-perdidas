@@ -27,14 +27,41 @@ const HEADER_PLAZAS = 'PLAZAS';
 const HEADER_CATASTRAL = 'REF. CATASTRAL';
 const HEADER_NOMBRE = 'N. COMERCIAL';
 
+/** Entidades HTML con nombre que sirve el export del ITREM. La cabecera de
+ * dirección llega como «DIRECCI&Oacute;N» (visto en agosto de 2026):
+ * decodificarlas antes de la regla genérica evita perder la columna en
+ * silencio y quedarnos con 12.000 viviendas sin dirección. */
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  Aacute: 'Á',
+  aacute: 'á',
+  Eacute: 'É',
+  eacute: 'é',
+  Iacute: 'Í',
+  iacute: 'í',
+  Oacute: 'Ó',
+  oacute: 'ó',
+  Uacute: 'Ú',
+  uacute: 'ú',
+  Ntilde: 'Ñ',
+  ntilde: 'ñ',
+  Uuml: 'Ü',
+  uuml: 'ü',
+  ordm: 'º',
+  ordf: 'ª',
+};
+
 function stripTags(cell: string): string {
   return cell
     .replace(/<[^>]+>/gu, '')
-    .replace(/&nbsp;/gu, ' ')
-    .replace(/&amp;/gu, '&')
-    .replace(/&lt;/gu, '<')
-    .replace(/&gt;/gu, '>')
-    .replace(/&#?\w+;/gu, ' ')
+    .replace(/&#x([0-9a-f]+);/giu, (_match, hex: string) =>
+      String.fromCodePoint(Number.parseInt(hex, 16)),
+    )
+    .replace(/&#(\d+);/gu, (_match, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&(\w+);/gu, (_match, name: string) => NAMED_ENTITIES[name] ?? ' ')
     .replace(/\s+/gu, ' ')
     .trim();
 }
@@ -61,11 +88,23 @@ export interface MurciaFetcher {
 
 export type MurciaBuckets = Map<string, Map<string, OfficialVutRecord>>;
 
+/** Columnas imprescindibles: si cualquiera desaparece se aborta la pasada.
+ * Degradar en silencio a columna vacía importaría miles de filas rotas. */
+const REQUIRED_HEADERS = [
+  HEADER_SIGNATURA,
+  HEADER_DIRECCION,
+  HEADER_LOCALIDAD,
+  HEADER_POSTAL,
+  HEADER_PLAZAS,
+  HEADER_CATASTRAL,
+  HEADER_NOMBRE,
+] as const;
+
 /**
  * Parsea una tabla del ITREM (viviendas o apartamentos) y vuelca sus filas en
  * los buckets por municipio. Devuelve cuántas filas de datos trajo. Busca las
- * columnas por nombre de cabecera, así que una tabla con otra estructura cae a
- * filas vacías (nunca a datos erróneos). Lanza solo si falta la cabecera.
+ * columnas por nombre de cabecera y lanza si falta cualquiera de las
+ * necesarias: mejor abortar que importar filas con campos en blanco.
  */
 export function ingestMurciaTable(
   html: string,
@@ -78,6 +117,10 @@ export function ingestMurciaTable(
     throw new Error('El listado de Murcia no trae la cabecera esperada.');
   }
   const header = rows[headerIndex] ?? [];
+  const missing = REQUIRED_HEADERS.filter((title) => !header.includes(title));
+  if (missing.length > 0) {
+    throw new Error(`Al listado de Murcia le faltan cabeceras: ${missing.join(', ')}.`);
+  }
   const column = (title: string): number => header.indexOf(title);
   const dataRows = rows.slice(headerIndex + 1).filter((row) => row.length === header.length);
   for (const row of dataRows) {

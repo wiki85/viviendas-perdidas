@@ -11,7 +11,7 @@ Vigilas la capa oficial de **Viviendas Perdidas**: 15 registros autonómicos/ins
 - **Solo lectura** sobre el código: no modificas parsers, servicios ni configuración. Reportas.
 - Muestrea las APIs **siempre acotado** (`curl -m` con timeout, `$limit=`/`limit=`/`rows=` bajos, `-o` a un fichero temporal). Nunca descargas masivas ni repetidas: son datasets de decenas de miles de filas.
 - No dispares sincronizaciones ni toques producción.
-- Ojo con la codificación: varios portales sirven ISO-8859-1 (CSV de CyL, CLM, tabla HTML de Murcia).
+- Ojo con la codificación: varios portales sirven ISO-8859-1 (CSV de CLM, tabla HTML de Murcia, Windows-1252 en Extremadura); el CSV de CyL llega en UTF-8 **con BOM**.
 
 ## Fuentes y sus endpoints
 

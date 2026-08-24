@@ -112,11 +112,20 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             <strong>Generalitat Valenciana</strong> (Registro de Turismo de la Comunidad Valenciana,
             CC BY 4.0), con coordenadas de la Sede Electrónica del Catastro, y del{' '}
             <strong>Consell de Mallorca</strong> (Registro de Viviendas Turísticas de Mallorca, CC
-            BY 4.0), del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra, CC BY
-            4.0), del <strong>Gobierno Vasco</strong> (REATE, Open Data Euskadi, CC BY 4.0) y de la{' '}
-            <strong>Comunidad de Madrid</strong> (declaraciones responsables de VUT, CC BY 4.0).
-            Adaptamos los datos originales y ninguna administración respalda este proyecto; el
-            detalle completo está en la metodología.
+            BY), del <strong>Gobierno de Navarra</strong> (Registro de Turismo de Navarra, CC BY
+            4.0), del <strong>Gobierno Vasco</strong> (REATE, Open Data Euskadi, CC BY 4.0), de la{' '}
+            <strong>Comunidad de Madrid</strong> (declaraciones responsables de VUT, CC BY 4.0), del{' '}
+            <strong>Gobierno de Canarias</strong> (Registro General Turístico, reutilización con
+            atribución), del <strong>Instituto de Turismo de la Región de Murcia</strong> (listados
+            de viviendas vacacionales y apartamentos turísticos, Ley 37/2007), del{' '}
+            <strong>Consell Insular de Menorca</strong> (registro insular, CC BY), de la{' '}
+            <strong>Xunta de Galicia</strong> (directorio REAT, CC BY-SA 4.0), de la{' '}
+            <strong>Junta de Castilla y León</strong> (Registro de Turismo, CC BY 4.0), del{' '}
+            <strong>Gobierno de Aragón</strong> (registro de VUT, Ley 37/2007), de la{' '}
+            <strong>Junta de Comunidades de Castilla-La Mancha</strong> (apartamentos y VUT, CC
+            BY-SA) y de la <strong>Junta de Extremadura</strong> (apartamentos turísticos, CC BY
+            4.0). Adaptamos los datos originales y ninguna administración respalda este proyecto; el
+            detalle completo está en la metodología y en la página de fuentes.
           </p>
         </section>
         <section className="about-page__section">

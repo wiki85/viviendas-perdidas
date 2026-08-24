@@ -49,7 +49,7 @@ export const OFFICIAL_SOURCE_RTC: OfficialSourceInfo = {
   licenseUrl: 'https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies',
   coordinatesCredit: {
     name: 'Ajuntament de Barcelona (Open Data BCN)',
-    url: 'https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic',
+    url: 'https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatges-us-turistic',
     licenseName: 'CC BY 4.0',
     licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
   },
@@ -75,7 +75,7 @@ export const OFFICIAL_SOURCE_CAIB: OfficialSourceInfo = {
   registerName: 'Registro de Viviendas Turísticas y Estancias Turísticas en Vivienda de Mallorca',
   registerUrl: 'https://intranet.caib.es/opendatacataleg/ca/dataset/habitatges-turistics-mallorca',
   publisher: 'Consell de Mallorca (Dades Obertes GOIB)',
-  licenseName: 'CC BY 4.0',
+  licenseName: 'CC BY',
   licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
@@ -154,7 +154,7 @@ export const OFFICIAL_SOURCE_GAL: OfficialSourceInfo = {
   id: 'gal',
   registerName: 'Directorio de alojamientos del REAT (Galicia)',
   registerUrl:
-    'https://abertos.xunta.gal/catalogo/cultura-ocio-turismo/-/dataset/0401/directorio-alojamientos-turisticos',
+    'https://abertos.xunta.gal/catalogo/cultura-ocio-deporte/-/dataset/0401/directorio-alojamientos-turisticos',
   publisher: 'Xunta de Galicia (Turismo de Galicia)',
   licenseName: 'CC BY-SA 4.0',
   licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/deed.es',

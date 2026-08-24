@@ -43,7 +43,7 @@ function officialCredit(source: string): string {
     <p class="credit">
       Fuente: <a href="https://analisi.transparenciacatalunya.cat/d/t2h3-cgys" rel="noopener noreferrer">Registro de Turismo de Cataluña</a>
       (Generalitat de Catalunya, <a href="https://web.gencat.cat/ca/generalitat/dades-indicadors/dades-obertes/llicencies" rel="noopener noreferrer">licencia abierta de uso de información</a>),
-      coordenadas del <a href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatgesus-turistic" rel="noopener noreferrer">Ajuntament de Barcelona</a>
+      coordenadas del <a href="https://opendata-ajuntament.barcelona.cat/data/es/dataset/habitatges-us-turistic" rel="noopener noreferrer">Ajuntament de Barcelona</a>
       (<a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY 4.0</a>), datos adaptados. Sin respaldo oficial.
     </p>`;
   }
@@ -118,7 +118,7 @@ function officialCredit(source: string): string {
   if (source === 'gal') {
     return `
     <p class="credit">
-      Fuente: <a href="https://abertos.xunta.gal/catalogo/cultura-ocio-turismo/-/dataset/0401/directorio-alojamientos-turisticos" rel="noopener noreferrer">Directorio de alojamientos del REAT</a>
+      Fuente: <a href="https://abertos.xunta.gal/catalogo/cultura-ocio-deporte/-/dataset/0401/directorio-alojamientos-turisticos" rel="noopener noreferrer">Directorio de alojamientos del REAT</a>
       (Xunta de Galicia, Turismo de Galicia), datos adaptados ·
       <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" rel="noopener noreferrer">CC BY-SA 4.0</a>. Sin respaldo oficial.
     </p>`;
@@ -369,6 +369,19 @@ export const SHARED_CSS = `
   .sub-box h2{margin:0 0 4px;font-size:1.1rem}
   .sub-box p{margin:0;font-size:.9rem;max-width:52ch}
   .sub-box a{flex-shrink:0;display:inline-block;background:#315d4c;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px}
+  .fuente{background:#fff;border:1px solid rgba(30,43,39,.12);border-radius:14px;margin:24px 0;overflow:hidden}
+  .fuente-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:rgba(49,93,76,.08);border-bottom:1px solid rgba(30,43,39,.1)}
+  .fuente-head h2{margin:0;font-size:1.3rem;letter-spacing:-.01em}
+  .fuente-score{flex-shrink:0;color:#fff;font-weight:750;font-size:.95rem;padding:5px 13px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .fuente-body{padding:4px 20px 16px}
+  .fuente-body h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.07em;color:#65716c;margin:18px 0 6px}
+  .fuente-body ul{margin:6px 0;padding-left:20px}
+  .fuente-body li{margin:4px 0}
+  .fuente-meta{font-size:.85rem;color:#65716c}
+  .fuente-body details{margin:14px 0 4px}
+  .fuente-body summary{cursor:pointer;font-size:.85rem;font-weight:650;color:#315d4c}
+  .fuente-body details table{margin-top:10px;font-size:.85rem}
+  .ranking a{text-decoration:none;font-weight:650}
   .embed-row{display:flex;gap:10px;align-items:center;margin:10px 0}
   .embed-row code{flex:1;min-width:0;display:block;background:#fff;border:1px solid rgba(30,43,39,.14);border-radius:10px;padding:9px 12px;font-size:.72rem;overflow-x:auto;white-space:nowrap}
   .embed-row button{flex-shrink:0;font:inherit;font-size:.86rem;font-weight:700;color:#fff;background:#315d4c;border:0;border-radius:999px;padding:9px 16px;cursor:pointer}

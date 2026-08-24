@@ -33,7 +33,8 @@ async function fetchJsonWithBom(
   if (!response.ok) {
     throw new Error(`Open Data Euskadi devolvió HTTP ${response.status} para ${url}`);
   }
-  // The files ship with a UTF-8 BOM that response.json() rejects.
+  // Historically the files shipped with a UTF-8 BOM that response.json()
+  // rejects; today they arrive without it, but tolerating both stays safe.
   const payload: unknown = JSON.parse((await readBoundedText(response)).replace(/^\uFEFF/u, ''));
   return Array.isArray(payload) ? (payload as Array<Record<string, unknown>>) : [];
 }

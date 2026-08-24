@@ -213,7 +213,7 @@ export function MethodologyPage({ onClose }: Props) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              CC BY 4.0 <ExternalLink size={15} />
+              CC BY <ExternalLink size={15} />
             </a>
             . Se excluyen las figuras de comercializadores y empresarios (operadores, no viviendas);
             la mitad de los registros trae coordenadas y el resto se geocodifica por dirección.
@@ -268,9 +268,9 @@ export function MethodologyPage({ onClose }: Props) {
               CC BY 4.0 <ExternalLink size={15} />
             </a>
             . El conjunto es una instantánea del listado vigente de declaraciones (se refresca
-            semanalmente: las altas aparecen y las bajas desaparecen), sin número de registro ni
-            plazas; cada vivienda se identifica por su dirección normalizada y se ubica con
-            CartoCiudad (IGN) a nivel de portal.
+            aproximadamente cada mes: las altas aparecen y las bajas desaparecen), sin número de
+            registro ni plazas; cada vivienda se identifica por su dirección normalizada y se ubica
+            con CartoCiudad (IGN) a nivel de portal.
           </p>
           <p>
             <strong>Modificaciones que aplicamos</strong> (las licencias obligan a indicarlas): se
@@ -288,15 +288,71 @@ export function MethodologyPage({ onClose }: Props) {
               fuentes
             </a>
             ); el pequeño porcentaje de registros que no puede ubicarse con precisión de calle no se
-            dibuja ni se cuenta en el mapa.
+            dibuja ni se cuenta en el mapa. Los edificios de apartamentos turísticos cuentan por sus
+            viviendas, no como una: con el dato exacto donde el registro publica las unidades
+            (Andalucía, Extremadura) o inscribe cada apartamento por separado (Región de Murcia), y
+            estimando el número de apartamentos con un ratio de ~3,5 plazas por apartamento donde
+            solo se publica la capacidad (Cataluña, Castilla y León, Galicia, Navarra).
           </p>
           <p>
             Los datos oficiales de <strong>Canarias</strong> proceden del{' '}
             <strong>Registro General Turístico de Canarias</strong> (viviendas vacacionales) del{' '}
             <strong>Gobierno de Canarias</strong>, publicado en datos.canarias.es con refresco
-            diario y reutilizable con atribución. Es la fuente más completa de España en
-            geolocalización: el 100% de las fichas incluye coordenadas, que usamos directamente
-            validándolas contra el término municipal.
+            diario y reutilizable con atribución. Unos dos tercios de las fichas traen coordenadas,
+            que usamos directamente validándolas contra el término municipal; el tercio restante
+            llega con el punto (0,0) de relleno y se geocodifica por dirección en pasadas sucesivas.
+          </p>
+          <p>
+            Los datos oficiales de la <strong>Región de Murcia</strong> proceden de los listados
+            públicos de viviendas vacacionales y de apartamentos turísticos del{' '}
+            <strong>Instituto de Turismo de la Región de Murcia (ITREM)</strong> (reutilización de
+            información del sector público, Ley 37/2007). Publican plazas y, en la mayoría de altas,
+            referencia catastral: las ubicamos resolviéndola en la Sede Electrónica del Catastro y
+            geocodificando el resto. Los apartamentos turísticos se inscriben apartamento a
+            apartamento, así que los edificios completos cuentan por sus viviendas reales; el
+            teléfono y el email del titular que publica el listado se descartan en la ingesta.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Menorca</strong> proceden del registro de estancias y
+            viviendas turísticas de vacaciones del <strong>Consell Insular de Menorca</strong>{' '}
+            (Dades Obertes GOIB, CC BY). El 100% de las fichas trae coordenadas, que usamos
+            directamente validándolas contra el término municipal; el teléfono del titular se
+            descarta en la ingesta.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Galicia</strong> proceden del directorio de alojamientos
+            del REAT de la <strong>Xunta de Galicia</strong> (CC BY-SA 4.0). Se filtran las
+            viviendas de uso turístico, las viviendas turísticas y los complejos de apartamentos; el
+            directorio apenas trae coordenadas, así que se geocodifica por dirección (con
+            CartoCiudad como primera vía) en pasadas sucesivas, y el teléfono y el correo del
+            anuncio se descartan.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Castilla y León</strong> proceden del Registro de Turismo
+            de la <strong>Junta de Castilla y León</strong> (CC BY 4.0). Se filtran las figuras
+            «Vivienda turística» y «Apartamentos Turísticos»; el GPS que publica el registro (~28%
+            de filas) se usa validado contra el municipio, el resto se geocodifica, y los datos de
+            contacto del titular se descartan.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Aragón</strong> proceden del export del buscador público
+            de viviendas de uso turístico del <strong>Gobierno de Aragón</strong> (reutilización de
+            información del sector público, Ley 37/2007). No publica plazas ni coordenadas: la
+            ubicación se geocodifica por dirección y la capacidad no puede mostrarse; el contacto
+            personal que aparece en parte de las filas se descarta.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Castilla-La Mancha</strong> proceden del conjunto de
+            apartamentos turísticos y viviendas de uso turístico de la{' '}
+            <strong>Junta de Comunidades de Castilla-La Mancha</strong> (CC BY-SA). El conjunto no
+            publica número de registro, así que derivamos una clave sintética estable; el refresco
+            es semestral y el email y el teléfono del titular se descartan en la ingesta.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Extremadura</strong> proceden del listado de apartamentos
+            turísticos de la <strong>Junta de Extremadura</strong> (CC BY 4.0), estancado desde
+            marzo de 2025. Cada apartamento turístico declara sus unidades de alojamiento, así que
+            los edificios completos cuentan por sus apartamentos reales, no como una sola vivienda.
           </p>
           <p>
             Los <strong>límites de barrio</strong> que usa el mapa son los polígonos oficiales de
