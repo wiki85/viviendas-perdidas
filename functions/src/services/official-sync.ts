@@ -1507,7 +1507,12 @@ export async function runAllOfficialSyncs(
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : String(failure);
       failures.push({ source: sourceId, message });
-      logger.error('Official source failed during the manual pass', { source: sourceId, message });
+      // OJO: la clave del payload no puede llamarse `message` — colisiona con
+      // el mensaje de la propia entrada de log y el detalle se pierde.
+      logger.error('Official source failed during the manual pass', {
+        source: sourceId,
+        detail: message,
+      });
     }
   }
   // Una única reconstrucción de celdas para toda la pasada, bajo el mismo

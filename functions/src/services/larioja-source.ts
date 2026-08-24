@@ -61,7 +61,11 @@ export function discoverListadoUrl(html: string): string | null {
  * paga su coste el arranque en frío del resto de funciones. */
 async function extractPdfTextItems(bytes: Uint8Array): Promise<RiojaTextItem[][]> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const loadingTask = pdfjs.getDocument({ data: bytes, useSystemFonts: true });
+  // pdfjs rechaza expresamente los Buffer de Node (subclase de Uint8Array),
+  // y readBoundedBytes devuelve uno: copiar a un Uint8Array puro es
+  // obligatorio (falló en la primera pasada de producción del 24-8-2026).
+  const data = bytes.constructor === Uint8Array ? bytes : new Uint8Array(bytes);
+  const loadingTask = pdfjs.getDocument({ data, useSystemFonts: true });
   const document = await loadingTask.promise;
   const pages: RiojaTextItem[][] = [];
   try {
