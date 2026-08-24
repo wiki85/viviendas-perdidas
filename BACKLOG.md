@@ -8,6 +8,8 @@ Mejoras identificadas y pendientes de implementar. Al completar una, muévela al
 
 ## Panel de administración
 
+- **La pasada completa de `adminSyncOfficialData` no cabe en su timeout de 1500 s.** El 24-08-2026 el run manual murió a los 25 minutos en mitad de Murcia (novena fuente de quince). El mayor devorador de tiempo es que `runSource` reconstruye TODAS las celdas (`rebuildCells`, ~50 s sobre 178k registros) tras cada fuente: quince reconstrucciones ≈ 12 minutos. Opciones, combinables: reconstruir las celdas una sola vez al final en `runAllOfficialSyncs` (pasándole un flag a `runSource`), subir el timeout a 3600 s (máximo de las funciones v2), o exponer un callable por fuente para reparaciones dirigidas.
+
 - **El botón de sincronización manual muestra «deadline-exceeded» aunque el sync siga vivo.** El SDK cliente de Firebase corta la espera del callable `adminSyncOfficialData` a los ~70 segundos, pero la función sigue ejecutándose en el servidor (timeout propio de 1500 s) — visto el 24-08-2026. Opciones: pasar `{ timeout: 1_500_000 }` al `httpsCallable`, o mejor, convertir el botón en «lanzar y consultar» (disparar el sync y refrescar el estado leyendo `officialStats.updatedAt` en vez de esperar la respuesta).
 
 ## Vigilancia (no requiere código, revisar en unas semanas)
