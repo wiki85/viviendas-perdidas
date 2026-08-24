@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { MURCIA_MUNICIPALITIES, murciaBaseLocality, parseMurciaRow } from '../domain/murcia.js';
 import type { OfficialVutRecord } from '../domain/openrta.js';
 import { readBoundedBytes } from './bounded-body.js';
+import { parseHtmlTableRows } from './html-table.js';
 
 /** Listado público de viviendas vacacionales del ITREM (Región de Murcia).
  * Tabla HTML servida como .xls, ISO-8859-1, ~12k filas. */
@@ -27,56 +28,7 @@ const HEADER_PLAZAS = 'PLAZAS';
 const HEADER_CATASTRAL = 'REF. CATASTRAL';
 const HEADER_NOMBRE = 'N. COMERCIAL';
 
-/** Entidades HTML con nombre que sirve el export del ITREM. La cabecera de
- * dirección llega como «DIRECCI&Oacute;N» (visto en agosto de 2026):
- * decodificarlas antes de la regla genérica evita perder la columna en
- * silencio y quedarnos con 12.000 viviendas sin dirección. */
-const NAMED_ENTITIES: Record<string, string> = {
-  nbsp: ' ',
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  Aacute: 'Á',
-  aacute: 'á',
-  Eacute: 'É',
-  eacute: 'é',
-  Iacute: 'Í',
-  iacute: 'í',
-  Oacute: 'Ó',
-  oacute: 'ó',
-  Uacute: 'Ú',
-  uacute: 'ú',
-  Ntilde: 'Ñ',
-  ntilde: 'ñ',
-  Uuml: 'Ü',
-  uuml: 'ü',
-  ordm: 'º',
-  ordf: 'ª',
-};
-
-function stripTags(cell: string): string {
-  return cell
-    .replace(/<[^>]+>/gu, '')
-    .replace(/&#x([0-9a-f]+);/giu, (_match, hex: string) =>
-      String.fromCodePoint(Number.parseInt(hex, 16)),
-    )
-    .replace(/&#(\d+);/gu, (_match, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&(\w+);/gu, (_match, name: string) => NAMED_ENTITIES[name] ?? ' ')
-    .replace(/\s+/gu, ' ')
-    .trim();
-}
-
-/** Filas de la tabla HTML como celdas de texto plano. */
-export function parseHtmlTableRows(html: string): string[][] {
-  const rows: string[][] = [];
-  for (const rowMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gu)) {
-    const cells = [...(rowMatch[1] ?? '').matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gu)].map(
-      (cell) => stripTags(cell[1] ?? ''),
-    );
-    if (cells.length > 0) rows.push(cells);
-  }
-  return rows;
-}
+export { parseHtmlTableRows };
 
 export interface MurciaFetcher {
   prepare: (fetchImplementation: typeof fetch) => Promise<void>;

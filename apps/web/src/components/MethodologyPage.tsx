@@ -292,7 +292,7 @@ export function MethodologyPage({ onClose }: Props) {
             viviendas, no como una: con el dato exacto donde el registro publica las unidades
             (Andalucía, Extremadura) o inscribe cada apartamento por separado (Región de Murcia), y
             estimando el número de apartamentos con un ratio de ~3,5 plazas por apartamento donde
-            solo se publica la capacidad (Cataluña, Castilla y León, Galicia, Navarra).
+            solo se publica la capacidad (Cataluña, Castilla y León, Galicia, Navarra, Avilés).
           </p>
           <p>
             Los datos oficiales de <strong>Canarias</strong> proceden del{' '}
@@ -353,6 +353,47 @@ export function MethodologyPage({ onClose }: Props) {
             turísticos de la <strong>Junta de Extremadura</strong> (CC BY 4.0), estancado desde
             marzo de 2025. Cada apartamento turístico declara sus unidades de alojamiento, así que
             los edificios completos cuentan por sus apartamentos reales, no como una sola vivienda.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Ibiza</strong> proceden del Portal de Registres Turístics
+            del <strong>Consell Insular d&rsquo;Eivissa</strong> (reutilización de información del
+            sector público, Ley 37/2007), un export que se genera en vivo desde la base del registro
+            insular. Las cuatro figuras de vivienda (estancias y viviendas turísticas) ceden la
+            vivienda completa; casi todas las fichas traen referencia catastral, que resolvemos en
+            la Sede Electrónica del Catastro, y el titular (con su NIF), el teléfono y el email se
+            descartan en la ingesta.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Cantabria</strong> proceden de la capa «Viviendas
+            Turísticas» del servicio cartográfico oficial de la{' '}
+            <strong>Dirección General de Turismo del Gobierno de Cantabria</strong> (Licencia de Uso
+            No Comercial, Decreto 87/2013). Publica coordenadas nativas, plazas y modalidad
+            separable (el alquiler compartido suma habitantes, no hogares), pero no el número de
+            registro: derivamos una clave sintética de la dirección, y el teléfono, el email y la
+            web del titular se descartan.
+          </p>
+          <p>
+            Los datos oficiales de <strong>La Rioja</strong> proceden del «Listado de Viviendas
+            autorizadas» del Registro de Proveedores de Servicios Turísticos del{' '}
+            <strong>Gobierno de La Rioja</strong> (reutilización, Ley 37/2007 y Decreto 19/2013
+            riojano), un PDF mensual con número de registro estable y dirección que reconstruimos
+            posicionalmente y geocodificamos con CartoCiudad (IGN); la fuente no publica plazas ni
+            coordenadas.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Gijón</strong> proceden del visor municipal de viviendas
+            de uso turístico con licencia del <strong>Ayuntamiento de Gijón</strong> (reutilización,
+            Ley 37/2007): expediente único, coordenadas y referencia catastral en prácticamente
+            todas las fichas, sin plazas. El Principado de Asturias no publica su registro de
+            turismo (REAT) en formato reutilizable; por eso Asturias entra en el mapa por sus
+            fuentes municipales.
+          </p>
+          <p>
+            Los datos oficiales de <strong>Avilés</strong> proceden del dataset «Alojamientos
+            turísticos» del <strong>Ayuntamiento de Avilés</strong> (CC BY), un extracto municipal
+            del REAT con signatura oficial, plazas y referencia catastral, que resolvemos en el
+            Catastro. Los bloques de apartamentos turísticos cuentan por sus apartamentos estimados
+            por capacidad y el titular se descarta en la ingesta.
           </p>
           <p>
             Los <strong>límites de barrio</strong> que usa el mapa son los polígonos oficiales de

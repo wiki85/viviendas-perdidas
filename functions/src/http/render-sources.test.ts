@@ -18,7 +18,7 @@ describe('rúbrica de fuentes', () => {
     }
   });
 
-  it('cubre las quince fuentes sincronizadas', () => {
+  it('cubre las veinte fuentes sincronizadas', () => {
     expect(SOURCES.map((source) => source.id).sort()).toEqual(
       [
         'caib',
@@ -36,6 +36,11 @@ describe('rúbrica de fuentes', () => {
         'ara',
         'clm',
         'ext',
+        'eiv',
+        'cnt',
+        'lrj',
+        'gij',
+        'avi',
       ].sort(),
     );
   });

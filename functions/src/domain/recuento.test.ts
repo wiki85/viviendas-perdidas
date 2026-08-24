@@ -24,7 +24,7 @@ describe('scopes', () => {
   it('resolves cities for every scope kind and rejects unknowns', () => {
     expect(cityIdsForScope('city:sevilla')).toEqual(['sevilla']);
     expect(cityIdsForScope('community:euskadi')).toEqual(['donostia', 'bilbao']);
-    expect(cityIdsForScope('all').length).toBe(72);
+    expect(cityIdsForScope('all').length).toBe(94);
     expect(cityIdsForScope('city:paris')).toEqual([]);
     expect(cityIdsForScope('drop table')).toEqual([]);
   });

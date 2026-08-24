@@ -642,6 +642,208 @@ export const SOURCES: SourceEntry[] = [
       licencia: 10,
     },
   },
+  {
+    id: 'eiv',
+    ccaa: 'Islas Baleares (Ibiza)',
+    registro: 'Portal de Registres Turístics — Consell Insular d’Eivissa',
+    cities:
+      'San José, Santa Eulalia del Río, San Antonio de Portmany, San Juan de Labritja e Ibiza',
+    links: [
+      {
+        label: 'Buscador público del registro insular (registreturistic.conselldeivissa.es)',
+        url: 'https://registreturistic.conselldeivissa.es/habitatges-turistics/',
+      },
+    ],
+    datos: [
+      'Número de inscripción (ETV/ET/VTV/VT), nombre comercial, habitaciones, plazas en el 100% de filas, dirección, municipio y — la joya — referencia catastral en el ~98,5%. Las cuatro figuras insulares ceden la vivienda completa.',
+      'A diferencia de Mallorca y Menorca, el export no es un volcado del catálogo CAIB: se genera en vivo desde la base del registro en cada petición, así que refleja el estado del día.',
+    ],
+    posicionamiento:
+      'Resolvemos la referencia catastral contra la Sede del Catastro (centroide de parcela, sin coste); el ~1,5% restante, con direcciones rústicas a menudo incompletas, va a geocodificación por dirección.',
+    problemas: [
+      'El export es una tabla HTML con extensión .xls en ISO-8859-1: hay que parsearla a mano.',
+      'Publica el nombre del titular (con NIF), su teléfono y su email: los descartamos en la ingesta y no se espejan nunca.',
+      'Algunos números de inscripción se repiten entre viviendas: derivamos una clave con la dirección para no perder registros.',
+      'Sin licencia de datos abiertos ni presencia en ningún catálogo (el CKAN del Consell está abandonado desde 2024).',
+    ],
+    mejoras: [
+      'Publicar el listado como dataset con licencia abierta (CC BY) en el catálogo CAIB, como ya hacen Mallorca y Menorca.',
+      'Retirar el NIF y los datos de contacto personales del export público.',
+      'Añadir coordenadas (el registro ya conoce la parcela catastral).',
+    ],
+    frecuencia:
+      'Registro en vivo (el export se genera en cada consulta); nosotros sincronizamos cada martes.',
+    licencia:
+      'Sin licencia explícita: reutilización de información del sector público (Ley 37/2007).',
+    score: {
+      ubicacion: 20,
+      identificador: 14,
+      riqueza: 15,
+      frecuencia: 20,
+      acceso: 4,
+      licencia: 4,
+    },
+  },
+  {
+    id: 'cnt',
+    ccaa: 'Cantabria',
+    registro:
+      'Capa «Viviendas Turísticas» del servicio INSPIRE de la Dirección General de Turismo — Gobierno de Cantabria',
+    cities:
+      'Suances, San Vicente de la Barquera, Miengo, Piélagos, Laredo, Comillas, Santander, Ribamontán al Mar, Noja, Santillana del Mar, Castro-Urdiales y Torrelavega',
+    links: [
+      {
+        label: 'Servicio ArcGIS REST (geoservicios.cantabria.es, capa 3)',
+        url: 'https://geoservicios.cantabria.es/inspire/rest/services/Turismo_Infraestructura_Turistica/MapServer',
+      },
+    ],
+    datos: [
+      'Nombre comercial, modalidad separable (alquiler completo frente a compartido — el compartido suma habitantes, no hogares), plazas, dirección desglosada (vía, número, bloque, piso, puerta), código postal y coordenadas nativas en el 100% de los puntos. Sin número de registro utilizable: el campo de signatura dice literalmente «VUT» en todas las filas.',
+    ],
+    posicionamiento:
+      'Usamos directamente las coordenadas publicadas por el Gobierno de Cantabria (el servicio las reproyecta a WGS84), validadas contra un radio municipal de plausibilidad.',
+    problemas: [
+      'Sin número de registro estable: cualquier corrección de dirección parece un alta más una baja (derivamos una clave sintética de la dirección, como en Madrid).',
+      'El municipio llega como código INE de tres dígitos que hay que traducir con otra capa del propio servicio.',
+      'La capa declara actualización «anual», aunque el recuento observado crece al ritmo de las regularizaciones del Decreto 50/2025: la cadencia real está por confirmar y la vigilamos.',
+      'La licencia es la «de uso no comercial» del Decreto 87/2013, no una licencia abierta estándar.',
+      'Publica el teléfono, el email y la web del titular: los descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Publicar el número de registro real de cada vivienda (existe: la web del registro lo muestra).',
+      'Declarar la frecuencia de actualización real del dato y una licencia abierta estándar.',
+      'Retirar los datos de contacto personales del servicio público.',
+    ],
+    frecuencia:
+      'Declarada anual, pero el recuento observado evoluciona con las regularizaciones (en vigilancia); nosotros sincronizamos cada viernes.',
+    licencia: 'Licencia de Uso No Comercial del Decreto 87/2013 de Cantabria.',
+    score: {
+      ubicacion: 25,
+      identificador: 0,
+      riqueza: 16,
+      frecuencia: 10,
+      acceso: 8,
+      licencia: 3,
+    },
+  },
+  {
+    id: 'lrj',
+    ccaa: 'La Rioja',
+    registro:
+      'Registro de Proveedores de Servicios Turísticos (listado de viviendas autorizadas) — Gobierno de La Rioja',
+    cities: 'Logroño, Haro y Ezcaray',
+    links: [
+      {
+        label: 'Trámite con el «Listado de Viviendas autorizadas» (web.larioja.org)',
+        url: 'https://web.larioja.org/oficina-electronica/tramite?n=24269',
+      },
+    ],
+    datos: [
+      'Número de registro estable (VT-LR-NNNN), fecha de comunicación de inicio, dirección con piso y puerta, y municipio. Sin plazas, sin código postal, sin coordenadas y sin referencia catastral. La VUT riojana es siempre cesión de la vivienda completa (Decreto 10/2017).',
+    ],
+    posicionamiento:
+      'Sin ubicación en origen: geocodificamos cada dirección con CartoCiudad (IGN) y respaldo comercial en pasadas sucesivas. La capacidad (plazas) no puede mostrarse porque la fuente no la publica.',
+    problemas: [
+      'El listado es un PDF maquetado, no un dato estructurado: hay que reconstruir las filas por la posición del texto.',
+      'La URL del PDF rota con cada edición mensual: hay que redescubrir el enlace en la página del trámite en cada sincronización.',
+      'El cortafuegos del portal rechaza clientes automatizados sin cabeceras de navegador.',
+      'Ningún portal de datos abiertos (ni el riojano ni datos.gob.es) cataloga el listado.',
+    ],
+    mejoras: [
+      'Publicar el listado como CSV con licencia abierta en Dato Abierto La Rioja, con plazas y referencia catastral.',
+      'Mantener una URL estable del recurso.',
+    ],
+    frecuencia: 'PDF mensual; nosotros sincronizamos cada lunes.',
+    licencia:
+      'Sin licencia explícita: reutilización de información del sector público (Ley 37/2007; Decreto 19/2013 de La Rioja).',
+    score: {
+      ubicacion: 2,
+      identificador: 15,
+      riqueza: 4,
+      frecuencia: 10,
+      acceso: 2,
+      licencia: 4,
+    },
+  },
+  {
+    id: 'gij',
+    ccaa: 'Asturias (Gijón)',
+    registro: 'Visor municipal de viviendas de uso turístico con licencia — Ayuntamiento de Gijón',
+    cities: 'Gijón',
+    links: [
+      {
+        label: 'Visor de VUT (Urbanismo/PGO, documentos.gijon.es)',
+        url: 'https://documentos.gijon.es/doc/Urbanismo/PGO/Interactivo_vuts/',
+      },
+    ],
+    datos: [
+      'Expediente urbanístico único y estable, calle y número en el 100% de las fichas, referencia catastral en el ~99,8% y coordenadas WGS84 en el 100%. Sin plazas y sin el número del registro turístico autonómico.',
+      'El Principado de Asturias no publica el REAT en ningún formato reutilizable: este visor municipal es hoy la única fuente oficial per-vivienda de la ciudad.',
+    ],
+    posicionamiento:
+      'Usamos directamente las coordenadas publicadas por el Ayuntamiento, validadas contra un radio municipal de plausibilidad.',
+    problemas: [
+      'El dato vive en el fichero JS de un visor cartográfico, no en un catálogo de datos abiertos, y sin licencia declarada.',
+      'Refresco trimestral aproximado, ligado a la regeneración del visor.',
+      'Sin plazas: Gijón queda fuera de las métricas de capacidad.',
+      'Publica el nombre del interesado de cada expediente: lo descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Publicar la capa como dataset con licencia abierta en el catálogo municipal.',
+      'Añadir las plazas y el número del registro turístico autonómico.',
+      'Que el Principado publique el REAT completo: cubriría Oviedo y el resto de Asturias.',
+    ],
+    frecuencia:
+      'Actualización aproximadamente trimestral del visor; nosotros sincronizamos cada jueves.',
+    licencia:
+      'Sin licencia explícita: reutilización de información del sector público (Ley 37/2007).',
+    score: {
+      ubicacion: 25,
+      identificador: 13,
+      riqueza: 6,
+      frecuencia: 7,
+      acceso: 3,
+      licencia: 4,
+    },
+  },
+  {
+    id: 'avi',
+    ccaa: 'Asturias (Avilés)',
+    registro: 'Dataset «Alojamientos turísticos» (extracto del REAT) — Ayuntamiento de Avilés',
+    cities: 'Avilés',
+    links: [
+      {
+        label: 'Dataset en el CKAN municipal (datos.aviles.es)',
+        url: 'https://datos.gob.es/es/catalogo/l01330045-alojamientos-turisticos1',
+      },
+    ],
+    datos: [
+      'Signatura oficial del REAT (VUT.####.AS), nombre comercial, tipo separable, dirección desglosada, código postal, plazas y referencia catastral en el 100% de las VUT. Espejamos las viviendas de uso turístico, las viviendas vacacionales y los apartamentos turísticos (estos últimos contados por sus apartamentos estimados por capacidad).',
+    ],
+    posicionamiento:
+      'Resolvemos la referencia catastral contra la Sede del Catastro (centroide de parcela, sin coste); las fichas sin ella se geocodifican por dirección.',
+    problemas: [
+      'El refresco declarado es mensual pero el dato observado va varios meses por detrás.',
+      'El portal responde 403 a los clientes sin cabeceras de navegador.',
+      'Cuela espacios duros (NBSP) dentro de los valores.',
+      'Publica el nombre del titular: lo descartamos en la ingesta.',
+    ],
+    mejoras: [
+      'Recuperar la cadencia mensual declarada.',
+      'Demuestra que el REAT existe estructurado: que el Principado lo publique entero haría innecesario el espejo municipio a municipio.',
+    ],
+    frecuencia:
+      'Declarada mensual, observada con retraso de meses; nosotros sincronizamos cada miércoles.',
+    licencia: 'CC BY',
+    score: {
+      ubicacion: 20,
+      identificador: 15,
+      riqueza: 16,
+      frecuencia: 5,
+      acceso: 9,
+      licencia: 10,
+    },
+  },
 ];
 
 export function sourceTotal(entry: SourceEntry): number {
@@ -649,7 +851,8 @@ export function sourceTotal(entry: SourceEntry): number {
 }
 
 /** Fecha de la última revisión editorial de esta página. */
-const LAST_REVIEW = '24 de agosto de 2026 (revisión integral de las 15 fuentes)';
+const LAST_REVIEW =
+  '24 de agosto de 2026 (revisión integral y cinco fuentes nuevas: Ibiza, Cantabria, La Rioja, Gijón y Avilés)';
 
 const scoreColor = (pct: number) => (pct >= 75 ? '#315d4c' : pct >= 50 ? '#a06b1f' : '#9b3b30');
 
@@ -757,8 +960,8 @@ export function renderSourcesPage(): string {
         apartamentos de cada edificio; usamos ese. En la Región de Murcia el propio registro
         inscribe cada apartamento como asiento independiente (A.MU.###-n), así que el recuento
         también es exacto.</li>
-        <li><strong>Estimado por capacidad</strong> — Cataluña, Castilla y León, Galicia y Navarra
-        publican la figura y su capacidad total, pero no el número de apartamentos. Lo estimamos con
+        <li><strong>Estimado por capacidad</strong> — Cataluña, Castilla y León, Galicia, Navarra
+        y Avilés publican la figura y su capacidad total, pero no el número de apartamentos. Lo estimamos con
         un ratio de <strong>~3,5 plazas por apartamento</strong>, medido sobre 817 apartamentos
         turísticos reales de Extremadura que sí declaran ambos datos (y confirmado en Andalucía). Es
         una estimación conservadora, no un dato exacto.</li>

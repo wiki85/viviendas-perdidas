@@ -21,7 +21,12 @@ export type OfficialSourceInfo = {
     | 'cyl'
     | 'ara'
     | 'clm'
-    | 'ext';
+    | 'ext'
+    | 'eiv'
+    | 'cnt'
+    | 'lrj'
+    | 'gij'
+    | 'avi';
   registerName: string;
   registerUrl: string;
   publisher: string;
@@ -199,6 +204,71 @@ export const OFFICIAL_SOURCE_EXT: OfficialSourceInfo = {
   licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 };
 
+export const OFFICIAL_SOURCE_EIV: OfficialSourceInfo = {
+  id: 'eiv',
+  registerName: 'Portal de Registres Turístics del Consell Insular d’Eivissa',
+  registerUrl: 'https://registreturistic.conselldeivissa.es/habitatges-turistics/',
+  publisher: 'Consell Insular d’Eivissa',
+  licenseName: 'Reutilización de información del sector público (Ley 37/2007)',
+  licenseUrl: 'https://www.boe.es/buscar/act.php?id=BOE-A-2007-19814',
+  coordinatesCredit: {
+    name: 'Sede Electrónica del Catastro',
+    url: 'https://www.sedecatastro.gob.es/',
+    licenseName: 'Dirección General del Catastro',
+    licenseUrl: 'https://www.catastro.hacienda.gob.es/esp/condiciones_acceso.asp',
+  },
+};
+
+export const OFFICIAL_SOURCE_CNT: OfficialSourceInfo = {
+  id: 'cnt',
+  registerName: 'Viviendas Turísticas (servicio INSPIRE de la DG de Turismo de Cantabria)',
+  registerUrl:
+    'https://geoservicios.cantabria.es/inspire/rest/services/Turismo_Infraestructura_Turistica/MapServer',
+  publisher: 'Gobierno de Cantabria (Dirección General de Turismo)',
+  licenseName: 'Licencia de Uso No Comercial (Decreto 87/2013 de Cantabria)',
+  licenseUrl: 'https://www.territoriodecantabria.es/cartografia-sig/servicios-wms-iig',
+};
+
+export const OFFICIAL_SOURCE_LRJ: OfficialSourceInfo = {
+  id: 'lrj',
+  registerName:
+    'Listado de viviendas autorizadas del Registro de Proveedores de Servicios Turísticos de La Rioja',
+  registerUrl: 'https://web.larioja.org/oficina-electronica/tramite?n=24269',
+  publisher: 'Gobierno de La Rioja (Dirección General de Turismo)',
+  licenseName: 'Reutilización de información del sector público (Ley 37/2007; Decreto 19/2013)',
+  licenseUrl: 'https://www.boe.es/buscar/act.php?id=BOE-A-2007-19814',
+  coordinatesCredit: {
+    name: 'CartoCiudad (IGN)',
+    url: 'https://www.cartociudad.es/',
+    licenseName: 'Instituto Geográfico Nacional',
+    licenseUrl: 'https://www.ign.es/',
+  },
+};
+
+export const OFFICIAL_SOURCE_GIJ: OfficialSourceInfo = {
+  id: 'gij',
+  registerName: 'Visor de viviendas de uso turístico con licencia del Ayuntamiento de Gijón',
+  registerUrl: 'https://documentos.gijon.es/doc/Urbanismo/PGO/Interactivo_vuts/',
+  publisher: 'Ayuntamiento de Gijón (Urbanismo)',
+  licenseName: 'Reutilización de información del sector público (Ley 37/2007)',
+  licenseUrl: 'https://www.boe.es/buscar/act.php?id=BOE-A-2007-19814',
+};
+
+export const OFFICIAL_SOURCE_AVI: OfficialSourceInfo = {
+  id: 'avi',
+  registerName: 'Alojamientos turísticos (extracto del REAT) del Ayuntamiento de Avilés',
+  registerUrl: 'https://datos.gob.es/es/catalogo/l01330045-alojamientos-turisticos1',
+  publisher: 'Ayuntamiento de Avilés',
+  licenseName: 'CC BY',
+  licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  coordinatesCredit: {
+    name: 'Sede Electrónica del Catastro',
+    url: 'https://www.sedecatastro.gob.es/',
+    licenseName: 'Dirección General del Catastro',
+    licenseUrl: 'https://www.catastro.hacienda.gob.es/esp/condiciones_acceso.asp',
+  },
+};
+
 export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_RTA,
   OFFICIAL_SOURCE_RTC,
@@ -215,6 +285,11 @@ export const OFFICIAL_SOURCES: readonly OfficialSourceInfo[] = [
   OFFICIAL_SOURCE_ARA,
   OFFICIAL_SOURCE_CLM,
   OFFICIAL_SOURCE_EXT,
+  OFFICIAL_SOURCE_EIV,
+  OFFICIAL_SOURCE_CNT,
+  OFFICIAL_SOURCE_LRJ,
+  OFFICIAL_SOURCE_GIJ,
+  OFFICIAL_SOURCE_AVI,
 ];
 
 /** Source of an official pin, derived from its mirror doc id. */
@@ -233,5 +308,10 @@ export function officialSourceForPinId(pinId: string): OfficialSourceInfo {
   if (pinId.startsWith('ara-')) return OFFICIAL_SOURCE_ARA;
   if (pinId.startsWith('clm-')) return OFFICIAL_SOURCE_CLM;
   if (pinId.startsWith('ext-')) return OFFICIAL_SOURCE_EXT;
+  if (pinId.startsWith('eiv-')) return OFFICIAL_SOURCE_EIV;
+  if (pinId.startsWith('cnt-')) return OFFICIAL_SOURCE_CNT;
+  if (pinId.startsWith('lrj-')) return OFFICIAL_SOURCE_LRJ;
+  if (pinId.startsWith('gij-')) return OFFICIAL_SOURCE_GIJ;
+  if (pinId.startsWith('avi-')) return OFFICIAL_SOURCE_AVI;
   return OFFICIAL_SOURCE_RTA;
 }

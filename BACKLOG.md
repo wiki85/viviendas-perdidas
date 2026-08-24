@@ -4,7 +4,8 @@ Mejoras identificadas y pendientes de implementar. Al completar una, muévela al
 
 ## CCAA pendientes
 
-- **Plan completo en [PLAN-CCAA-PENDIENTES.md](PLAN-CCAA-PENDIENTES.md)** (24-08-2026): Ibiza (fase 1, integrable ya), Cantabria (fase 2, tras verificar licencia y frescura), La Rioja (fase 3, PDF mensual), Asturias vía Gijón+Avilés (fase 4), gestiones administrativas para Formentera y el REAT asturiano; Ceuta y Melilla descartadas.
+- **Fases 1-4 implementadas el 24-08-2026** (fuentes `eiv`, `cnt`, `lrj`, `gij`, `avi`); la investigación queda en [PLAN-CCAA-PENDIENTES.md](PLAN-CCAA-PENDIENTES.md). Siguen vivas las **gestiones administrativas**: solicitud de reutilización a Formentera (turisme@formentera.es, citando el Reglament 1/2015), solicitud del REAT al Principado de Asturias (cubriría Oviedo, Llanes, Ribadesella y sustituiría los espejos municipales), validación formal de la licencia del Decreto 87/2013 con Cantabria y petición al Ayuntamiento de Gijón del alta de su visor como dataset con licencia.
+- **Vigilancia de frescura de Cantabria:** comprobar 2-3 semanas si el recuento de la capa (806 el 24-08) crece con las regularizaciones del Decreto 50/2025; si se congela, contactar con la DG de Turismo y valorar rebajar su puntuación de frecuencia en `/fuentes`.
 
 ## Fuentes oficiales
 

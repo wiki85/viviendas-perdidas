@@ -1,5 +1,7 @@
 # Plan de incorporación de las CCAA pendientes
 
+> **Estado (24-08-2026, tarde):** las fases 1-4 están **IMPLEMENTADAS** (fuentes `eiv`, `cnt`, `lrj`, `gij` y `avi`, con parsers, tests, jobs y atribuciones). Quedan vivas las **gestiones administrativas** del final y la vigilancia de frescura de Cantabria. Este documento se conserva como registro de la investigación que fundamentó cada integración.
+
 Estado a 24 de agosto de 2026: 15 fuentes espejadas cubren 14 de 17 CCAA (Baleares a medias: faltan Ibiza y Formentera). Pendientes: **Asturias, Cantabria, La Rioja, Ibiza, Formentera** (+ Ceuta y Melilla, descartadas). Todos los datos de este plan proceden de muestreos acotados verificados el 24-08-2026 por tres agentes de exploración; lo no verificado se marca como supuesto.
 
 Regla de oro (petición expresa): **solo fuentes oficiales** (registro de turismo o portal institucional) **y actualizadas** (frescura verificada, no declarada).

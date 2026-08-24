@@ -40,6 +40,16 @@ import { createCastillaLaManchaFetcher } from './castillalamancha-source.js';
 import { CASTILLA_LA_MANCHA_MUNICIPALITIES } from '../domain/castillalamancha.js';
 import { createExtremaduraFetcher } from './extremadura-source.js';
 import { EXTREMADURA_MUNICIPALITIES } from '../domain/extremadura.js';
+import { createEivissaFetcher } from './eivissa-source.js';
+import { EIVISSA_MUNICIPALITIES } from '../domain/eivissa.js';
+import { createCantabriaFetcher } from './cantabria-source.js';
+import { CANTABRIA_MUNICIPALITIES } from '../domain/cantabria.js';
+import { createRiojaFetcher } from './larioja-source.js';
+import { LARIOJA_MUNICIPALITIES } from '../domain/larioja.js';
+import { createGijonFetcher } from './gijon-source.js';
+import { GIJON_MUNICIPALITY } from '../domain/gijon.js';
+import { createAvilesFetcher } from './aviles-source.js';
+import { AVILES_MUNICIPALITY } from '../domain/aviles.js';
 import { readBoundedJson, readBoundedText } from './bounded-body.js';
 
 /* ------------------------------- Sources ---------------------------------- */
@@ -59,7 +69,12 @@ export type OfficialSourceId =
   | 'cyl'
   | 'ara'
   | 'clm'
-  | 'ext';
+  | 'ext'
+  | 'eiv'
+  | 'cnt'
+  | 'lrj'
+  | 'gij'
+  | 'avi';
 
 /**
  * One mirrored registry. The runner is source-agnostic: every source turns
@@ -176,6 +191,28 @@ export const SYNCED_CLM_MUNICIPALITIES: readonly string[] = CASTILLA_LA_MANCHA_M
 export const SYNCED_EXT_MUNICIPALITIES: readonly string[] = EXTREMADURA_MUNICIPALITIES.map(
   (entry) => entry.name,
 );
+
+/** Municipios ibicencos espejados (grafía del export del Consell). */
+export const SYNCED_EIV_MUNICIPALITIES: readonly string[] = EIVISSA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios cántabros espejados (nombre para mostrar; el fetcher traduce
+ * desde el código INE de la capa). */
+export const SYNCED_CNT_MUNICIPALITIES: readonly string[] = CANTABRIA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Municipios riojanos espejados. */
+export const SYNCED_LRJ_MUNICIPALITIES: readonly string[] = LARIOJA_MUNICIPALITIES.map(
+  (entry) => entry.name,
+);
+
+/** Gijón, espejado desde el visor municipal de VUT. */
+export const SYNCED_GIJ_MUNICIPALITIES: readonly string[] = [GIJON_MUNICIPALITY.name];
+
+/** Avilés, espejado desde el CKAN municipal. */
+export const SYNCED_AVI_MUNICIPALITIES: readonly string[] = [AVILES_MUNICIPALITY.name];
 
 async function fetchRtaPage(
   municipality: string,
@@ -422,6 +459,61 @@ function buildSource(id: OfficialSourceId): OfficialSource {
       idPrefix: 'ext-',
       statsSource: 'ext',
       municipalities: SYNCED_EXT_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'eiv') {
+    const fetcher = createEivissaFetcher();
+    return {
+      id,
+      idPrefix: 'eiv-',
+      statsSource: 'eiv',
+      municipalities: SYNCED_EIV_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'cnt') {
+    const fetcher = createCantabriaFetcher();
+    return {
+      id,
+      idPrefix: 'cnt-',
+      statsSource: 'cnt',
+      municipalities: SYNCED_CNT_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'lrj') {
+    const fetcher = createRiojaFetcher();
+    return {
+      id,
+      idPrefix: 'lrj-',
+      statsSource: 'lrj',
+      municipalities: SYNCED_LRJ_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'gij') {
+    const fetcher = createGijonFetcher();
+    return {
+      id,
+      idPrefix: 'gij-',
+      statsSource: 'gij',
+      municipalities: SYNCED_GIJ_MUNICIPALITIES,
+      prepare: fetcher.prepare,
+      fetchMunicipality: fetcher.fetchMunicipality,
+    };
+  }
+  if (id === 'avi') {
+    const fetcher = createAvilesFetcher();
+    return {
+      id,
+      idPrefix: 'avi-',
+      statsSource: 'avi',
+      municipalities: SYNCED_AVI_MUNICIPALITIES,
       prepare: fetcher.prepare,
       fetchMunicipality: fetcher.fetchMunicipality,
     };
@@ -1380,6 +1472,11 @@ export async function runAllOfficialSyncs(
     'ara',
     'clm',
     'ext',
+    'eiv',
+    'cnt',
+    'lrj',
+    'gij',
+    'avi',
   ] as const) {
     summaries.push(
       await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState, false),

@@ -37,6 +37,11 @@ export {
   syncAragon,
   syncCastillaLaMancha,
   syncExtremadura,
+  syncEivissa,
+  syncCantabria,
+  syncLaRioja,
+  syncGijon,
+  syncAviles,
   adminSyncOfficialData,
 } from './scheduled/sync-openrta.js';
 export {

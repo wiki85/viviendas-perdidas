@@ -337,6 +337,112 @@ export const syncExtremadura = onSchedule(
   },
 );
 
+/** Espejo semanal del export vivo del Consell Insular d'Eivissa. */
+export const syncEivissa = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '1GiB',
+    schedule: 'every tuesday 05:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'eiv',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Eivissa sync finished', summary);
+  },
+);
+
+/** Espejo semanal de la capa ArcGIS de la DG de Turismo de Cantabria. */
+export const syncCantabria = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '1GiB',
+    schedule: 'every friday 06:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'cnt',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Cantabria sync finished', summary);
+  },
+);
+
+/** Espejo semanal del listado PDF mensual de La Rioja (el job semanal
+ * reintenta sin coste hasta que sale la edición nueva). */
+export const syncLaRioja = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '1GiB',
+    schedule: 'every monday 05:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'lrj',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('La Rioja sync finished', summary);
+  },
+);
+
+/** Espejo semanal del visor municipal de VUT de Gijón. */
+export const syncGijon = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '1GiB',
+    schedule: 'every thursday 05:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'gij',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Gijón sync finished', summary);
+  },
+);
+
+/** Espejo semanal del datastore CKAN del Ayuntamiento de Avilés. */
+export const syncAviles = onSchedule(
+  {
+    region: SCHEDULER_REGION,
+    timeoutSeconds: 1500,
+    memory: '1GiB',
+    schedule: 'every wednesday 05:30',
+    timeZone: 'Europe/Madrid',
+    secrets: [googleMapsServerApiKey],
+  },
+  async () => {
+    const summary = await runOfficialSync(
+      'avi',
+      fetch,
+      geohashForLocation,
+      googleMapsServerApiKey.value(),
+    );
+    logger.info('Avilés sync finished', summary);
+  },
+);
+
 /** Manual trigger from the admin panel: every registry, one shared budget.
  * 3600 s (el máximo de las funciones v2): la pasada de 15 fuentes con
  * reparaciones frías no cabía en 1500 s (visto el 24-8-2026). */

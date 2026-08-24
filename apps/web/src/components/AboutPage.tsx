@@ -123,9 +123,14 @@ export function AboutPage({ onClose, onExport, onOpenMethodology }: Props) {
             <strong>Junta de Castilla y León</strong> (Registro de Turismo, CC BY 4.0), del{' '}
             <strong>Gobierno de Aragón</strong> (registro de VUT, Ley 37/2007), de la{' '}
             <strong>Junta de Comunidades de Castilla-La Mancha</strong> (apartamentos y VUT, CC
-            BY-SA) y de la <strong>Junta de Extremadura</strong> (apartamentos turísticos, CC BY
-            4.0). Adaptamos los datos originales y ninguna administración respalda este proyecto; el
-            detalle completo está en la metodología y en la página de fuentes.
+            BY-SA), de la <strong>Junta de Extremadura</strong> (apartamentos turísticos, CC BY
+            4.0), del <strong>Consell Insular d&rsquo;Eivissa</strong> (registro insular, Ley
+            37/2007), del <strong>Gobierno de Cantabria</strong> (capa de viviendas turísticas,
+            Decreto 87/2013), del <strong>Gobierno de La Rioja</strong> (listado de viviendas
+            autorizadas, Ley 37/2007), del <strong>Ayuntamiento de Gijón</strong> (visor de VUT con
+            licencia, Ley 37/2007) y del <strong>Ayuntamiento de Avilés</strong> (extracto del REAT,
+            CC BY). Adaptamos los datos originales y ninguna administración respalda este proyecto;
+            el detalle completo está en la metodología y en la página de fuentes.
           </p>
         </section>
         <section className="about-page__section">

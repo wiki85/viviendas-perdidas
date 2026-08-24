@@ -156,6 +156,49 @@ function officialCredit(source: string): string {
       Extremadura no publica una figura separada de vivienda de uso turístico. Sin respaldo oficial.
     </p>`;
   }
+  if (source === 'eiv') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://registreturistic.conselldeivissa.es/habitatges-turistics/" rel="noopener noreferrer">Portal de Registres Turístics del Consell Insular d'Eivissa</a>
+      (Consell Insular d'Eivissa), datos adaptados ·
+      reutilización de información del sector público (Ley 37/2007) ·
+      coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'cnt') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://geoservicios.cantabria.es/inspire/rest/services/Turismo_Infraestructura_Turistica/MapServer" rel="noopener noreferrer">Viviendas Turísticas (servicio INSPIRE de la DG de Turismo)</a>
+      (Gobierno de Cantabria), datos adaptados ·
+      Licencia de Uso No Comercial (Decreto 87/2013 de Cantabria). Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'lrj') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://web.larioja.org/oficina-electronica/tramite?n=24269" rel="noopener noreferrer">listado de viviendas autorizadas del Registro de Proveedores de Servicios Turísticos</a>
+      (Gobierno de La Rioja), datos adaptados ·
+      reutilización de información del sector público (Ley 37/2007; Decreto 19/2013) ·
+      coordenadas de <a href="https://www.cartociudad.es/" rel="noopener noreferrer">CartoCiudad (IGN)</a>. Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'gij') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://documentos.gijon.es/doc/Urbanismo/PGO/Interactivo_vuts/" rel="noopener noreferrer">visor de viviendas de uso turístico con licencia</a>
+      (Ayuntamiento de Gijón, Urbanismo), datos adaptados ·
+      reutilización de información del sector público (Ley 37/2007). Sin respaldo oficial.
+    </p>`;
+  }
+  if (source === 'avi') {
+    return `
+    <p class="credit">
+      Fuente: <a href="https://datos.gob.es/es/catalogo/l01330045-alojamientos-turisticos1" rel="noopener noreferrer">Alojamientos turísticos (extracto del REAT)</a>
+      (Ayuntamiento de Avilés), datos adaptados ·
+      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer">CC BY</a> ·
+      coordenadas de la <a href="https://www.sedecatastro.gob.es/" rel="noopener noreferrer">Dirección General del Catastro</a>. Sin respaldo oficial.
+    </p>`;
+  }
   return `
     <p class="credit">
       Fuente: <a href="https://datos.gob.es/es/catalogo/a01002820-openrta" rel="noopener noreferrer">Registro de Turismo de Andalucía</a>
