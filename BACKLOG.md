@@ -2,6 +2,10 @@
 
 Mejoras identificadas y pendientes de implementar. Al completar una, muévela al historial de git (el commit es el registro).
 
+## CCAA pendientes
+
+- **Plan completo en [PLAN-CCAA-PENDIENTES.md](PLAN-CCAA-PENDIENTES.md)** (24-08-2026): Ibiza (fase 1, integrable ya), Cantabria (fase 2, tras verificar licencia y frescura), La Rioja (fase 3, PDF mensual), Asturias vía Gijón+Avilés (fase 4), gestiones administrativas para Formentera y el REAT asturiano; Ceuta y Melilla descartadas.
+
 ## Fuentes oficiales
 
 - **Cataluña: usar la referencia catastral como carril gratuito del Catastro.** Desde 2026 el dataset Socrata del RTC publica la columna `referencia_cadastral` (~19% de altas en Barcelona, ~20% en Girona, ~11% en Tarragona, verificado el 24-08-2026). Añadirla al `$select` de `services/catalunya-source.ts` y mapearla a `cadastralRef` en `domain/catalunya.ts` daría a Girona y Tarragona el mismo carril gratuito de coordenadas por Catastro que ya usa la fuente valenciana (`repairViaCatastro`), reduciendo la dependencia de CartoCiudad y de la geocodificación comercial. Al hacerlo, actualizar la entrada `cat` de `/fuentes` (http/render-sources.ts) y valorar si sube su puntuación de «Ubicación».
