@@ -30,6 +30,9 @@ export default defineConfig(({ command, mode }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [
+            // Firebase reserved namespace: the auth popup/redirect helpers
+            // (/__/auth/*) must reach the network, never the app shell.
+            /^\/__\//,
             /^\/ciudad/,
             /^\/ciudades/,
             /^\/compartir/,

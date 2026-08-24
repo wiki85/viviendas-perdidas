@@ -24,6 +24,7 @@ import type {
   ContactMessage,
 } from '../domain/types';
 import { BrandMark } from './BrandMark';
+import { AuthFlowError } from '../lib/auth-errors';
 import { encodeJpegBase64 } from '../lib/photo';
 
 type Props = {
@@ -51,6 +52,7 @@ function prettyDetails(details: string): string {
 }
 
 function describeError(cause: unknown): string {
+  if (cause instanceof AuthFlowError) return cause.message;
   if (cause && typeof cause === 'object' && 'code' in cause) {
     const code = String((cause as { code: unknown }).code);
     if (code.includes('permission-denied')) {
@@ -74,6 +76,7 @@ export function AdminPage({ service, onClose }: Props) {
   const [deniedEmail, setDeniedEmail] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('photos');
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [photos, setPhotos] = useState<PendingPhoto[] | null>(null);
@@ -357,19 +360,40 @@ export function AdminPage({ service, onClose }: Props) {
     setLoading(true);
     try {
       const session = await service.adminSignIn();
-      if (!session.moderator) {
-        // The service already signed the account out; show the single
-        // "no permissions" screen instead of the (empty) panel.
-        setDeniedEmail(session.email);
-        return;
+      // Redirecting: the page is about to navigate away, keep the spinner.
+      if (session.status === 'redirecting') return;
+      if (session.status === 'ok') {
+        if (!session.moderator) {
+          // The service already signed the account out; show the single
+          // "no permissions" screen instead of the (empty) panel.
+          setDeniedEmail(session.email);
+        } else {
+          setEmail(session.email);
+        }
       }
-      setEmail(session.email);
     } catch (cause) {
       setError(describeError(cause));
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
+
+  // Reuses a persisted session on reload: adminSignIn resolves from
+  // currentUser (no popup) and re-applies the moderator probe.
+  const bootstrapped = useRef(false);
+  useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+    void (async () => {
+      try {
+        const pending = await service.prepareAuth();
+        if (pending.kind === 'session') await signIn();
+      } catch {
+        // Ignored: the gate simply asks to sign in again.
+      } finally {
+        setChecking(false);
+      }
+    })();
+  });
 
   const review = async (photo: PendingPhoto, decision: PhotoDecision) => {
     setBusyId(photo.id);
@@ -635,11 +659,15 @@ export function AdminPage({ service, onClose }: Props) {
           <button
             className="button button--confirm"
             type="button"
-            disabled={loading}
+            disabled={loading || checking}
             onClick={() => void signIn()}
           >
-            {loading ? <LoaderCircle className="spin" size={17} /> : <LogIn size={17} />}
-            Entrar con Google
+            {loading || checking ? (
+              <LoaderCircle className="spin" size={17} />
+            ) : (
+              <LogIn size={17} />
+            )}
+            {checking ? 'Comprobando sesión…' : 'Entrar con Google'}
           </button>
           {error && (
             <p className="form-message" role="alert">

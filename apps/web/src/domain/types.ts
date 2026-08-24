@@ -320,6 +320,21 @@ export type ErrorLogEntry = {
   acknowledged: boolean;
 };
 
+/** Sesión pendiente resuelta al montar una página con login (recarga, redirect o enlace mágico). */
+export type PrepareAuthResult =
+  | { kind: 'session'; email: string }
+  | { kind: 'none' }
+  /** Enlace mágico abierto en un dispositivo distinto al que lo pidió: falta confirmar el correo. */
+  | { kind: 'emailLinkPendingEmail' };
+
+export type SignInOutcome =
+  { status: 'ok'; email: string } | { status: 'cancelled' } | { status: 'redirecting' };
+
+export type AdminSignInOutcome =
+  | { status: 'ok'; email: string; moderator: boolean }
+  | { status: 'cancelled' }
+  | { status: 'redirecting' };
+
 export interface ListingsService {
   readonly mode: 'firebase' | 'demo';
   loadListings(bounds: MapBounds): Promise<Listing[]>;
@@ -343,12 +358,16 @@ export interface ListingsService {
   listOfficialCells(bounds: MapBounds, precision: number): Promise<OfficialCell[]>;
   listOfficialPinCells(cellIds: string[]): Promise<OfficialPinCell[]>;
   getCityImpactSources(cityId: string): Promise<CityImpactSources>;
-  adminSignIn(): Promise<{ email: string; moderator: boolean }>;
+  prepareAuth(): Promise<PrepareAuthResult>;
+  signOutUser(): Promise<void>;
+  adminSignIn(): Promise<AdminSignInOutcome>;
   adminResolveOfficialMatch(listingId: string): Promise<void>;
   adminSyncOfficialData(): Promise<{ municipalities: number; records: number }>;
   submitContactMessage(input: ContactMessageInput): Promise<void>;
   listOfficialHistory(): Promise<OfficialHistoryEntry[]>;
-  newsletterSignIn(): Promise<{ email: string }>;
+  newsletterSignIn(): Promise<SignInOutcome>;
+  sendNewsletterLoginLink(email: string, continueCityId: string | null): Promise<void>;
+  completeNewsletterEmailLink(email: string): Promise<SignInOutcome>;
   getNewsletterPreferences(): Promise<NewsletterPreferences>;
   saveNewsletterPreferences(preferences: {
     scopes: string[];

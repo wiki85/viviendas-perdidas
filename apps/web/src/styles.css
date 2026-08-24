@@ -3259,6 +3259,38 @@ textarea:focus-visible,
   justify-items: start;
 }
 
+.newsletter-signin__divider {
+  margin: 0;
+  color: #97a19c;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.newsletter-linkform {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.newsletter-linkform input {
+  flex: 1 1 220px;
+  min-width: 0;
+  border: 1px solid rgba(30, 43, 39, 0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  color: #1e2b27;
+  background: #fff;
+}
+
+.newsletter-linkform input:focus-visible {
+  outline: 2px solid #315d4c;
+  outline-offset: 1px;
+}
+
 .newsletter-account {
   color: #3c4a44;
   margin: 14px 0 4px;

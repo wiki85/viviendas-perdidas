@@ -18,6 +18,9 @@ import type {
   NewsletterPreferences,
   NewsletterSubscriber,
   OfficialHistoryEntry,
+  PrepareAuthResult,
+  SignInOutcome,
+  AdminSignInOutcome,
 } from '../domain/types';
 import { calculateImpact } from '../lib/impact';
 import { distanceMeters, listingIsInBounds } from '../lib/geo';
@@ -322,8 +325,16 @@ export class DemoListingsService implements ListingsService {
     // Demo mode: nothing stored.
   }
 
-  async adminSignIn(): Promise<{ email: string; moderator: boolean }> {
-    return { email: 'moderacion@demo.local', moderator: true };
+  async prepareAuth(): Promise<PrepareAuthResult> {
+    return { kind: 'none' };
+  }
+
+  async signOutUser(): Promise<void> {
+    // Demo mode: no session to close.
+  }
+
+  async adminSignIn(): Promise<AdminSignInOutcome> {
+    return { status: 'ok', email: 'moderacion@demo.local', moderator: true };
   }
 
   private newsletterPreferences: NewsletterPreferences = {
@@ -334,8 +345,16 @@ export class DemoListingsService implements ListingsService {
     monthly: true,
   };
 
-  async newsletterSignIn(): Promise<{ email: string }> {
-    return { email: this.newsletterPreferences.email };
+  async newsletterSignIn(): Promise<SignInOutcome> {
+    return { status: 'ok', email: this.newsletterPreferences.email };
+  }
+
+  async sendNewsletterLoginLink(): Promise<void> {
+    // Demo mode: no email leaves the browser.
+  }
+
+  async completeNewsletterEmailLink(email: string): Promise<SignInOutcome> {
+    return { status: 'ok', email };
   }
 
   async getNewsletterPreferences(): Promise<NewsletterPreferences> {

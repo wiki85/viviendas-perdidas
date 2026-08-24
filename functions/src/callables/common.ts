@@ -18,6 +18,24 @@ export function requireAppCheckRateLimitSubject(request: CallableRequest<unknown
   return appCheckTokenHash(token);
 }
 
+export function requireUser(
+  auth: { uid?: string; token?: { email?: unknown; email_verified?: unknown } } | undefined,
+): {
+  uid: string;
+  email: string;
+} {
+  const uid = auth?.uid;
+  const email = auth?.token?.email;
+  if (typeof uid !== 'string' || typeof email !== 'string' || email.length === 0) {
+    throw new HttpsError('unauthenticated', 'Inicia sesión para gestionar tu suscripción.');
+  }
+  // Igual que requireModerator: un claim ausente NO cuenta como verificado.
+  if (auth?.token?.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'Tu correo aún no está verificado.');
+  }
+  return { uid, email: email.toLocaleLowerCase('es') };
+}
+
 export function requireModerator(request: CallableRequest<unknown>): string {
   const token = request.auth?.token;
   const email = typeof token?.email === 'string' ? token.email : null;

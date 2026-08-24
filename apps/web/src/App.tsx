@@ -118,6 +118,12 @@ function currentPathIsNewsletter() {
   return window.location.pathname.replace(/\/$/, '') === '/boletin';
 }
 
+/** The magic link and the sign-in redirect land back on /boletin?ciudad=… */
+function newsletterCityFromUrl(): string | null {
+  const ciudad = new URLSearchParams(window.location.search).get('ciudad');
+  return ciudad && /^[a-z0-9-]+$/u.test(ciudad) ? ciudad : null;
+}
+
 function sharedScopeFromUrl(): string | null {
   const scopeId = new URLSearchParams(window.location.search).get('scope');
   return scopeId && /^[a-z0-9-]+(?:__[a-z0-9-]+)?$/u.test(scopeId) ? scopeId : null;
@@ -230,9 +236,12 @@ export default function App() {
   const [methodologyOpen, setMethodologyOpen] = useState(currentPathIsMethodology);
   const [statsOpen, setStatsOpen] = useState(currentPathIsStats);
   const [newsletterOpen, setNewsletterOpen] = useState(currentPathIsNewsletter);
-  const [newsletterCityHint, setNewsletterCityHint] = useState<string | null>(null);
+  const [newsletterCityHint, setNewsletterCityHint] = useState<string | null>(() =>
+    currentPathIsNewsletter() ? newsletterCityFromUrl() : null,
+  );
   const openNewsletter = useCallback((cityId?: string) => {
-    window.history.pushState({}, '', '/boletin');
+    // The city rides in the URL so it survives a sign-in redirect round trip.
+    window.history.pushState({}, '', cityId ? `/boletin?ciudad=${cityId}` : '/boletin');
     setNewsletterCityHint(cityId ?? null);
     setStatsOpen(false);
     setNewsletterOpen(true);
@@ -936,7 +945,11 @@ export default function App() {
             setNewsletterCityHint(null);
           }}
           preselectCityId={newsletterCityHint}
+          prepareAuth={() => service.prepareAuth()}
           signIn={() => service.newsletterSignIn()}
+          signOut={() => service.signOutUser()}
+          sendLoginLink={(email) => service.sendNewsletterLoginLink(email, newsletterCityHint)}
+          completeEmailLink={(email) => service.completeNewsletterEmailLink(email)}
           loadPreferences={() => service.getNewsletterPreferences()}
           savePreferences={(preferences) => service.saveNewsletterPreferences(preferences)}
           unsubscribe={() => service.unsubscribeNewsletter()}

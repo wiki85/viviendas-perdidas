@@ -66,6 +66,14 @@ class LazyFirebaseListingsService implements ListingsService {
     );
   }
 
+  prepareAuth() {
+    return this.load().then((service) => service.prepareAuth());
+  }
+
+  signOutUser() {
+    return this.load().then((service) => service.signOutUser());
+  }
+
   adminSignIn() {
     return this.load().then((service) => service.adminSignIn());
   }
@@ -96,6 +104,14 @@ class LazyFirebaseListingsService implements ListingsService {
 
   newsletterSignIn() {
     return this.load().then((service) => service.newsletterSignIn());
+  }
+
+  sendNewsletterLoginLink(email: string, continueCityId: string | null) {
+    return this.load().then((service) => service.sendNewsletterLoginLink(email, continueCityId));
+  }
+
+  completeNewsletterEmailLink(email: string) {
+    return this.load().then((service) => service.completeNewsletterEmailLink(email));
   }
 
   getNewsletterPreferences() {

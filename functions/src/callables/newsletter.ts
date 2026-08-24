@@ -6,13 +6,13 @@ import { randomBytes } from 'node:crypto';
 import { REGION } from '../config.js';
 import { db } from '../firebase.js';
 import { cityIdsForScope, scopeDisplayName } from '../domain/communities.js';
-import { requireModerator } from './common.js';
+import { requireModerator, requireUser } from './common.js';
 
 /**
  * «El Recuento» subscriptions. Preferences live under the Firebase Auth uid
- * (Google sign-in gives us a verified email); the unsubscribe link works
- * WITHOUT auth via a per-subscriber random token, so the one-click promise
- * in every email footer holds even logged out.
+ * (Google or email-link sign-in gives us a verified email); the unsubscribe
+ * link works WITHOUT auth via a per-subscriber random token, so the one-click
+ * promise in every email footer holds even logged out.
  */
 
 const MAX_SCOPES = 12;
@@ -25,24 +25,6 @@ interface Preferences {
 
 function validScope(scope: unknown): scope is string {
   return typeof scope === 'string' && scope.length <= 60 && cityIdsForScope(scope).length > 0;
-}
-
-function requireUser(
-  auth: { uid?: string; token?: { email?: unknown; email_verified?: unknown } } | undefined,
-): {
-  uid: string;
-  email: string;
-} {
-  const uid = auth?.uid;
-  const email = auth?.token?.email;
-  if (typeof uid !== 'string' || typeof email !== 'string' || email.length === 0) {
-    throw new HttpsError('unauthenticated', 'Inicia sesión para gestionar tu suscripción.');
-  }
-  // Igual que requireModerator: un claim ausente NO cuenta como verificado.
-  if (auth?.token?.email_verified !== true) {
-    throw new HttpsError('failed-precondition', 'Tu correo aún no está verificado.');
-  }
-  return { uid, email: email.toLocaleLowerCase('es') };
 }
 
 export const getNewsletterPreferences = onCall(

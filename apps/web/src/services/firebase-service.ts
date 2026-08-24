@@ -53,6 +53,9 @@ import type {
   NewsletterPreferences,
   NewsletterSubscriber,
   OfficialHistoryEntry,
+  PrepareAuthResult,
+  SignInOutcome,
+  AdminSignInOutcome,
 } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { boundsWithin, distanceMeters, expandBounds, listingIsInBounds } from '../lib/geo';
@@ -549,40 +552,62 @@ export class FirebaseListingsService implements ListingsService {
     await callable({ id });
   }
 
-  async adminSignIn(): Promise<{ email: string; moderator: boolean }> {
-    const { getAuth, GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-    const auth = getAuth(this.app);
-    let email = auth.currentUser?.email ?? null;
-    if (!email) {
-      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-      email = credential.user.email;
-    }
-    if (!email) throw new Error('La cuenta no tiene email visible.');
+  // firebase/auth stays out of the map bundle: only /boletin and /admin load it.
+  private authModule: Promise<typeof import('./firebase-auth')> | null = null;
+
+  private loadAuth() {
+    this.authModule ??= import('./firebase-auth');
+    return this.authModule;
+  }
+
+  async prepareAuth(): Promise<PrepareAuthResult> {
+    const authModule = await this.loadAuth();
+    const auth = authModule.getFirebaseAuth(this.app);
+    return authModule.resolvePendingSession(auth);
+  }
+
+  async signOutUser(): Promise<void> {
+    const authModule = await this.loadAuth();
+    await authModule.signOutFirebase(authModule.getFirebaseAuth(this.app));
+  }
+
+  async adminSignIn(): Promise<AdminSignInOutcome> {
+    const authModule = await this.loadAuth();
+    const auth = authModule.getFirebaseAuth(this.app);
+    const outcome = await authModule.signInWithGoogle(auth);
+    if (outcome.status !== 'ok') return outcome;
     try {
       // Server-side probe: only allowlisted moderators pass. Anyone else is
       // signed out immediately so no session lingers behind the admin gate.
       await httpsCallable(this.functions, 'adminWhoAmI')({});
-      return { email, moderator: true };
+      return { status: 'ok', email: outcome.email, moderator: true };
     } catch (cause) {
       const code = (cause as { code?: string }).code ?? '';
       if (code.includes('permission-denied')) {
         await auth.signOut().catch(() => undefined);
-        return { email, moderator: false };
+        return { status: 'ok', email: outcome.email, moderator: false };
       }
       throw cause;
     }
   }
 
-  async newsletterSignIn(): Promise<{ email: string }> {
-    const { getAuth, GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-    const auth = getAuth(this.app);
-    let email = auth.currentUser?.email ?? null;
-    if (!email) {
-      const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-      email = credential.user.email;
-    }
-    if (!email) throw new Error('La cuenta no tiene email visible.');
-    return { email };
+  async newsletterSignIn(): Promise<SignInOutcome> {
+    const authModule = await this.loadAuth();
+    return authModule.signInWithGoogle(authModule.getFirebaseAuth(this.app));
+  }
+
+  async sendNewsletterLoginLink(email: string, continueCityId: string | null): Promise<void> {
+    const authModule = await this.loadAuth();
+    const auth = authModule.getFirebaseAuth(this.app);
+    const continueUrl = `${window.location.origin}/boletin${
+      continueCityId ? `?ciudad=${continueCityId}` : ''
+    }`;
+    await authModule.sendLoginLink(auth, email, continueUrl);
+  }
+
+  async completeNewsletterEmailLink(email: string): Promise<SignInOutcome> {
+    const authModule = await this.loadAuth();
+    return authModule.completeEmailLink(authModule.getFirebaseAuth(this.app), email);
   }
 
   async getNewsletterPreferences(): Promise<NewsletterPreferences> {
