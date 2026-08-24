@@ -6,6 +6,10 @@ Mejoras identificadas y pendientes de implementar. Al completar una, muévela al
 
 - **Cataluña: usar la referencia catastral como carril gratuito del Catastro.** Desde 2026 el dataset Socrata del RTC publica la columna `referencia_cadastral` (~19% de altas en Barcelona, ~20% en Girona, ~11% en Tarragona, verificado el 24-08-2026). Añadirla al `$select` de `services/catalunya-source.ts` y mapearla a `cadastralRef` en `domain/catalunya.ts` daría a Girona y Tarragona el mismo carril gratuito de coordenadas por Catastro que ya usa la fuente valenciana (`repairViaCatastro`), reduciendo la dependencia de CartoCiudad y de la geocodificación comercial. Al hacerlo, actualizar la entrada `cat` de `/fuentes` (http/render-sources.ts) y valorar si sube su puntuación de «Ubicación».
 
+## Panel de administración
+
+- **El botón de sincronización manual muestra «deadline-exceeded» aunque el sync siga vivo.** El SDK cliente de Firebase corta la espera del callable `adminSyncOfficialData` a los ~70 segundos, pero la función sigue ejecutándose en el servidor (timeout propio de 1500 s) — visto el 24-08-2026. Opciones: pasar `{ timeout: 1_500_000 }` al `httpsCallable`, o mejor, convertir el botón en «lanzar y consultar» (disparar el sync y refrescar el estado leyendo `officialStats.updatedAt` en vez de esperar la respuesta).
+
 ## Vigilancia (no requiere código, revisar en unas semanas)
 
 - **Catálogo CAIB (Mallorca y Menorca):** declara refresco diario automático pero ambos GeoJSON llevan sin regenerarse desde el 07-08-2026. Si sigue congelado, reflejarlo en las fichas de `/fuentes`.
