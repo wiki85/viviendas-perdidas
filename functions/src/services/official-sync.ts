@@ -1182,6 +1182,9 @@ async function runSource(
   fetchImplementation: typeof fetch,
   geohashFor: GeohashFn,
   geocodeState: GeocodeState,
+  /** La pasada completa lo apaga: reconstruir las celdas tras cada fuente
+   * costaba ~50 s × 15 y agotaba el timeout del callable manual. */
+  rebuildCellsAfter = true,
 ): Promise<OfficialSyncSummary> {
   const releaseLock = await acquireSyncLock();
   try {
@@ -1330,7 +1333,7 @@ async function runSource(
 
     // Geohash cell mirror: the map reads these aggregated bubbles (and the
     // embedded pins at street zoom) instead of querying 60k individual docs.
-    await rebuildCells(geohashFor);
+    if (rebuildCellsAfter) await rebuildCells(geohashFor);
     return { source: source.id, municipalities: source.municipalities.length, records: total };
   } finally {
     await releaseLock();
@@ -1379,8 +1382,23 @@ export async function runAllOfficialSyncs(
     'ext',
   ] as const) {
     summaries.push(
-      await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState),
+      await runSource(buildSource(sourceId), fetchImplementation, geohashFor, geocodeState, false),
     );
+  }
+  // Una única reconstrucción de celdas para toda la pasada, bajo el mismo
+  // candado que usan las fuentes. Si otro sync lo ha tomado justo ahora, su
+  // propia reconstrucción dejará las celdas al día: no tiramos la pasada.
+  try {
+    const releaseLock = await acquireSyncLock();
+    try {
+      await rebuildCells(geohashFor);
+    } finally {
+      await releaseLock();
+    }
+  } catch (failure) {
+    logger.warn('Cells rebuild skipped after manual pass', {
+      message: failure instanceof Error ? failure.message : String(failure),
+    });
   }
   return summaries;
 }

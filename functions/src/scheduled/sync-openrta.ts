@@ -337,11 +337,13 @@ export const syncExtremadura = onSchedule(
   },
 );
 
-/** Manual trigger from the admin panel: every registry, one shared budget. */
+/** Manual trigger from the admin panel: every registry, one shared budget.
+ * 3600 s (el máximo de las funciones v2): la pasada de 15 fuentes con
+ * reparaciones frías no cabía en 1500 s (visto el 24-8-2026). */
 export const adminSyncOfficialData = onCall(
   {
     region: REGION,
-    timeoutSeconds: 1500,
+    timeoutSeconds: 3600,
     // Quince registros en secuencia: los volcados grandes (Canarias,
     // Galicia, Murcia) desbordarían los 512MiB.
     memory: '1GiB',
