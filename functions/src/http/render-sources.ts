@@ -922,6 +922,7 @@ export function renderSourcesPage(): string {
     .join('');
 
   const body = `
+    <p class="eyebrow">Fuentes oficiales</p>
     <h1>Fuentes de datos, comunidad a comunidad</h1>
     <p>
       Todo lo que este mapa muestra como «registro oficial» procede de los registros de turismo
@@ -975,7 +976,7 @@ export function renderSourcesPage(): string {
     <div class="note">
       ¿Trabajas en una de estas administraciones y quieres mejorar vuestra puntuación — o hemos
       cometido un error? Escríbenos desde el formulario de contacto del <a href="/">mapa</a>
-      (icono del sobre). Ninguna administración citada respalda este proyecto; la crítica y el
+      (menú «Más» → Contacto). Ninguna administración citada respalda este proyecto; la crítica y el
       crédito son nuestros.
     </div>`;
 

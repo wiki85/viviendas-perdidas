@@ -155,7 +155,7 @@ export const shareScope = onRequest(
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${escapeHtml(`${origin}/og.png`)}">
     <title>${escapeHtml(title)} | Viviendas Perdidas</title>
-    <style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f7f3eb;color:#1e2b27}a{color:#315d4c;font-weight:700}</style>
+    <style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f5f0e6;color:#1b2521}a{color:#24463a;font-weight:700}</style>
   </head>
   <body>
     <p>Abriendo <a href="${escapeHtml(mapUrl)}">Viviendas Perdidas</a>…</p>

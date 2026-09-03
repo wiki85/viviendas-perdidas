@@ -28,7 +28,7 @@ const PAGE_HEADERS = {
   'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
   // Inline script allowed: the share button enhancement lives in the page.
   'Content-Security-Policy':
-    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'none'; frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
 } as const;
 
@@ -48,7 +48,7 @@ function sendUnavailable(response: Response): void {
     .status(503)
     .type('html')
     .send(
-      `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vuelve en un momento</title><style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f7f3eb;color:#1e2b27;text-align:center;padding:20px}a{color:#315d4c;font-weight:700}</style></head><body><div><p>No hemos podido cargar esta página ahora mismo.</p><p><a href="/">Ir al mapa</a> o vuelve a intentarlo en un momento.</p></div></body></html>`,
+      `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vuelve en un momento</title><style>body{font:16px system-ui;margin:0;display:grid;place-items:center;min-height:100vh;background:#f5f0e6;color:#1b2521;text-align:center;padding:20px}a{color:#24463a;font-weight:700}</style></head><body><div><p>No hemos podido cargar esta página ahora mismo.</p><p><a href="/">Ir al mapa</a> o vuelve a intentarlo en un momento.</p></div></body></html>`,
     );
 }
 

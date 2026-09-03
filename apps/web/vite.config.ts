@@ -1,7 +1,40 @@
+import { copyFileSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
-import { loadEnv } from 'vite';
+import { loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+
+// Copias con nombre estable de las fuentes para las páginas generadas en
+// servidor (/ciudad, /fuentes, /prensa, /embed): sus @font-face no pueden
+// conocer el hash que Vite añade a los ficheros de la SPA.
+const PUBLIC_FONTS: Record<string, string> = {
+  'bricolage-grotesque-latin.woff2':
+    '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-opsz-normal.woff2',
+  'bricolage-grotesque-latin-ext.woff2':
+    '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-ext-opsz-normal.woff2',
+  'instrument-serif-latin.woff2':
+    '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2',
+  'instrument-serif-latin-ext.woff2':
+    '@fontsource/instrument-serif/files/instrument-serif-latin-ext-400-normal.woff2',
+};
+
+function copyPublicFonts(): Plugin {
+  const require = createRequire(import.meta.url);
+  return {
+    name: 'copy-public-fonts',
+    apply: 'build',
+    closeBundle() {
+      const target = fileURLToPath(new URL('./dist/fonts', import.meta.url));
+      mkdirSync(target, { recursive: true });
+      for (const [name, source] of Object.entries(PUBLIC_FONTS)) {
+        copyFileSync(require.resolve(source), join(target, name));
+      }
+    },
+  };
+}
 
 export default defineConfig(({ command, mode }) => {
   // Salvaguarda de despliegue (VP-11): un build de producción con los
@@ -28,6 +61,9 @@ export default defineConfig(({ command, mode }) => {
         manifest: false,
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+          // Las copias de /fonts son para las páginas de servidor; la SPA ya
+          // precachea sus propias fuentes con hash.
+          globIgnores: ['fonts/**'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [
             // Firebase reserved namespace: the auth popup/redirect helpers
@@ -50,6 +86,7 @@ export default defineConfig(({ command, mode }) => {
           runtimeCaching: [],
         },
       }),
+      copyPublicFonts(),
     ],
     build: {
       target: 'es2022',

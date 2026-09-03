@@ -32,7 +32,7 @@ Contra producción, con `curl` de solo lectura (nunca `-X`/`-d`/`-F`):
 ```bash
 curl -sS -D - -o /dev/null --max-time 20 https://www.aquiviviamos.com/                 # 200 + cabeceras CSP
 curl -sS -D - -o /dev/null --max-time 20 https://www.aquiviviamos.com/ciudad/sevilla    # página de ciudad (SSR)
-curl -sS -D - -o /dev/null --max-time 20 https://www.aquiviviamos.com/embed/sevilla      # embed
+curl -sS -D - -o /dev/null --max-time 20 https://www.aquiviviamos.com/embed/sevilla/cifras   # embed (siempre con sufijo /cifras o /evolucion)
 curl -sS --max-time 25 https://www.aquiviviamos.com/datos/export -o /tmp/export.json      # export público
 curl -sS -D - -o /dev/null --max-time 20 https://www.aquiviviamos.com/fuentes             # /fuentes
 ```

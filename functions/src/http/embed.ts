@@ -83,11 +83,11 @@ function embedShell(title: string, body: string): string {
 <meta name="robots" content="noindex">
 <title>${escapeHtml(title)}</title>
 <style>${SHARED_CSS}
-  body{padding:14px 16px;background:#fdfbf6}
+  body{padding:14px 16px;background:var(--card)}
   .embed-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px}
-  .embed-head strong{font-size:.95rem}
-  .embed-brand{font-size:.72rem;color:#65716c;white-space:nowrap}
-  .embed-brand a{color:#315d4c;font-weight:700;text-decoration:none}
+  .embed-head strong{font-size:.95rem;letter-spacing:-.01em}
+  .embed-brand{font-size:.75rem;color:var(--ink-3);white-space:nowrap}
+  .embed-brand a{color:var(--moss-700);font-weight:700;text-decoration:none}
   .evo{margin:0}
 </style>
 </head>
@@ -126,7 +126,7 @@ function renderFiguresEmbed(scope: EmbedScope, series: Array<{ date: string; tot
   const signed = (value: number) =>
     value > 0 ? `+${formatInt(value)}` : value < 0 ? `−${formatInt(Math.abs(value))}` : '0';
   const tile = (value: string, label: string, accent = false) => `
-    <div class="stat"><strong${accent ? '' : ' style="color:#1e2b27"'}>${value}</strong><span>${escapeHtml(label)}</span></div>`;
+    <div class="stat"><strong${accent ? '' : ' style="color:#1b2521"'}>${value}</strong><span>${escapeHtml(label)}</span></div>`;
   const body = `
   <div class="embed-head">
     <strong>Viviendas turísticas registradas — ${escapeHtml(scope.label)}</strong>
@@ -144,7 +144,7 @@ const EMBED_HEADERS = {
   'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
   // Deliberately NO frame-ancestors: any site may iframe these figures.
   'Content-Security-Policy':
-    "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'",
+    "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'none'",
   'X-Content-Type-Options': 'nosniff',
 } as const;
 
