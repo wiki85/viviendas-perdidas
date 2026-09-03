@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Crosshair, LocateFixed, Minus, Plus } from 'lucide-react';
 import type { LatLng } from '../../domain/types';
 import { approximateBounds } from '../../lib/geo';
+import { pinAriaLabel, pinClassName } from '../../lib/marker-icons';
 import type { MapStageProps } from './MapStage';
+import { PinGlyph } from './PinGlyph';
 
 const TILE_SIZE = 256;
 
@@ -233,19 +235,17 @@ export function DemoMap({
             type="button"
             key={listing.id}
             style={{ left, top }}
-            className={`map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''} ${selectedId === listing.id ? 'map-marker--selected' : ''}`}
-            aria-label={
-              listing.type === 'commercial'
-                ? `Local comercial convertido, ${listing.address.formatted}`
-                : `${listing.type === 'building' ? 'Edificio completo o parcial' : 'Apartamento'}, ${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'vivienda' : 'viviendas'}, ${listing.address.formatted}`
-            }
+            className={pinClassName(listing, selectedId === listing.id)}
+            aria-label={pinAriaLabel(listing)}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={() => onSelectListing(listing)}
           >
-            <span aria-hidden="true">
-              {listing.type === 'building' ? '🏢' : listing.type === 'commercial' ? '🏪' : '⌂'}
-            </span>
-            {listing.type === 'building' && <b>{listing.dwellingsCount}</b>}
+            <PinGlyph type={listing.type} />
+            {listing.type === 'building' && (
+              <b className="pin__count" aria-hidden="true">
+                {listing.dwellingsCount}
+              </b>
+            )}
           </button>
         ) : null,
       )}
@@ -262,20 +262,20 @@ export function DemoMap({
           })()}
           aria-label="Ubicación seleccionada"
         >
-          <MapPinIcon />
+          <span />
         </span>
       )}
       {placementMode && (
         <div className="placement-hint" aria-live="polite">
-          <Crosshair size={16} /> Toca el edificio en el mapa
+          <Crosshair size={16} aria-hidden="true" /> Toca el edificio en el mapa
         </div>
       )}
-      <div className="map-controls">
+      <div className="map-zoom" role="group" aria-label="Zoom del mapa">
         <button type="button" onClick={() => updateZoom(zoom + 1)} aria-label="Acercar mapa">
-          <Plus />
+          <Plus size={20} aria-hidden="true" />
         </button>
         <button type="button" onClick={() => updateZoom(zoom - 1)} aria-label="Alejar mapa">
-          <Minus />
+          <Minus size={20} aria-hidden="true" />
         </button>
         {placementMode && (
           <button
@@ -283,14 +283,10 @@ export function DemoMap({
             onClick={() => onPickLocation(center)}
             aria-label="Usar el centro del mapa"
           >
-            <LocateFixed />
+            <LocateFixed size={20} aria-hidden="true" />
           </button>
         )}
       </div>
     </div>
   );
-}
-
-function MapPinIcon() {
-  return <span aria-hidden="true">●</span>;
 }

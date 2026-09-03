@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { TriangleAlert } from 'lucide-react';
 
 type Props = { children: ReactNode };
 type State = { failed: boolean };
@@ -19,13 +20,19 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <main className="crash-screen" role="alert">
         <div>
-          <span aria-hidden="true">🏚️</span>
+          <span className="crash-screen__icon" aria-hidden="true">
+            <TriangleAlert size={30} />
+          </span>
           <h1>Algo ha fallado</h1>
           <p>
             Ha ocurrido un error inesperado. Recarga la página para volver al mapa; si se repite,
             inténtalo de nuevo en unos minutos.
           </p>
-          <button type="button" onClick={() => window.location.reload()}>
+          <button
+            className="button button--primary"
+            type="button"
+            onClick={() => window.location.reload()}
+          >
             Recargar la página
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Building2,
   CalendarDays,
@@ -11,13 +11,12 @@ import {
   MapPin,
   ShieldAlert,
   Store,
-  UsersRound,
-  X,
 } from 'lucide-react';
 import type { Listing, VoteKind } from '../domain/types';
 import { appConfig } from '../lib/config';
 import { calculateImpact, formatListingDate } from '../lib/impact';
 import { buildStreetViewUrl } from '../lib/streetview';
+import { Sheet } from './Sheet';
 
 type Props = {
   listing: Listing;
@@ -26,7 +25,6 @@ type Props = {
 };
 
 export function ListingSheet({ listing, onClose, onVote }: Props) {
-  const closeButton = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState<VoteKind | null>(null);
   const [voted, setVoted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -44,15 +42,6 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
         )
       : null;
   const photoUrl = communityPhotoUrl ?? streetViewUrl;
-
-  useEffect(() => {
-    closeButton.current?.focus();
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', escape);
-    return () => window.removeEventListener('keydown', escape);
-  }, [onClose]);
 
   const vote = async (kind: VoteKind) => {
     setBusy(kind);
@@ -73,177 +62,155 @@ export function ListingSheet({ listing, onClose, onVote }: Props) {
   };
 
   return (
-    <div
-      className="sheet-layer"
-      role="presentation"
-      onPointerDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
-      }}
+    <Sheet
+      variant="panel"
+      labelledBy="listing-title"
+      onClose={onClose}
+      closeLabel="Cerrar ficha"
+      className="listing-sheet"
     >
-      <section
-        className="bottom-sheet listing-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="listing-title"
-      >
-        <span className="sheet-handle" aria-hidden="true" />
-        <button
-          ref={closeButton}
-          className="sheet-close"
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar ficha"
-        >
-          <X size={20} />
-        </button>
-        <div className="listing-sheet__photo">
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={`Vista de la fachada en ${listing.address.formatted}`}
-              width="400"
-              height="300"
-            />
+      <div className="listing-sheet__photo">
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt={`Vista de la fachada en ${listing.address.formatted}`}
+            width="400"
+            height="300"
+          />
+        ) : (
+          <div className="street-placeholder">
+            <ImageOff size={28} aria-hidden="true" />
+            <span>Sin imagen de Street View</span>
+            <small>El registro sigue siendo válido</small>
+          </div>
+        )}
+        <span className={`listing-badge listing-badge--${listing.type}`}>
+          {listing.type === 'building' ? (
+            <Building2 size={15} aria-hidden="true" />
+          ) : listing.type === 'commercial' ? (
+            <Store size={15} aria-hidden="true" />
           ) : (
-            <div className="street-placeholder">
-              <ImageOff size={28} />
-              <span>Sin imagen de Street View</span>
-              <small>El registro sigue siendo válido</small>
-            </div>
+            <House size={15} aria-hidden="true" />
           )}
-          <span className={`listing-badge listing-badge--${listing.type}`}>
-            {listing.type === 'building' ? (
-              <Building2 size={15} />
-            ) : listing.type === 'commercial' ? (
-              <Store size={15} />
-            ) : (
-              <House size={15} />
-            )}
-            {listing.type === 'building'
-              ? 'Edificio completo/parcial'
-              : listing.type === 'commercial'
-                ? 'Local comercial convertido'
-                : 'Apartamento individual'}
-          </span>
-          {communityPhotoUrl && (
-            <span className="listing-badge listing-badge--community">Foto de la comunidad</span>
-          )}
-        </div>
-        <div className="listing-sheet__body">
-          {listing.status === 'flagged' && (
-            <div className="review-notice" role="status">
-              <ShieldAlert size={18} />
-              <span>
-                <strong>En revisión comunitaria.</strong> Hay dudas sobre este registro.
-              </span>
-            </div>
-          )}
-          <h2 id="listing-title">
-            {listing.type === 'commercial'
-              ? commercialCount === 1
-                ? 'Local comercial perdido'
-                : `${commercialCount} locales comerciales perdidos`
-              : `${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'vivienda perdida' : 'viviendas perdidas'}`}
-          </h2>
-          <p className="listing-address">
-            <MapPin size={17} /> {listing.address.formatted}
-          </p>
-          {listing.type === 'commercial' ? (
-            <div className="impact-callout">
-              <div>
-                <Store size={19} />
-                <span>Aquí había</span>
-                <strong>
-                  {commercialCount === 1
-                    ? 'un comercio de barrio'
-                    : `${commercialCount} comercios de barrio`}
-                </strong>
-              </div>
-              <div>
-                <span className="person-glyph" aria-hidden="true">
-                  ●
-                </span>
-                <span>Ahora es</span>
-                <strong>alojamiento turístico</strong>
-              </div>
-            </div>
-          ) : (
-            <div className="impact-callout">
-              <div>
-                <UsersRound size={19} />
-                <span>Aquí vivían aprox.</span>
-                <strong>
-                  {impact.lostFamilies} {impact.lostFamilies === 1 ? 'familia' : 'familias'}
-                </strong>
-              </div>
-              <div>
-                <span className="person-glyph" aria-hidden="true">
-                  ●
-                </span>
-                <span>Equivale a unas</span>
-                <strong>{impact.lostInhabitants} personas</strong>
-              </div>
-            </div>
-          )}
-          <div className="listing-meta">
+          {listing.type === 'building'
+            ? 'Edificio completo/parcial'
+            : listing.type === 'commercial'
+              ? 'Local comercial convertido'
+              : 'Apartamento individual'}
+        </span>
+        {communityPhotoUrl && (
+          <span className="listing-badge listing-badge--community">Foto de la comunidad</span>
+        )}
+      </div>
+      <div className="sheet__body">
+        {listing.status === 'flagged' && (
+          <div className="review-notice" role="status">
+            <ShieldAlert size={18} aria-hidden="true" />
             <span>
-              <CalendarDays size={15} /> Registrado el {formatListingDate(listing.createdAt)}
+              <strong>En revisión comunitaria.</strong> Hay dudas sobre este registro.
             </span>
-            {listing.type === 'building' && (listing.commercialUnitsCount ?? 0) > 0 && (
-              <span>
-                <Store size={15} /> {listing.commercialUnitsCount}{' '}
-                {listing.commercialUnitsCount === 1
-                  ? 'local comercial eliminado'
-                  : 'locales comerciales eliminados'}
-              </span>
-            )}
-            {listing.licenseVerified && (
-              <span className="listing-verified">
-                <BadgeCheck size={15} /> Licencia verificada en el registro oficial
-              </span>
-            )}
-            {listing.officialMatch && (
-              <span className="listing-verified">
-                <Landmark size={15} /> Figura en el registro oficial de turismo (
-                {listing.officialMatch.registrationCode})
-              </span>
-            )}
-            {listing.evidence.licenseNumber && (
-              <span>Licencia: {listing.evidence.licenseNumber}</span>
-            )}
-            {listing.evidence.platform && (
-              <span>Plataforma indicada: {listing.evidence.platform}</span>
-            )}
           </div>
-          {listing.evidence.note && <p className="listing-note">“{listing.evidence.note}”</p>}
-          <div className="vote-actions" aria-label="Validación comunitaria">
-            <button
-              className="button button--confirm"
-              type="button"
-              disabled={busy !== null || voted}
-              onClick={() => void vote('confirm')}
-            >
-              <Check size={19} /> {busy === 'confirm' ? 'Guardando…' : 'Confirmo que existe'}
-            </button>
-            <button
-              className="button button--report"
-              type="button"
-              disabled={busy !== null || voted}
-              onClick={() => void vote('report')}
-            >
-              <Flag size={17} /> {busy === 'report' ? 'Guardando…' : 'Reportar error'}
-            </button>
+        )}
+        <h2 id="listing-title" className="sheet__title">
+          {listing.type === 'commercial'
+            ? commercialCount === 1
+              ? 'Local comercial perdido'
+              : `${commercialCount} locales comerciales perdidos`
+            : `${listing.dwellingsCount} ${listing.dwellingsCount === 1 ? 'vivienda perdida' : 'viviendas perdidas'}`}
+        </h2>
+        <p className="listing-address">
+          <MapPin size={17} aria-hidden="true" /> <span>{listing.address.formatted}</span>
+        </p>
+        {listing.type === 'commercial' ? (
+          <div className="facts">
+            <div className="fact">
+              <span className="fact__label">Aquí había</span>
+              <strong className="fact__value">
+                {commercialCount === 1
+                  ? 'un comercio de barrio'
+                  : `${commercialCount} comercios de barrio`}
+              </strong>
+            </div>
+            <div className="fact">
+              <span className="fact__label">Ahora es</span>
+              <strong className="fact__value">alojamiento turístico</strong>
+            </div>
           </div>
-          <p className="vote-tally">
-            {listing.confirmations} confirmaciones · {listing.reports} reportes
-          </p>
-          {message && (
-            <p className="form-message" role="status">
-              {message}
-            </p>
+        ) : (
+          <div className="facts">
+            <div className="fact">
+              <span className="fact__label">Aquí vivían aprox.</span>
+              <strong className="fact__value">
+                {impact.lostFamilies} {impact.lostFamilies === 1 ? 'familia' : 'familias'}
+              </strong>
+            </div>
+            <div className="fact">
+              <span className="fact__label">Equivale a unas</span>
+              <strong className="fact__value">{impact.lostInhabitants} personas</strong>
+            </div>
+          </div>
+        )}
+        <div className="listing-meta">
+          <span>
+            <CalendarDays size={16} aria-hidden="true" /> Registrado el{' '}
+            {formatListingDate(listing.createdAt)}
+          </span>
+          {listing.type === 'building' && (listing.commercialUnitsCount ?? 0) > 0 && (
+            <span>
+              <Store size={16} aria-hidden="true" /> {listing.commercialUnitsCount}{' '}
+              {listing.commercialUnitsCount === 1
+                ? 'local comercial eliminado'
+                : 'locales comerciales eliminados'}
+            </span>
+          )}
+          {listing.licenseVerified && (
+            <span className="listing-verified">
+              <BadgeCheck size={16} aria-hidden="true" /> Licencia verificada en el registro oficial
+            </span>
+          )}
+          {listing.officialMatch && (
+            <span className="listing-verified">
+              <Landmark size={16} aria-hidden="true" /> Figura en el registro oficial de turismo (
+              {listing.officialMatch.registrationCode})
+            </span>
+          )}
+          {listing.evidence.licenseNumber && (
+            <span>Licencia: {listing.evidence.licenseNumber}</span>
+          )}
+          {listing.evidence.platform && (
+            <span>Plataforma indicada: {listing.evidence.platform}</span>
           )}
         </div>
-      </section>
-    </div>
+        {listing.evidence.note && <p className="listing-note">“{listing.evidence.note}”</p>}
+        <div className="vote-actions" role="group" aria-label="Validación comunitaria">
+          <button
+            className="button button--confirm"
+            type="button"
+            disabled={busy !== null || voted}
+            onClick={() => void vote('confirm')}
+          >
+            <Check size={18} aria-hidden="true" />{' '}
+            {busy === 'confirm' ? 'Guardando…' : 'Confirmo que existe'}
+          </button>
+          <button
+            className="button button--report"
+            type="button"
+            disabled={busy !== null || voted}
+            onClick={() => void vote('report')}
+          >
+            <Flag size={16} aria-hidden="true" />{' '}
+            {busy === 'report' ? 'Guardando…' : 'Reportar error'}
+          </button>
+        </div>
+        <p className="vote-tally">
+          {listing.confirmations} confirmaciones · {listing.reports} reportes
+        </p>
+        {message && (
+          <p className="form-message" role="status">
+            {message}
+          </p>
+        )}
+      </div>
+    </Sheet>
   );
 }

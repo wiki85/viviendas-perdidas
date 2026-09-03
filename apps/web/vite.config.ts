@@ -27,7 +27,7 @@ export default defineConfig(({ command, mode }) => {
         // public/manifest.webmanifest is hand-maintained; don't generate one.
         manifest: false,
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [
             // Firebase reserved namespace: the auth popup/redirect helpers

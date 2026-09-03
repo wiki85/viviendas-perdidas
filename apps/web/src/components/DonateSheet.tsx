@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Check,
   Coffee,
@@ -7,9 +7,9 @@ import {
   ExternalLink,
   HeartHandshake,
   Smartphone,
-  X,
 } from 'lucide-react';
 import { appConfig } from '../lib/config';
+import { Sheet } from './Sheet';
 
 type Props = {
   onClose: () => void;
@@ -53,20 +53,10 @@ function formatPhone(phone: string) {
 }
 
 export function DonateSheet({ onClose }: Props) {
-  const closeButton = useRef<HTMLButtonElement>(null);
   const [amount, setAmount] = useState<number>(COFFEE_PRICE_EUR);
   const [copied, setCopied] = useState(false);
   const { bizumPhone } = appConfig.donation;
   const links = STRIPE_LINKS[amount] ?? STRIPE_LINKS[COFFEE_PRICE_EUR];
-
-  useEffect(() => {
-    closeButton.current?.focus();
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', escape);
-    return () => window.removeEventListener('keydown', escape);
-  }, [onClose]);
 
   useEffect(() => {
     if (!copied) return;
@@ -85,112 +75,93 @@ export function DonateSheet({ onClose }: Props) {
   };
 
   return (
-    <div
-      className="sheet-layer"
-      role="presentation"
-      onPointerDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
-      }}
-    >
-      <section
-        className="bottom-sheet donate-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="donate-title"
-      >
-        <span className="sheet-handle" aria-hidden="true" />
-        <button
-          ref={closeButton}
-          className="sheet-close"
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar donaciones"
-        >
-          <X size={20} />
-        </button>
-        <div className="donate-sheet__body">
-          <span className="donate-sheet__icon" aria-hidden="true">
-            <Coffee size={26} />
-          </span>
-          <h2 id="donate-title">Invítame a un café</h2>
-          <p>
-            Este proyecto es personal, independiente y sin ánimo de lucro, pero mantenerlo en marcha
-            tiene costes reales: las APIs de Google Maps (mapa, buscador, Street View) y la
-            infraestructura de base de datos y servidores.{' '}
-            <strong>
-              Todo lo recaudado se destina íntegramente a pagar esos costes de mantenimiento.
-            </strong>
-          </p>
-          <div className="donate-amounts" role="radiogroup" aria-label="Importe de la donación">
-            {AMOUNTS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={amount === option.value}
-                className={amount === option.value ? 'is-selected' : ''}
-                onClick={() => setAmount(option.value)}
-              >
-                <strong>{formatEuros(option.value)}</strong>
-                <small>{option.label}</small>
-              </button>
-            ))}
-          </div>
-          {bizumPhone && (
-            <div className="donate-method">
-              <h3>
-                <Smartphone size={17} /> Por Bizum
-              </h3>
-              <p>
-                Abre la app de tu banco, entra en <strong>Bizum → Enviar dinero</strong> y envía{' '}
-                <strong>{formatEuros(amount)}</strong> a este número:
-              </p>
-              <div className="donate-phone">
-                <span>{formatPhone(bizumPhone)}</span>
-                <button className="button button--secondary" type="button" onClick={copyPhone}>
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                  {copied ? 'Copiado' : 'Copiar número'}
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="donate-method">
-            <h3>
-              <CreditCard size={17} /> Con tarjeta o Apple Pay
-            </h3>
-            <p>El pago se procesa de forma segura en una página externa.</p>
-            <a
-              className="button button--primary"
-              href={links.once}
-              target="_blank"
-              rel="noreferrer"
+    <Sheet labelledBy="donate-title" onClose={onClose} closeLabel="Cerrar donaciones">
+      <div className="sheet__body donate-sheet__body">
+        <span className="donate-sheet__icon" aria-hidden="true">
+          <Coffee size={26} />
+        </span>
+        <h2 id="donate-title" className="sheet__title">
+          Invítame a un café
+        </h2>
+        <p>
+          Este proyecto es personal, independiente y sin ánimo de lucro, pero mantenerlo en marcha
+          tiene costes reales: las APIs de Google Maps (mapa, buscador, Street View) y la
+          infraestructura de base de datos y servidores.{' '}
+          <strong>
+            Todo lo recaudado se destina íntegramente a pagar esos costes de mantenimiento.
+          </strong>
+        </p>
+        <div className="donate-amounts" role="radiogroup" aria-label="Importe de la donación">
+          {AMOUNTS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={amount === option.value}
+              onClick={() => setAmount(option.value)}
             >
-              Donar {formatEuros(amount)} con tarjeta <ExternalLink size={16} />
-            </a>
-          </div>
+              <strong>{formatEuros(option.value)}</strong>
+              <small>{option.label}</small>
+            </button>
+          ))}
+        </div>
+        {bizumPhone && (
           <div className="donate-method">
             <h3>
-              <HeartHandshake size={17} /> Hazte mecenas
+              <Smartphone size={17} aria-hidden="true" /> Por Bizum
             </h3>
             <p>
-              El mismo importe <strong>cada mes</strong>, automático y cancelable cuando quieras: la
-              forma más útil de sostener los costes fijos del proyecto.
+              Abre la app de tu banco, entra en <strong>Bizum → Enviar dinero</strong> y envía{' '}
+              <strong>{formatEuros(amount)}</strong> a este número:
             </p>
-            <a
-              className="button button--secondary"
-              href={links.monthly}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Apoyar con {formatEuros(amount)} al mes <ExternalLink size={16} />
-            </a>
+            <div className="donate-phone">
+              <span>{formatPhone(bizumPhone)}</span>
+              <button
+                className="button button--secondary button--small"
+                type="button"
+                onClick={copyPhone}
+              >
+                {copied ? (
+                  <Check size={16} aria-hidden="true" />
+                ) : (
+                  <Copy size={16} aria-hidden="true" />
+                )}
+                {copied ? 'Copiado' : 'Copiar número'}
+              </button>
+            </div>
           </div>
-          <p className="donate-footnote">
-            Las donaciones son voluntarias y no dan acceso a funciones adicionales: la aplicación es
-            igual para todo el mundo.
-          </p>
+        )}
+        <div className="donate-method">
+          <h3>
+            <CreditCard size={17} aria-hidden="true" /> Con tarjeta o Apple Pay
+          </h3>
+          <p>El pago se procesa de forma segura en una página externa.</p>
+          <a className="button button--primary" href={links.once} target="_blank" rel="noreferrer">
+            Donar {formatEuros(amount)} con tarjeta <ExternalLink size={16} aria-hidden="true" />
+          </a>
         </div>
-      </section>
-    </div>
+        <div className="donate-method">
+          <h3>
+            <HeartHandshake size={17} aria-hidden="true" /> Hazte mecenas
+          </h3>
+          <p>
+            El mismo importe <strong>cada mes</strong>, automático y cancelable cuando quieras: la
+            forma más útil de sostener los costes fijos del proyecto.
+          </p>
+          <a
+            className="button button--secondary"
+            href={links.monthly}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Apoyar con {formatEuros(amount)} al mes <ExternalLink size={16} aria-hidden="true" />
+          </a>
+        </div>
+        <p className="donate-footnote">
+          Las donaciones son voluntarias y no dan acceso a funciones adicionales: la aplicación es
+          igual para todo el mundo.
+        </p>
+      </div>
+    </Sheet>
   );
 }

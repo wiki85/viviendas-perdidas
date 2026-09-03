@@ -402,15 +402,15 @@ export function RegisterWizard({
     return (
       <div className="sheet-layer sheet-layer--wizard">
         <section
-          className="bottom-sheet register-sheet"
+          className="sheet sheet--wizard"
           role="dialog"
           aria-modal="true"
           aria-labelledby="official-title"
         >
-          <span className="sheet-handle" aria-hidden="true" />
+          <span className="sheet__handle" aria-hidden="true" />
           <button
             ref={closeButton}
-            className="sheet-close"
+            className="sheet__close"
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
@@ -421,7 +421,7 @@ export function RegisterWizard({
             <span className="wizard-result__icon wizard-result__icon--official">
               <Landmark size={28} />
             </span>
-            <p className="eyebrow">⚠ Ya está en el registro oficial</p>
+            <p className="eyebrow eyebrow--official">Ya está en el registro oficial</p>
             <h2 id="official-title">Esta dirección figura en el registro oficial de turismo</h2>
             <div className="duplicate-card duplicate-card--official">
               <strong>Licencia {official.registrationCode}</strong>
@@ -467,15 +467,15 @@ export function RegisterWizard({
     return (
       <div className="sheet-layer sheet-layer--wizard">
         <section
-          className="bottom-sheet register-sheet"
+          className="sheet sheet--wizard"
           role="dialog"
           aria-modal="true"
           aria-labelledby="duplicate-title"
         >
-          <span className="sheet-handle" aria-hidden="true" />
+          <span className="sheet__handle" aria-hidden="true" />
           <button
             ref={closeButton}
-            className="sheet-close"
+            className="sheet__close"
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
@@ -536,15 +536,15 @@ export function RegisterWizard({
   return (
     <div className="sheet-layer sheet-layer--wizard">
       <section
-        className="bottom-sheet register-sheet"
+        className="sheet sheet--wizard"
         role="dialog"
         aria-modal="true"
         aria-labelledby="register-title"
       >
-        <span className="sheet-handle" aria-hidden="true" />
+        <span className="sheet__handle" aria-hidden="true" />
         <button
           ref={closeButton}
-          className="sheet-close"
+          className="sheet__close"
           type="button"
           onClick={onClose}
           aria-label="Cerrar registro"
@@ -553,7 +553,9 @@ export function RegisterWizard({
         </button>
         <header className="wizard-header">
           <p className="eyebrow">Nuevo registro</p>
-          <h2 id="register-title">{STEPS[step]}</h2>
+          <h2 id="register-title" className="sheet__title">
+            {STEPS[step]}
+          </h2>
           <div className="wizard-progress" aria-label={`Paso ${step + 1} de ${STEPS.length}`}>
             {STEPS.map((label, index) => (
               <span key={label} className={index <= step ? 'is-active' : ''} />
@@ -642,7 +644,6 @@ export function RegisterWizard({
                   type="button"
                   role="radio"
                   aria-checked={type === 'unit'}
-                  className={type === 'unit' ? 'is-selected' : ''}
                   onClick={() => {
                     setType('unit');
                     setDwellingsCount(1);
@@ -660,7 +661,6 @@ export function RegisterWizard({
                   type="button"
                   role="radio"
                   aria-checked={type === 'building'}
-                  className={type === 'building' ? 'is-selected' : ''}
                   onClick={() => {
                     setType('building');
                     setCommercialUnitsCount(0);
@@ -677,7 +677,6 @@ export function RegisterWizard({
                   type="button"
                   role="radio"
                   aria-checked={type === 'commercial'}
-                  className={type === 'commercial' ? 'is-selected' : ''}
                   onClick={() => {
                     setType('commercial');
                     setDwellingsCount(1);

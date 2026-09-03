@@ -14,7 +14,7 @@ La aplicación está preparada para funcionar de dos formas:
 ```text
 apps/web/                 React 18 + Vite + TypeScript + TailwindCSS
   public/geo/             GeoJSON normalizados y manifiesto de ciudades
-  src/components/         Mapa, barra superior, ficha y asistente de alta
+  src/components/         Mapa, HUD (buscador, cifras y dock inferior), fichas y asistente de alta
   src/hooks/              Ámbito visible, agregados y listings en viewport
   src/lib/                Firebase, geodatos, Street View y modo demo
 functions/                Cloud Functions v2 y lógica de dominio

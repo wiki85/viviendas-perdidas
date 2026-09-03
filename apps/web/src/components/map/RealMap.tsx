@@ -9,7 +9,9 @@ import {
 } from '@vis.gl/react-google-maps';
 import type { Listing, OfficialCell, OfficialPin } from '../../domain/types';
 import { MAP_STYLE, SPAIN_BOUNDS } from '../../lib/constants';
+import { pinAriaLabel, pinClassName, pinSvg } from '../../lib/marker-icons';
 import { formatCellCount } from '../../lib/official-cells';
+import { MapZoomControls } from './MapZoomControls';
 import type { CameraCommand, MapStageProps } from './MapStage';
 
 type RealMapProps = MapStageProps & { apiKey: string; mapId: string };
@@ -27,14 +29,23 @@ function CameraCommander({ command }: { command: CameraCommand | null }) {
 /** Zoom applied when tapping a bubble: jumps into the next, finer band. */
 const CELL_ZOOM_AFTER_CLICK: Record<number, number> = { 4: 10, 5: 13, 6: 15.4, 7: 17.2 };
 
-function officialBubbleElement(count: number, label: string): HTMLButtonElement {
+/** Burbuja de agrupación: coral para lo vecinal, musgo para lo oficial. */
+function clusterElement(
+  count: number,
+  label: string,
+  kind: 'community' | 'official',
+): HTMLButtonElement {
   const content = document.createElement('button');
   content.type = 'button';
   const size = count >= 1000 ? 'l' : count >= 100 ? 'm' : 's';
-  content.className = `map-cluster--official map-cluster--official--${size}`;
+  content.className = `map-cluster map-cluster--${kind} map-cluster--${size}`;
   content.textContent = formatCellCount(count);
   content.setAttribute('aria-label', label);
   return content;
+}
+
+function officialBubbleElement(count: number, label: string): HTMLButtonElement {
+  return clusterElement(count, label, 'official');
 }
 
 /** Aggregated bubbles of the official registry (server-precomputed cells). */
@@ -248,7 +259,22 @@ function MarkerLayer({
 
   useEffect(() => {
     if (!map || !google.maps.marker?.AdvancedMarkerElement) return;
-    const clusterer = new MarkerClusterer({ map, markers: [] });
+    const clusterer = new MarkerClusterer({
+      map,
+      markers: [],
+      renderer: {
+        render: ({ count, position }) =>
+          new google.maps.marker.AdvancedMarkerElement({
+            position,
+            zIndex: Math.min(count, 900_000),
+            content: clusterElement(
+              count,
+              `Grupo de ${count} registros vecinales. Acercar.`,
+              'community',
+            ),
+          }),
+      },
+    });
     clustererRef.current = clusterer;
     const markerStore = markersRef.current;
     return () => {
@@ -280,14 +306,11 @@ function MarkerLayer({
       if (current.has(listing.id)) continue;
       const content = document.createElement('button');
       content.type = 'button';
-      content.className = `map-marker map-marker--${listing.type} ${listing.status === 'flagged' ? 'map-marker--flagged' : ''}`;
-      content.setAttribute(
-        'aria-label',
-        listing.type === 'commercial'
-          ? `Local comercial convertido, ${listing.address.formatted}`
-          : `${listing.type === 'building' ? 'Edificio completo o parcial' : 'Apartamento'}, ${listing.dwellingsCount} viviendas, ${listing.address.formatted}`,
-      );
-      content.innerHTML = `<span aria-hidden="true">${listing.type === 'building' ? '🏢' : listing.type === 'commercial' ? '🏪' : '⌂'}</span>${listing.type === 'building' ? `<b>${listing.dwellingsCount}</b>` : ''}`;
+      content.className = pinClassName(listing);
+      content.setAttribute('aria-label', pinAriaLabel(listing));
+      content.innerHTML =
+        pinSvg(listing.type) +
+        (listing.type === 'building' ? `<b class="pin__count">${listing.dwellingsCount}</b>` : '');
       const marker = new google.maps.marker.AdvancedMarkerElement({
         position: listing.location,
         content,
@@ -305,7 +328,7 @@ function MarkerLayer({
   useEffect(() => {
     for (const [id, entry] of markersRef.current) {
       (entry.marker.content as HTMLElement | null)?.classList.toggle(
-        'map-marker--selected',
+        'pin--selected',
         id === selectedId,
       );
     }
@@ -382,11 +405,12 @@ function MapContent(props: RealMapProps) {
               className="placement-pin placement-pin--google"
               aria-label="Ubicación seleccionada"
             >
-              <span>●</span>
+              <span />
             </span>
           </AdvancedMarker>
         )}
       </GoogleMap>
+      <MapZoomControls />
       {props.placementMode && (
         <div className="placement-hint" aria-live="polite">
           Toca el edificio o arrastra el pin

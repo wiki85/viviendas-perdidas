@@ -1,5 +1,14 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FileText, MailPlus, Plus, Sparkles, TriangleAlert, X } from 'lucide-react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { Sparkles, TriangleAlert, X } from 'lucide-react';
 import type {
   Aggregate,
   CityDefinition,
@@ -23,7 +32,14 @@ import { ListingSheet } from './components/ListingSheet';
 import { OfficialSheet } from './components/OfficialSheet';
 import { OfficialStackSheet } from './components/OfficialStackSheet';
 import { MapStage, type CameraCommand } from './components/map/MapStage';
-import { TopBar } from './components/TopBar';
+import { BottomNav, type Section } from './components/hud/BottomNav';
+import type { ImpactDetailsProps } from './components/hud/ImpactDetails';
+import { ImpactSheet } from './components/hud/ImpactSheet';
+import { ImpactStrip } from './components/hud/ImpactStrip';
+import { MoreSheet } from './components/hud/MoreSheet';
+import { SearchDock } from './components/hud/SearchDock';
+import { SidePanel } from './components/hud/SidePanel';
+import { DESKTOP_QUERY, useMediaQuery } from './hooks/use-media-query';
 
 // Secondary surfaces load on demand: they were ~30 kB gzip of the startup
 // chunk despite rendering only behind explicit navigation.
@@ -85,6 +101,8 @@ import { SPAIN_CENTER, SPAIN_ZOOM } from './lib/constants';
 import { getListingsService } from './services';
 
 type Toast = { kind: 'success' | 'error'; message: string };
+/** Secciones a pantalla completa que sustituyen al mapa. */
+type Page = 'about' | 'methodology' | 'stats' | 'newsletter' | 'contact' | null;
 
 // Stable empty arrays: fresh `[]` per render would re-run the map layer
 // effects (and tear down markers) even when there is nothing to draw.
@@ -239,16 +257,34 @@ export default function App() {
   const [newsletterCityHint, setNewsletterCityHint] = useState<string | null>(() =>
     currentPathIsNewsletter() ? newsletterCityFromUrl() : null,
   );
-  const openNewsletter = useCallback((cityId?: string) => {
-    // The city rides in the URL so it survives a sign-in redirect round trip.
-    window.history.pushState({}, '', cityId ? `/boletin?ciudad=${cityId}` : '/boletin');
-    setNewsletterCityHint(cityId ?? null);
-    setStatsOpen(false);
-    setNewsletterOpen(true);
-  }, []);
-  const [donateOpen, setDonateOpen] = useState(false);
   // Sin ruta propia a propósito: la página de contacto no debe ser rastreable.
   const [contactOpen, setContactOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [impactOpen, setImpactOpen] = useState(false);
+  const desktop = useMediaQuery(DESKTOP_QUERY);
+  // Una sola sección abierta a la vez; cambiar de sección cierra el resto.
+  const showPage = useCallback((page: Page, path?: string) => {
+    if (path !== undefined) window.history.pushState({}, '', path);
+    setAdminOpen(false);
+    setAboutOpen(page === 'about');
+    setMethodologyOpen(page === 'methodology');
+    setStatsOpen(page === 'stats');
+    setNewsletterOpen(page === 'newsletter');
+    setContactOpen(page === 'contact');
+    if (page !== 'newsletter') setNewsletterCityHint(null);
+    setMoreOpen(false);
+    setImpactOpen(false);
+  }, []);
+  const openNewsletter = useCallback(
+    (cityId?: string) => {
+      // The city rides in the URL so it survives a sign-in redirect round trip.
+      window.history.pushState({}, '', cityId ? `/boletin?ciudad=${cityId}` : '/boletin');
+      setNewsletterCityHint(cityId ?? null);
+      showPage('newsletter');
+    },
+    [showPage],
+  );
+  const [donateOpen, setDonateOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pendingImpact, setPendingImpact] = useState<PendingImpact | null>(null);
   const [sourceMode, setSourceMode] = useState<SourceMode>(() => sharedSourceFromUrl() ?? 'both');
@@ -838,16 +874,6 @@ export default function App() {
     if (result.status === 'removed') setSelectedId(null);
   };
 
-  const openAbout = () => {
-    window.history.pushState({}, '', '/acerca');
-    setAboutOpen(true);
-  };
-
-  const closeAbout = () => {
-    window.history.pushState({}, '', '/');
-    setAboutOpen(false);
-  };
-
   const exportData = async () => {
     try {
       const blob = await service.exportPublicData();
@@ -893,126 +919,137 @@ export default function App() {
     }
   };
 
+  const section: Section = aboutOpen
+    ? 'about'
+    : methodologyOpen
+      ? 'methodology'
+      : statsOpen
+        ? 'stats'
+        : newsletterOpen
+          ? 'newsletter'
+          : contactOpen
+            ? 'contact'
+            : 'map';
+  const cityReportLink = cityReport ? { id: cityReport.id, name: cityReport.name } : null;
+  const goMap = () => showPage(null, '/');
+  const openAbout = () => showPage('about', '/acerca');
+  const openMethodology = () => showPage('methodology', '/metodologia');
+  const openStats = () => showPage('stats', '/estadisticas');
+  const openContact = () => showPage('contact');
+  const openRegistration = () => {
+    if (section !== 'map') goMap();
+    setSelectedId(null);
+    setSelectedFallback(null);
+    setSelectedOfficial(null);
+    setSelectedStack(null);
+    setPickedPosition(null);
+    setRegistrationOpen(true);
+  };
+  const share = () => void shareVisibleScope();
+  // Con una ficha abierta, el banner de la ciudad quedaría medio tapado.
+  const detailOpen = Boolean(selectedListing || selectedOfficial || selectedStack);
+
+  const impactProps: ImpactDetailsProps = {
+    aggregate: metricsAggregate,
+    viewportMode: Boolean(viewportAggregate),
+    loading: viewportAggregate
+      ? listingState.loading || resolvedScope.loading
+      : aggregateLoading || resolvedScope.loading,
+    sourceMode,
+    onSourceModeChange: setSourceMode,
+    official: officialViewport,
+    officialStatus,
+    sourceToggleAvailable: service.mode === 'firebase',
+    cityReport: cityReportLink,
+    onOpenNewsletter: openNewsletter,
+    onShare: share,
+    onOpenMethodology: openMethodology,
+  };
+
+  const dock = (
+    <BottomNav
+      section={section}
+      moreOpen={moreOpen}
+      onMap={goMap}
+      onStats={openStats}
+      onRegister={openRegistration}
+      onNewsletter={() => openNewsletter(cityReport?.id)}
+      onMore={() => setMoreOpen((open) => !open)}
+    />
+  );
+  const overlays = (
+    <>
+      {moreOpen && (
+        <MoreSheet
+          cityReport={cityReportLink}
+          onOpenAbout={openAbout}
+          onOpenMethodology={openMethodology}
+          onOpenContact={openContact}
+          onOpenDonate={() => setDonateOpen(true)}
+          onOpenNewsletter={openNewsletter}
+          onShare={share}
+          onClose={() => setMoreOpen(false)}
+        />
+      )}
+      {donateOpen && <DonateSheet onClose={() => setDonateOpen(false)} />}
+      {toast && <ToastMessage toast={toast} onClose={() => setToast(null)} />}
+    </>
+  );
+
   if (adminOpen) {
     return (
       <Suspense fallback={<PageLoading />}>
-        <AdminPage
-          service={service}
-          onClose={() => {
-            window.history.pushState({}, '', '/');
-            setAdminOpen(false);
-          }}
-        />
+        <AdminPage service={service} onClose={goMap} />
       </Suspense>
     );
   }
 
+  let page: ReactNode = null;
   if (methodologyOpen) {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <MethodologyPage
-          onClose={() => {
-            window.history.pushState({}, '', '/');
-            setMethodologyOpen(false);
-          }}
-        />
-      </Suspense>
+    page = <MethodologyPage onClose={goMap} />;
+  } else if (statsOpen) {
+    page = (
+      <StatsPage
+        onClose={goMap}
+        loadHistory={() => service.listOfficialHistory()}
+        onOpenNewsletter={() => openNewsletter()}
+      />
     );
+  } else if (newsletterOpen) {
+    page = (
+      <NewsletterPage
+        onClose={goMap}
+        preselectCityId={newsletterCityHint}
+        prepareAuth={() => service.prepareAuth()}
+        signIn={() => service.newsletterSignIn()}
+        signOut={() => service.signOutUser()}
+        sendLoginLink={(email) => service.sendNewsletterLoginLink(email, newsletterCityHint)}
+        completeEmailLink={(email) => service.completeNewsletterEmailLink(email)}
+        loadPreferences={() => service.getNewsletterPreferences()}
+        savePreferences={(preferences) => service.saveNewsletterPreferences(preferences)}
+        unsubscribe={() => service.unsubscribeNewsletter()}
+      />
+    );
+  } else if (contactOpen) {
+    page = (
+      <ContactPage onClose={goMap} onSubmit={(input) => service.submitContactMessage(input)} />
+    );
+  } else if (aboutOpen) {
+    page = <AboutPage onClose={goMap} onExport={exportData} onOpenMethodology={openMethodology} />;
   }
 
-  if (statsOpen) {
+  if (page) {
     return (
-      <Suspense fallback={<PageLoading />}>
-        <StatsPage
-          onClose={() => {
-            window.history.pushState({}, '', '/');
-            setStatsOpen(false);
-          }}
-          loadHistory={() => service.listOfficialHistory()}
-          onOpenNewsletter={() => openNewsletter()}
-        />
-      </Suspense>
-    );
-  }
-
-  if (newsletterOpen) {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <NewsletterPage
-          onClose={() => {
-            window.history.pushState({}, '', '/');
-            setNewsletterOpen(false);
-            setNewsletterCityHint(null);
-          }}
-          preselectCityId={newsletterCityHint}
-          prepareAuth={() => service.prepareAuth()}
-          signIn={() => service.newsletterSignIn()}
-          signOut={() => service.signOutUser()}
-          sendLoginLink={(email) => service.sendNewsletterLoginLink(email, newsletterCityHint)}
-          completeEmailLink={(email) => service.completeNewsletterEmailLink(email)}
-          loadPreferences={() => service.getNewsletterPreferences()}
-          savePreferences={(preferences) => service.saveNewsletterPreferences(preferences)}
-          unsubscribe={() => service.unsubscribeNewsletter()}
-        />
-      </Suspense>
-    );
-  }
-
-  if (contactOpen) {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <ContactPage
-          onClose={() => setContactOpen(false)}
-          onSubmit={(input) => service.submitContactMessage(input)}
-        />
-      </Suspense>
-    );
-  }
-
-  if (aboutOpen) {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <AboutPage
-          onClose={closeAbout}
-          onExport={exportData}
-          onOpenMethodology={() => {
-            window.history.pushState({}, '', '/metodologia');
-            setAboutOpen(false);
-            setMethodologyOpen(true);
-          }}
-        />
-        {toast && <ToastMessage toast={toast} onClose={() => setToast(null)} />}
-      </Suspense>
+      <>
+        <Suspense fallback={<PageLoading />}>{page}</Suspense>
+        {dock}
+        {overlays}
+      </>
     );
   }
 
   return (
     <main className="app-shell">
-      <TopBar
-        aggregate={metricsAggregate}
-        viewportMode={Boolean(viewportAggregate)}
-        loading={
-          viewportAggregate
-            ? listingState.loading || resolvedScope.loading
-            : aggregateLoading || resolvedScope.loading
-        }
-        mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
-        sourceMode={sourceMode}
-        onSourceModeChange={setSourceMode}
-        official={officialViewport}
-        officialStatus={officialStatus}
-        sourceToggleAvailable={service.mode === 'firebase'}
-        onSelectPlace={selectPlace}
-        onOpenAbout={openAbout}
-        onOpenContact={() => setContactOpen(true)}
-        onOpenNewsletter={() => openNewsletter()}
-        onOpenStats={() => {
-          window.history.pushState({}, '', '/estadisticas');
-          setStatsOpen(true);
-        }}
-        onOpenDonate={() => setDonateOpen(true)}
-        onShare={() => void shareVisibleScope()}
-      />
       <section className="map-region" aria-label="Mapa de viviendas turísticas registradas">
         <MapStage
           center={center}
@@ -1032,12 +1069,28 @@ export default function App() {
           onSelectOfficialStack={selectOfficialStack}
           onPickLocation={pickLocation}
         />
+        {!registrationOpen &&
+          (desktop ? (
+            <SidePanel
+              mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
+              onSelectPlace={selectPlace}
+              onOpenDonate={() => setDonateOpen(true)}
+              {...impactProps}
+            />
+          ) : (
+            <SearchDock
+              mapsEnabled={Boolean(appConfig.googleMapsApiKey)}
+              onSelectPlace={selectPlace}
+              onOpenAbout={openAbout}
+              onOpenDonate={() => setDonateOpen(true)}
+            />
+          ))}
         {(capabilityNotice || aggregateError || listingState.error) && (
           <div className="mode-notice" role="status">
             {aggregateError || listingState.error ? (
-              <TriangleAlert size={15} />
+              <TriangleAlert size={15} aria-hidden="true" />
             ) : (
-              <Sparkles size={15} />
+              <Sparkles size={15} aria-hidden="true" />
             )}
             <span>{aggregateError ?? listingState.error ?? capabilityNotice}</span>
           </div>
@@ -1047,50 +1100,30 @@ export default function App() {
             <span /> Actualizando registros…
           </div>
         )}
-        {cityReport && !registrationOpen && (
-          <div className="map-top-stack">
-            {bannerVisible && (
-              <CityImpactBanner
-                key={cityReport.id}
-                cityId={cityReport.id}
-                cityName={cityReport.name}
-                summary={cityReport.summary}
-                onClose={closeBanner}
-              />
-            )}
-            <div className="city-fabs">
-              <a
-                className="report-fab"
-                href={`/ciudad/${encodeURIComponent(cityReport.id)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText size={15} aria-hidden="true" /> Informe de {cityReport.name}
-              </a>
-              <button
-                className="subscribe-fab"
-                type="button"
-                onClick={() => openNewsletter(cityReport.id)}
-              >
-                <MailPlus size={15} aria-hidden="true" /> Suscríbete a {cityReport.name}
-              </button>
-            </div>
-          </div>
+        {cityReport && bannerVisible && !registrationOpen && !detailOpen && (
+          <CityImpactBanner
+            key={cityReport.id}
+            cityId={cityReport.id}
+            cityName={cityReport.name}
+            summary={cityReport.summary}
+            onClose={closeBanner}
+          />
         )}
-        {!registrationOpen && !selectedListing && (
-          <button
-            className="register-fab"
-            type="button"
-            onClick={() => {
-              setPickedPosition(null);
-              setRegistrationOpen(true);
-            }}
-          >
-            <Plus size={23} /> <span>Registrar</span>
-          </button>
+        {!registrationOpen && !desktop && (
+          <ImpactStrip
+            aggregate={metricsAggregate}
+            viewportMode={impactProps.viewportMode}
+            loading={impactProps.loading}
+            cityReport={cityReportLink}
+            expanded={impactOpen}
+            onOpen={() => setImpactOpen(true)}
+          />
         )}
       </section>
-
+      {!registrationOpen && dock}
+      {impactOpen && !desktop && (
+        <ImpactSheet {...impactProps} onClose={() => setImpactOpen(false)} />
+      )}
       {selectedListing && (
         <ListingSheet
           listing={selectedListing}
@@ -1126,10 +1159,9 @@ export default function App() {
           />
         </Suspense>
       )}
-      {donateOpen && <DonateSheet onClose={() => setDonateOpen(false)} />}
+      {overlays}
       <CookieNotice />
       <DonateBanner onOpen={() => setDonateOpen(true)} />
-      {toast && <ToastMessage toast={toast} onClose={() => setToast(null)} />}
       <span className="sr-only" aria-live="polite">
         {displayedAggregate.name}: {displayedAggregate.lostFamilies} familias y{' '}
         {displayedAggregate.lostInhabitants} habitantes estimados.
